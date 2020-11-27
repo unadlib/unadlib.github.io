@@ -82,7 +82,7 @@
       color: #ccc;
       font-size: 14px;
     }
-    
+
     #post .content {
       margin-top: 8%;
     }
@@ -141,7 +141,7 @@
         padding: 2% 4%;
         border-radius: 0;
       }
-      
+
       .recent-post-item:first-child {
         margin-top: 32px;
       }
@@ -410,9 +410,24 @@ App -&gt; moduleDidInitialize pending: false ready: true
     nodes.forEach((node, index) => {
       var lang = node.getAttribute('class');
       var code = node.innerText;
+      var mode = lang;
+      switch(lang) {
+        case 'jsx':
+          lang = 'javascript';
+          mode = 'text/jsx';
+          break;
+        case 'tsx':
+          lang = 'javascript';
+          mode = 'text/typescript-jsx';
+        case 'typescript':
+          lang = 'javascript';
+          mode = 'text/typescript';
+        default:
+          break;
+      }
       var config = {
         value: code,
-        mode:  lang,
+        mode,
         theme: 'seti'
       };
       if (!lang) return;

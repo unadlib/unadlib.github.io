@@ -82,7 +82,7 @@
       color: #ccc;
       font-size: 14px;
     }
-    
+
     #post .content {
       margin-top: 8%;
     }
@@ -141,7 +141,7 @@
         padding: 2% 4%;
         border-radius: 0;
       }
-      
+
       .recent-post-item:first-child {
         margin-top: 32px;
       }
@@ -179,7 +179,7 @@
 <p>It is a complete architecture of React.</p>
 <h2 id="What-problem-was-solved"><a href="#What-problem-was-solved" class="headerlink" title="What problem was solved?"></a>What problem was solved?</h2><p>Reactant is a progressive framework. In the process of developing applications from simple to complex, it can provide the appropriate features at each stage, based on its system architecture design can also be a variety of gradual and smooth upgrade and evolution.</p>
 <h3 id="Better-Immutable-State-Management"><a href="#Better-Immutable-State-Management" class="headerlink" title="Better Immutable State Management"></a>Better Immutable State Management</h3><p>React advocates immutable state type management, and Redux clearly fits this. But the fact is that simple mutation update operations like MobX are increasingly in line with current trends. Therefore Reactant provides a new immutable state management model based on Redux and Immer, which incorporates similar API elements of MobX. And more importantly, it still maintains the immutability of state.</p>
-<pre><code class="ts">@injectable()
+<pre><code class="typescript">@injectable()
 class TodoList {
   @state
   list: Todo[] = [];
@@ -245,9 +245,24 @@ class AppView extends ViewModule {
     nodes.forEach((node, index) => {
       var lang = node.getAttribute('class');
       var code = node.innerText;
+      var mode = lang;
+      switch(lang) {
+        case 'jsx':
+          lang = 'javascript';
+          mode = 'text/jsx';
+          break;
+        case 'tsx':
+          lang = 'javascript';
+          mode = 'text/typescript-jsx';
+        case 'typescript':
+          lang = 'javascript';
+          mode = 'text/typescript';
+        default:
+          break;
+      }
       var config = {
         value: code,
-        mode:  lang,
+        mode,
         theme: 'seti'
       };
       if (!lang) return;
