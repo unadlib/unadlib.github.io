@@ -25,6 +25,9 @@
 
     a {
       color: #000;
+    }
+
+    a.title {
       text-decoration: none;
     }
 
@@ -181,7 +184,7 @@
 </ol>
 <p>These shortcomings eventually led to the advent of Crius.</p>
 <h2 id="What’s-Crius"><a href="#What’s-Crius" class="headerlink" title="What’s Crius"></a>What’s Crius</h2><p>Crius is our answer to Cucumber. Let’s see some example code:</p>
-<pre><code class="jsx">@autorun(test)
+<pre><code class="tsx">@autorun(test)
 @title(&#39;User add ${todo} item in todo list&#39;)
 class AddTodoItem extends Step {
 
