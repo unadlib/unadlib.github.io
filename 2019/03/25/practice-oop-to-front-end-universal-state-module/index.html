@@ -1,0 +1,461 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+  <title>Practice OOP to front-end universal state module with Redux/MobX/Vuexunadlib&#39;s Notes</title>
+  <style type="text/css">
+    body, html {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+      font-size: 18px;
+      line-height: 1.8;
+      user-select: none;
+      box-sizing: border-box;
+      touch-action: manipulation;
+      background-color: #f1f3f4;
+    }
+
+    a {
+      color: #000;
+    }
+
+    a.title {
+      text-decoration: none;
+    }
+
+    #content-outer {
+      margin: 4% 14%;
+      padding: 4% 8%;
+      box-shadow: 0 0 3px -1px rgba(0,0,0,.3);
+      border-radius: 5px;
+      box-sizing: border-box;
+      background: #fff;
+      border-bottom: 1px solid #b5b5b5;
+    }
+
+    #content-inner {
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .recent-post-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .recent-post-item .title {
+      overflow: hidden;
+      text-overflow:ellipsis;
+      white-space: nowrap;
+    }
+
+    .recent-post-item .time {
+      color: #ccc;
+      font-size: 14px;
+      line-height: 32px;
+      min-width: 81px;
+      text-align: right;
+    }
+
+    #post img {
+      max-width: 100%;
+    }
+
+    #post h1.title {
+      text-align: center;
+      font-size: 2em;
+      margin-block-start: 0.67em;
+      margin-block-end: 0.67em;
+      line-height: 1;
+    }
+
+    #post .time {
+      text-align: center;
+      color: #ccc;
+      font-size: 14px;
+    }
+
+    #post .content {
+      margin-top: 8%;
+    }
+
+    #post .content blockquote {
+      border-left: 3px solid #eee;
+      padding-left: 20px;
+      color: #666;
+      margin: 0;
+    }
+
+    #post .content .gutter {
+      display: none;
+    }
+
+    code, kbd, pre, samp {
+      font-size: 16px !important;
+    }
+
+    .CodeMirror {
+      height: auto !important;
+      padding: 36px 24px 0;
+      border-radius: 6px;
+    }
+
+    #post .content figure {
+      padding: 0 1em;
+      background-color: #f1f3f4;
+      border: 1px solid #e0e0e0;
+      margin: 0;
+      overflow: auto;
+    }
+
+    #post .content figure table {
+      width: 100%;
+    }
+
+    @media screen and (max-width: 1024px)  {
+      #content-outer {
+        margin: 2% 7%;
+        padding: 2% 4%;
+      }
+
+      .recent-post-item:first-child {
+        margin-top: 16px;
+      }
+    }
+
+    @media screen and (max-width: 480px) {
+      body{
+        -webkit-text-size-adjust: none;
+      }
+
+      #content-outer {
+        margin: 0;
+        padding: 2% 4%;
+        border-radius: 0;
+      }
+
+      .recent-post-item:first-child {
+        margin-top: 32px;
+      }
+
+      .recent-post-item:last-child {
+        border-bottom: none;
+      }
+    }
+  </style>
+  
+    <!-- styles list from theme config.yml -->
+    
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/codemirror.min.css">
+    
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/theme/seti.min.css">
+    
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+<body class="cm-s-seti">
+
+<div id="content-outer">
+  <div id="content-inner">
+    
+<article id="post">
+  <h1 class="title">Practice OOP to front-end universal state module with Redux/MobX/Vuex</h1>
+  <p class="time">2019-03-25</span>
+  <div class="content">
+      <p><img src="/assets/2019-02-25-practice-oop-to-front-end-universal-state-module/architecture.jpg" alt="architecture"></p>
+<blockquote>
+<p>This is a proposal of an universal state management module design rooted in the OOP paradigm.</p>
+</blockquote>
+<h2 id="Motivation"><a href="#Motivation" class="headerlink" title="Motivation"></a>Motivation</h2><p>As front-end single-page application development becomes increasingly complex, we have to use some state management or state containers (collectively referred to as state library) in order to develop complex apps, and we need a model design that is easier to modularize.</p>
+<p>State management libraries are quite abundant in the front-end space, there are <a target="_blank" rel="noopener" href="https://github.com/reduxjs/redux">Redux</a>, <a target="_blank" rel="noopener" href="https://github.com/mobxjs/mobx">MobX</a>, <a target="_blank" rel="noopener" href="https://github.com/vuejs/vuex">Vuex</a>, and the self-contained state management that comes with <a target="_blank" rel="noopener" href="https://github.com/angular/angular">Angular</a> to name a few. Redux is a predictable state container with immutable data structure. MobX is a observable state management. Vuex is centralized state management with observable pattern for Vue.js. As for modularization, Angular has its own implementations already, but the rest of the state management libraries only started to deal with this new requirement in complex systems in recent years.</p>
+<p>In this article, let’s explore an OOP modular design that has universal support for popular state management libraries.</p>
+<h2 id="Universal-state-module"><a href="#Universal-state-module" class="headerlink" title="Universal state module"></a>Universal state module</h2><p>Object-oriented programming(OOP) is commonly used in the architecture design of large projects in the front-end. The following questions are often asked when deciding on a state management library:</p>
+<ul>
+<li>Is it Redux or MobX more suitable for React?</li>
+<li>Is Redux suitable for OOP?</li>
+<li>What are the pros and cons of using MobX’s observable in React?</li>
+<li>How to do OOP with Vuex?</li>
+</ul>
+<p>Typically front-end architectures are tightly coupled with state management. Once a state management library is selected, it is difficult to switch to another without major refactoring. So any system that uses such architecture will also have to use the same state library. </p>
+<p>Better front-end architecture design should be flexible and scalable. Especially for designs that aim to fulfill integration purposes, where adapting to the target environments and sdk architectures is very important. In order to create modules that work with popular frameworks like React+Redux, React+MobX, Vue+Vuex, and Angular, we need an universal state module design.</p>
+<h2 id="Design-Goals"><a href="#Design-Goals" class="headerlink" title="Design Goals"></a>Design Goals</h2><ul>
+<li>Object Oriented</li>
+<li>Simple &amp; Flexible</li>
+<li>Dependency Detection &amp; Module Lifecycle</li>
+</ul>
+<h2 id="Proposal"><a href="#Proposal" class="headerlink" title="Proposal"></a>Proposal</h2><p><strong>Based on the concept of universalization, we propose a new <code>Universal State Module</code> library —— <a target="_blank" rel="noopener" href="https://github.com/unadlib/usm">usm</a>.</strong></p>
+<p>Let’s start with a typical Redux example of a counter:</p>
+<pre><code class="javascript">import &#123; createStore &#125; from &#39;redux&#39;;
+
+function counter(state = 0, action) &#123;
+  switch (action.type) &#123;
+    case &#39;INCREMENT&#39;:
+      return state + 1;
+    case &#39;DECREMENT&#39;:
+      return state - 1;
+    default:
+      return state;
+  &#125;
+&#125;
+
+const store = createStore(counter)
+
+store.dispatch(&#123; type: &#39;INCREMENT&#39; &#125;)
+store.dispatch(&#123; type: &#39;DECREMENT&#39; &#125;)
+</code></pre>
+<p>USM supports Redux, MobX, Vuex and Angular. It provides <code>usm</code>, <code>usm-redux</code>, <code>usm-mobx</code> and <code>usm-vuex</code> packages. Here is the same counter using <code>usm-redux</code>:</p>
+<pre><code class="javascript">import Module, &#123; state, action &#125; from &#39;usm-redux&#39;;
+
+class Counter extends Module &#123;
+  @state count = 0;
+
+  @action
+  increase(state) &#123;
+    state.count += 1;
+  &#125;
+
+  @action
+  decrease(state) &#123;
+    state.count -= 1;
+  &#125;
+&#125;
+
+const counter = Counter.create();
+
+counter.increase();
+counter.decrease();
+</code></pre>
+<p>The implementation of the same <code>counter</code> above is based on object-oriented paradigm. The use of ES6 class syntax is intuitive and concise. If this design can be universal to any state management library used, it will undoubtedly lead to more flexible and friendly development experience for developers, as well as better readability and maintainability.</p>
+<p>USM has four sub-packages, namly <code>usm</code>, <code>usm-redux</code>, <code>usm-mobx</code> and <code>usm-vuex</code>. <code>usm-redux</code> is used in this example, which is based on the use of <a target="_blank" rel="noopener" href="https://github.com/mweststrate/immer">Immer</a> that enables modifying the immutable redux state in a mutable manner.</p>
+<p>The following code demonstrate how the <code>usm-redux</code> module can be used with the connector from <code>react-redux</code>:</p>
+<pre><code class="javascript">// index.js
+export const counter = Counter.create();
+
+ReactDOM.render(
+  &lt;Provider store=&#123;counter.store&#125;&gt;
+    &lt;App /&gt;
+  &lt;/Provider&gt;,
+  document.getElementById(&#39;root&#39;)
+);
+</code></pre>
+<pre><code class="javascript">// app.js
+import &#123; connect &#125; from &#39;react-redux&#39;;
+import &#123; counter &#125; from &#39;./&#39;;
+
+export default connect(
+  state =&gt; (&#123; count: state.count &#125;)
+)( props =&gt; 
+  &lt;div&gt;
+    &lt;button onClick=&#123;() =&gt; counter.increase()&#125;&gt;+&lt;/button&gt;
+    &#123;props.count&#125;
+    &lt;button onClick=&#123;() =&gt; counter.decrease()&#125;&gt;-&lt;/button&gt;
+  &lt;/div&gt;
+);
+</code></pre>
+<p>And here is the same counter working with <code>mobx-react</code> using <code>usm-mobx</code>:</p>
+<pre><code class="javascript">// index.js
+
+export const counter = Counter.create();
+
+ReactDOM.render(
+  &lt;App /&gt;,
+  document.getElementById(&#39;root&#39;)
+);
+</code></pre>
+<pre><code class="javascript">// app.js
+import &#123; observer &#125; from &#39;mobx-react&#39;;
+import &#123; counter &#125; from &#39;./&#39;;
+
+export default observer(() =&gt;
+  &lt;div&gt;
+    &lt;button onClick=&#123;() =&gt; counter.increase()&#125;&gt;+&lt;/button&gt;
+    &#123;counter.count&#125;
+    &lt;button onClick=&#123;() =&gt; counter.decrease()&#125;&gt;-&lt;/button&gt;
+  &lt;/div&gt;
+);
+</code></pre>
+<p>The use of <code>usm-redux</code> and <code>usm-mobx</code> to connect with <code>react-redux</code> and <code>mobx-react</code> respectfully demonstrated that the core implementations of the state module is the same even when the connectors used are different. This is the core principle of the Universal State Module that we propose.</p>
+<p>** USM currently supports Redux, MobX, Vuex and Angular.**</p>
+<h3 id="Features"><a href="#Features" class="headerlink" title="Features"></a>Features</h3><ul>
+<li>Universal State Management</li>
+<li>Standardized Module Lifecycle</li>
+<li>Optional Event System</li>
+<li>Support Stateless Model</li>
+<li>Support React&#x2F;Vue&#x2F;Angular</li>
+</ul>
+<h3 id="Decorators"><a href="#Decorators" class="headerlink" title="Decorators"></a>Decorators</h3><p><code>usm</code> provides decorator <code>@state</code> to wrap a variable with a state, and decorator <code>@action</code> is used to wrap a function that changes state.</p>
+<pre><code class="javascript">class Shop extends Module &#123;
+  @state goods = [];
+  @state status = &#39;close&#39;;
+
+  @action
+  operate(item, status, state) &#123;
+    state.goods.push(item);
+    state.status = status;
+  &#125;
+  // call function -&gt; this.operate(&#123; name: &#39;fruits&#39;, amount: 10 &#125;, &#39;open&#39;);
+&#125;
+</code></pre>
+<h3 id="Module-lifecycle"><a href="#Module-lifecycle" class="headerlink" title="Module lifecycle"></a>Module lifecycle</h3><p><code>usm</code> provides these lifecycle events:</p>
+<ul>
+<li><code>moduleWillInitialize</code></li>
+<li><code>moduleWillInitializeSuccess</code></li>
+<li><code>moduleDidInitialize</code></li>
+<li><code>moduleWillReset</code></li>
+<li><code>moduleDidReset</code></li>
+</ul>
+<p>The order in which they are run is shown in the following flow chart:</p>
+<p><img src="/assets/2019-02-25-practice-oop-to-front-end-universal-state-module/usm_lifecycle.png" alt="lifecycle"></p>
+<p>These module lifecycles can be used to coordinate module initialization dependencies.</p>
+<pre><code class="javascript">class TodoList extends Module &#123;  
+  async moduleWillInitialize() &#123;
+    console.log(
+      &#39;TodoList -&gt; moduleWillInitialize&#39;,
+      `pending: $&#123;this.pending&#125;`, `ready: $&#123;this.ready&#125;`
+    );
+  &#125;
+
+  async moduleWillInitializeSuccess() &#123;
+    console.log(
+      &#39;TodoList -&gt; moduleWillInitializeSuccess&#39;,
+      `pending: $&#123;this.pending&#125;`, `ready: $&#123;this.ready&#125;`
+      );
+  &#125;
+
+  async moduleDidInitialize() &#123;
+    console.log(
+      &#39;TodoList -&gt; moduleDidInitialize&#39;,
+      `pending: $&#123;this.pending&#125;`, `ready: $&#123;this.ready&#125;`
+      );
+  &#125;
+&#125;
+
+
+class App extends Module&#123;
+  async moduleWillInitialize() &#123;
+    console.log(
+      &#39;App -&gt; moduleWillInitialize&#39;,
+      `pending: $&#123;this.pending&#125;`, `ready: $&#123;this.ready&#125;`
+    );
+  &#125;
+
+  async moduleWillInitializeSuccess() &#123;
+    console.log(
+      &#39;App -&gt; moduleWillInitializeSuccess&#39;,
+      `pending: $&#123;this.pending&#125;`, `ready: $&#123;this.ready&#125;`
+    );
+  &#125;
+
+  async moduleDidInitialize() &#123;
+    console.log(
+      &#39;App -&gt; moduleDidInitialize&#39;,
+      `pending: $&#123;this.pending&#125;`, `ready: $&#123;this.ready&#125;`
+    );
+  &#125;
+&#125;
+
+const todoList = new TodoList();
+
+const app = App.create(&#123;
+  modules: &#123;
+    todoList
+  &#125;
+&#125;);
+</code></pre>
+<p>console.log results:</p>
+<pre><code>App -&gt; moduleWillInitialize pending: false ready: false
+TodoList -&gt; moduleWillInitialize pending: false ready: false
+TodoList -&gt; moduleWillInitializeSuccess pending: true ready: false
+App -&gt; moduleWillInitializeSuccess pending: true ready: false
+TodoList -&gt; moduleDidInitialize pending: false ready: true
+App -&gt; moduleDidInitialize pending: false ready: true
+</code></pre>
+<h3 id="An-ideal-architecture"><a href="#An-ideal-architecture" class="headerlink" title="An ideal architecture"></a>An ideal architecture</h3><p><img src="/assets/2019-02-25-practice-oop-to-front-end-universal-state-module/flow_chart.png" alt="flow chart"></p>
+<p>In a complex front-end application, a typical modular architecture may contain the following:</p>
+<ul>
+<li>Lifecycle</li>
+<li>Store Subscriber</li>
+<li>Event System</li>
+<li>State</li>
+<li>Module dependency</li>
+<li>Domain Models</li>
+</ul>
+<h2 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h2><p><code>usm</code> is a module design that wants to bridge together the differences of using Redux, Mobx, and Vuex in conjunction with different view layers such as React, Vue and Angular. It is designed to help you build libraries that will work with any front-end architecture.</p>
+<p>Modules built with <code>usm</code> should be free of boilerplates, especially the type that is introduced by state libraries like Redux. More importantly, the object-oriented nature of <code>usm</code> makes modules simple and intuitive. <code>usm</code> also makes your modules compatible with various state libraries and view layers, allowing you to share your business logic libraries across projects regardless of the frameworks they are using.</p>
+<p>USM’s repo: <a target="_blank" rel="noopener" href="https://github.com/unadlib/usm">https://github.com/unadlib/usm</a></p>
+
+  </div>
+</article>
+
+  </div>
+</div>
+
+
+  <!-- scripts list from theme config.yml -->
+  
+    <script src="/js/attraction.js"></script>
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/codemirror.min.js"></script>
+  
+  <script>
+    var nodes = Array.from(document.querySelectorAll('pre code'));
+    var render = {};
+    var titleSvg = '<svg style="position: absolute;z-index: 1;margin: 12px 0 0 12px;" xmlns="http://www.w3.org/2000/svg" width="54" height="14" viewBox="0 0 54 14"><g fill="none" fill-rule="evenodd" transform="translate(1 1)"><circle cx="6" cy="6" r="6" fill="#FF5F56" stroke="#E0443E" stroke-width=".5"></circle><circle cx="26" cy="6" r="6" fill="#FFBD2E" stroke="#DEA123" stroke-width=".5"></circle><circle cx="46" cy="6" r="6" fill="#27C93F" stroke="#1AAB29" stroke-width=".5"></circle></g></svg>';
+    nodes.forEach((node, index) => {
+      var lang = node.getAttribute('class');
+      var code = node.innerText;
+      var mode = lang;
+      switch(lang) {
+        case 'jsx':
+          lang = 'javascript';
+          mode = 'text/jsx';
+          break;
+        case 'tsx':
+          lang = 'javascript';
+          mode = 'text/typescript-jsx';
+        case 'typescript':
+          lang = 'javascript';
+          mode = 'text/typescript';
+        default:
+          break;
+      }
+      var config = {
+        value: code,
+        mode,
+        theme: 'seti'
+      };
+      if (!lang) return;
+      var hasExisted = nodes.slice(0, index).find(function(node) { return node.getAttribute('class') === lang; });
+      if (hasExisted) {
+        render[lang].push(function() {
+          node.innerHTML = titleSvg;
+          CodeMirror(node, config);
+        });
+        return;
+      }
+      render[lang] = [];
+      var languagePackge = document.createElement('script');
+      languagePackge.src = `https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/mode/${lang}/${lang}.min.js`;
+      languagePackge.onload = () => {
+        setTimeout(() => {
+          node.innerHTML = titleSvg;
+          CodeMirror(node, config);
+          render[lang].forEach(function(callback) { callback(); })
+        }, 0);
+      }
+      document.body.appendChild(languagePackge);
+    });
+  </script>
+
+</body>
+</html>

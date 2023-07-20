@@ -1,0 +1,343 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+  <title>A new step from BDD - Criusunadlib&#39;s Notes</title>
+  <style type="text/css">
+    body, html {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+      font-size: 18px;
+      line-height: 1.8;
+      user-select: none;
+      box-sizing: border-box;
+      touch-action: manipulation;
+      background-color: #f1f3f4;
+    }
+
+    a {
+      color: #000;
+    }
+
+    a.title {
+      text-decoration: none;
+    }
+
+    #content-outer {
+      margin: 4% 14%;
+      padding: 4% 8%;
+      box-shadow: 0 0 3px -1px rgba(0,0,0,.3);
+      border-radius: 5px;
+      box-sizing: border-box;
+      background: #fff;
+      border-bottom: 1px solid #b5b5b5;
+    }
+
+    #content-inner {
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .recent-post-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .recent-post-item .title {
+      overflow: hidden;
+      text-overflow:ellipsis;
+      white-space: nowrap;
+    }
+
+    .recent-post-item .time {
+      color: #ccc;
+      font-size: 14px;
+      line-height: 32px;
+      min-width: 81px;
+      text-align: right;
+    }
+
+    #post img {
+      max-width: 100%;
+    }
+
+    #post h1.title {
+      text-align: center;
+      font-size: 2em;
+      margin-block-start: 0.67em;
+      margin-block-end: 0.67em;
+      line-height: 1;
+    }
+
+    #post .time {
+      text-align: center;
+      color: #ccc;
+      font-size: 14px;
+    }
+
+    #post .content {
+      margin-top: 8%;
+    }
+
+    #post .content blockquote {
+      border-left: 3px solid #eee;
+      padding-left: 20px;
+      color: #666;
+      margin: 0;
+    }
+
+    #post .content .gutter {
+      display: none;
+    }
+
+    code, kbd, pre, samp {
+      font-size: 16px !important;
+    }
+
+    .CodeMirror {
+      height: auto !important;
+      padding: 36px 24px 0;
+      border-radius: 6px;
+    }
+
+    #post .content figure {
+      padding: 0 1em;
+      background-color: #f1f3f4;
+      border: 1px solid #e0e0e0;
+      margin: 0;
+      overflow: auto;
+    }
+
+    #post .content figure table {
+      width: 100%;
+    }
+
+    @media screen and (max-width: 1024px)  {
+      #content-outer {
+        margin: 2% 7%;
+        padding: 2% 4%;
+      }
+
+      .recent-post-item:first-child {
+        margin-top: 16px;
+      }
+    }
+
+    @media screen and (max-width: 480px) {
+      body{
+        -webkit-text-size-adjust: none;
+      }
+
+      #content-outer {
+        margin: 0;
+        padding: 2% 4%;
+        border-radius: 0;
+      }
+
+      .recent-post-item:first-child {
+        margin-top: 32px;
+      }
+
+      .recent-post-item:last-child {
+        border-bottom: none;
+      }
+    }
+  </style>
+  
+    <!-- styles list from theme config.yml -->
+    
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/codemirror.min.css">
+    
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/theme/seti.min.css">
+    
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+<body class="cm-s-seti">
+
+<div id="content-outer">
+  <div id="content-inner">
+    
+<article id="post">
+  <h1 class="title">A new step from BDD - Crius</h1>
+  <p class="time">2019-12-23</span>
+  <div class="content">
+      <p>BDD (behavior-driven development) is an extension of TDD (test-driven development). It emphasizes writing tests specifically to test the behaviors of the application before the implementation process begins. DSLs are often used to facilitate the expression of behaviors and expected results in a format that resembles natural languages. BDD is an affective development process in dealing with complex business requirements.</p>
+<h2 id="Motivation"><a href="#Motivation" class="headerlink" title="Motivation"></a>Motivation</h2><p>![BDD](&#x2F;assets&#x2F;2019-12-08-a-new-step-from-bdd-crius&#x2F;bdd.png)</p>
+<p>A typical BDD development process begins with Epics, these Epics are then broken down into User Stories to describe the various features of the application. From User Stories, AC (Acceptance Criteria) will be listed to clearly define the behaviors and specifications of the feature. Because AC precisely defined the behaviors and test conditions for all the features of the application, they are perfect for writing into automated tests.</p>
+<p>The emergence of Cucumber in 2008 popularized the use of BDD in software development, which had a lot of influence over other BDD tools the came after Cucumber. The core value of Cucumber is the DSL that provided a way to express behaviors and application features similar to natural languages, including the popular clauses of Given, When, and Then. However, the actual test code is often kept in “steps” files and are language agnostic. The implementation of the test driver relies heavily on string pattern matching to link the feature definitions implicitly to the steps, often leading to performance issues difficulties in managing the steps. As the complexity of the application grows, it is often increasingly difficult to define unique step names due to many steps sharing similar words.</p>
+<p>From our years of BDD practice, we had found several shortcomings of Cucumber that we need to address:</p>
+<ol>
+<li>String Pattern Matching</li>
+<li>Implicit link between features and steps</li>
+<li>Lacks simple ways to re-use scenarios or steps</li>
+</ol>
+<p>These shortcomings eventually led to the advent of Crius.</p>
+<h2 id="What’s-Crius"><a href="#What’s-Crius" class="headerlink" title="What’s Crius"></a>What’s Crius</h2><p>Crius is our answer to Cucumber. Let’s see some example code:</p>
+<pre><code class="tsx">@autorun(test)
+@title(&#39;User add $&#123;todo&#125; item in todo list&#39;)
+class AddTodoItem extends Step &#123;
+
+  // cucumber-like example table, with JavaScript literals
+  @examples`
+    | todo       | object             |
+    | &#39;learning&#39; | &#123; obj: &#39;literal&#39; &#125; |
+    | &#39;crius&#39;    | &#123; obj: &#39;hello&#39; &#125;   |
+  `
+
+  //which is equivalent to:
+  // @examples([&#123;
+  //     todo: &#39;learning&#39;,
+  //     object: &#123; obj: &#39;literal&#39; &#125;
+  // &#125;, &#123;
+  //     todo: &#39;crius&#39;,
+  //     object: &#123; obj: &#39;hello&#39; &#125;
+  // &#125;])
+
+  run() &#123;
+
+    // JSX-like declarative feature description
+    return (
+      // explicit reference to actions
+      &lt;Scenario desc=&#39;User login website&#39; action=&#123;Login&#125;&gt;
+        &lt;Given desc=&#39;User navigate to todo list&#39; action=&#123;Navigate&#125; /&gt;
+
+        &#123; /* Allow Step class AddTodo to be used as an action to promote re-use */ &#125;
+        &lt;When desc=&#39;User type $&#123;todo&#125; in input field and click &quot;add&quot; button&#39; action=&#123;AddTodo&#125; /&gt;
+        &lt;Then desc=&#39;User should see $&#123;todo&#125; item in todo list&#39; action=&#123;CheckTodo&#125; /&gt;
+
+        &#123; /* action is optional */ &#125;
+        &lt;Then desc=&#39;Just an description&#39; /&gt;
+      &lt;/Scenario&gt;
+    )
+  &#125;
+&#125;
+
+// Functional Step definition similar to Functional Components in React
+const Login = async () =&gt; &#123;
+  // actual code to perform login
+&#125;;
+
+const Navigate = async () =&gt; &#123;
+  // navigate to todo list
+&#125;
+
+// Step is similar to React Component class
+class AddTodo extends Step &#123;
+  async run() &#123;
+    return (
+      &lt;&gt;
+        &lt;TypeTodoText text=&#123;this.context.example.todo&#125; /&gt;
+        &lt;SubmitTodo /&gt;
+      &lt;/&gt;
+    );
+  &#125;;
+&#125;
+
+const TypeTodoText = async (props) =&gt; &#123;
+  // `props.text` is the todo text.
+&#125;
+
+const SubmitTodo = async () =&gt; &#123;
+  // click the &quot;add&quot; button
+&#125;;
+
+const CheckTodo = async (_, &#123; example &#125;) =&gt; &#123;
+  // check todo item
+&#125;;
+</code></pre>
+<h3 id="Features-of-Crius"><a href="#Features-of-Crius" class="headerlink" title="Features of Crius"></a>Features of Crius</h3><ul>
+<li><strong>Declarative and Expressive DSL</strong> - By combining DSL characteristics of Cucumber and React</li>
+<li><strong>Re-usable Step definitions</strong> - Provide better Step and Scenario composition</li>
+<li><strong>Step lifecycle</strong> - Provide lifecycle hooks to have more control over tests</li>
+<li><strong>Plugin Support</strong> - Allow more custom features to be easily added</li>
+<li><strong>Test Runner Agnostic</strong> - Compatible to Jest, Mocha, and Jasmine out of the box</li>
+<li><strong>Use JavaScript literals for examples</strong> - Easily define complex object in examples</li>
+<li><strong>Lightweight</strong> - Core source code is less than 17k</li>
+</ul>
+<p>Compared to Cucumber, Crius offers the follow benefits:</p>
+<ul>
+<li><strong>No string pattern matching</strong> - An explicit relationship between feature definition and test steps exist via direct reference</li>
+<li><strong>Syntax highlighting in IDE and Diff tools</strong> - Since the feature definitions are written in TSX or JSX</li>
+<li><strong>Extensible through lifecycle hooks and plugins</strong> - So you can customize the test solution to fit the project needs</li>
+<li><strong>Support static type checking (if using typescript)</strong> - Helps you avoid typos and&#x2F;or type errors with IDE support</li>
+</ul>
+<h2 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h2><p>Cucumber brought expressive DSL to BDD and popularized the practice. Crius aims to strengthen the current state of BDD by providing better composition, explicit and clear relationships between feature definitions and actions, better integration with the current generation of development tools, and better extensibility for developers to customize their workflow to their needs. We believe the introduction of Crius into our toolset will greatly enhance our developer experience in improving the overall maintainability and quality of our application and increasing the efficiency of our communications between developers, QA, and our product managers. We will continue to iterate Crius to bring in more analytic and collaborative tools to further increase our productivity and quality of our applications.</p>
+<p>Crius Repository:</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/unadlib/crius">https://github.com/unadlib/crius</a></p>
+
+  </div>
+</article>
+
+  </div>
+</div>
+
+
+  <!-- scripts list from theme config.yml -->
+  
+    <script src="/js/attraction.js"></script>
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/codemirror.min.js"></script>
+  
+  <script>
+    var nodes = Array.from(document.querySelectorAll('pre code'));
+    var render = {};
+    var titleSvg = '<svg style="position: absolute;z-index: 1;margin: 12px 0 0 12px;" xmlns="http://www.w3.org/2000/svg" width="54" height="14" viewBox="0 0 54 14"><g fill="none" fill-rule="evenodd" transform="translate(1 1)"><circle cx="6" cy="6" r="6" fill="#FF5F56" stroke="#E0443E" stroke-width=".5"></circle><circle cx="26" cy="6" r="6" fill="#FFBD2E" stroke="#DEA123" stroke-width=".5"></circle><circle cx="46" cy="6" r="6" fill="#27C93F" stroke="#1AAB29" stroke-width=".5"></circle></g></svg>';
+    nodes.forEach((node, index) => {
+      var lang = node.getAttribute('class');
+      var code = node.innerText;
+      var mode = lang;
+      switch(lang) {
+        case 'jsx':
+          lang = 'javascript';
+          mode = 'text/jsx';
+          break;
+        case 'tsx':
+          lang = 'javascript';
+          mode = 'text/typescript-jsx';
+        case 'typescript':
+          lang = 'javascript';
+          mode = 'text/typescript';
+        default:
+          break;
+      }
+      var config = {
+        value: code,
+        mode,
+        theme: 'seti'
+      };
+      if (!lang) return;
+      var hasExisted = nodes.slice(0, index).find(function(node) { return node.getAttribute('class') === lang; });
+      if (hasExisted) {
+        render[lang].push(function() {
+          node.innerHTML = titleSvg;
+          CodeMirror(node, config);
+        });
+        return;
+      }
+      render[lang] = [];
+      var languagePackge = document.createElement('script');
+      languagePackge.src = `https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/mode/${lang}/${lang}.min.js`;
+      languagePackge.onload = () => {
+        setTimeout(() => {
+          node.innerHTML = titleSvg;
+          CodeMirror(node, config);
+          render[lang].forEach(function(callback) { callback(); })
+        }, 0);
+      }
+      document.body.appendChild(languagePackge);
+    });
+  </script>
+
+</body>
+</html>

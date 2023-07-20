@@ -1,0 +1,585 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+  <title>How to make Web application support multiple browser windowsunadlib&#39;s Notes</title>
+  <style type="text/css">
+    body, html {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+      font-size: 18px;
+      line-height: 1.8;
+      user-select: none;
+      box-sizing: border-box;
+      touch-action: manipulation;
+      background-color: #f1f3f4;
+    }
+
+    a {
+      color: #000;
+    }
+
+    a.title {
+      text-decoration: none;
+    }
+
+    #content-outer {
+      margin: 4% 14%;
+      padding: 4% 8%;
+      box-shadow: 0 0 3px -1px rgba(0,0,0,.3);
+      border-radius: 5px;
+      box-sizing: border-box;
+      background: #fff;
+      border-bottom: 1px solid #b5b5b5;
+    }
+
+    #content-inner {
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .recent-post-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .recent-post-item .title {
+      overflow: hidden;
+      text-overflow:ellipsis;
+      white-space: nowrap;
+    }
+
+    .recent-post-item .time {
+      color: #ccc;
+      font-size: 14px;
+      line-height: 32px;
+      min-width: 81px;
+      text-align: right;
+    }
+
+    #post img {
+      max-width: 100%;
+    }
+
+    #post h1.title {
+      text-align: center;
+      font-size: 2em;
+      margin-block-start: 0.67em;
+      margin-block-end: 0.67em;
+      line-height: 1;
+    }
+
+    #post .time {
+      text-align: center;
+      color: #ccc;
+      font-size: 14px;
+    }
+
+    #post .content {
+      margin-top: 8%;
+    }
+
+    #post .content blockquote {
+      border-left: 3px solid #eee;
+      padding-left: 20px;
+      color: #666;
+      margin: 0;
+    }
+
+    #post .content .gutter {
+      display: none;
+    }
+
+    code, kbd, pre, samp {
+      font-size: 16px !important;
+    }
+
+    .CodeMirror {
+      height: auto !important;
+      padding: 36px 24px 0;
+      border-radius: 6px;
+    }
+
+    #post .content figure {
+      padding: 0 1em;
+      background-color: #f1f3f4;
+      border: 1px solid #e0e0e0;
+      margin: 0;
+      overflow: auto;
+    }
+
+    #post .content figure table {
+      width: 100%;
+    }
+
+    @media screen and (max-width: 1024px)  {
+      #content-outer {
+        margin: 2% 7%;
+        padding: 2% 4%;
+      }
+
+      .recent-post-item:first-child {
+        margin-top: 16px;
+      }
+    }
+
+    @media screen and (max-width: 480px) {
+      body{
+        -webkit-text-size-adjust: none;
+      }
+
+      #content-outer {
+        margin: 0;
+        padding: 2% 4%;
+        border-radius: 0;
+      }
+
+      .recent-post-item:first-child {
+        margin-top: 32px;
+      }
+
+      .recent-post-item:last-child {
+        border-bottom: none;
+      }
+    }
+  </style>
+  
+    <!-- styles list from theme config.yml -->
+    
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/codemirror.min.css">
+    
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/theme/seti.min.css">
+    
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+<body class="cm-s-seti">
+
+<div id="content-outer">
+  <div id="content-inner">
+    
+<article id="post">
+  <h1 class="title">How to make Web application support multiple browser windows</h1>
+  <p class="time">2021-10-03</span>
+  <div class="content">
+      <h2 id="Motivation"><a href="#Motivation" class="headerlink" title="Motivation"></a>Motivation</h2><p>When we develop a Single-Page Application, we usually only define its behavior in a single browser window, and even if the same application is opened on multiple browser windows, in most cases it is only synchronized with the local storage, and the state of each application in each window is not synchronized in real time (unless the server synchronizes), they run in isolation and are relatively independent.</p>
+<p>However, this means that more browser windows will generate more and more independent application instances, which may have different UI states and often inevitably have the same network requests or WebSocket connections, which may also mean a bad user experience (as users may have become accustomed to) and excessive usage of server resources.</p>
+<p>So what does it mean to have applications that supports multiple browser windows?</p>
+<ul>
+<li>Application instance sharing: code sharing, local storage sharing, state sharing, and more</li>
+<li>Lower server resource usage</li>
+<li>Better user consistency experience</li>
+<li>Smoother web applications</li>
+</ul>
+<p>But it’s not easy to keep large Web applications running smoothly.</p>
+<p>Web applications are still primarily built in JavaScript, which is a single-threaded programming language, and slow JavaScript code can prevent the browser’s rendering. The good news is that mainstream browsers are gradually supporting more different types of workers, especially Service Workers, which are used to implement PWAs (Progressive Web Apps) that greatly enhance the user experience. And the latest modern browsers also provide Web Worker, Shared Worker. With IE becoming deprecated this year, there is <a target="_blank" rel="noopener" href="https://caniuse.com/?search=worker">good support for these workers</a>. Currently, only <a target="_blank" rel="noopener" href="https://bugs.webkit.org/show_bug.cgi?id=149850">Safari lacks support for Shared Worker</a> among modern browsers.</p>
+<p>So what does it mean for Web applications to be “multi-threaded” with Worker?</p>
+<p>“<a target="_blank" rel="noopener" href="https://www.smashingmagazine.com/2021/06/web-workers-2021/">The State Of Web Workers In 2021</a>“ post covers a number of unpredictable performance issues. With these browser workers we will likely be better able to deal with computationally complex and slow-running JS code to keep web applications smooth.</p>
+<p>It’s time to rethink why we can’t make web applications support multiple browser windows and improve the performance of web applications. New architectural requirements bring new framework requirements, and such applications we call it <strong><code>Shared Web Apps</code></strong>.</p>
+<h2 id="Shared-Web-Apps"><a href="#Shared-Web-Apps" class="headerlink" title="Shared Web Apps"></a>Shared Web Apps</h2><p>Even though we want users to open as few application windows as possible, the fact remains that many users will open the same application in multiple browser windows.</p>
+<p>Shared Web Apps supports running web applications in multiple browser windows.</p>
+<p>It has a unique Server thread to share the Shared Web Apps, whether it’s code sharing, local storage sharing, state sharing, and so on. No matter how many browser windows are opened, Shared Web Apps always has only one server app instance for multiple client apps sharing. We all know that DOM operations are expensive. In Shared Web Apps, the client app instance is only responsible for rendering, and except for state sync the client app will become very lightweight and almost all business logic will run in the server app.</p>
+<ul>
+<li>The client app only renders UI, making better use of the device’s multiple cores to ensure that the client app is smooth</li>
+<li>Solve the problems caused by multiple browser windows</li>
+<li>Better separation of concerns</li>
+</ul>
+<h2 id="reactant-share-A-framework-for-building-Shared-Web-Apps"><a href="#reactant-share-A-framework-for-building-Shared-Web-Apps" class="headerlink" title="reactant-share - A framework for building Shared Web Apps"></a>reactant-share - A framework for building Shared Web Apps</h2><p>To build such Shared Web Apps, <code>reactant-share</code> was created. reactant-share is based on the <code>reactant</code> framework and <code>react</code> library, which supports the following features.</p>
+<ul>
+<li>Dependency injection</li>
+<li>Immutable state management</li>
+<li>View module</li>
+<li>Redux plug-in module</li>
+<li>Test bed for unit testing and integration testing</li>
+<li>Routing module</li>
+<li>Persistence module</li>
+<li>Module dynamics</li>
+<li>Shared web app support multiple browser windows<ul>
+<li>Shared tab</li>
+<li>SharedWorker</li>
+<li>ServiceWorker</li>
+<li>Browser extension</li>
+<li>Detached window</li>
+<li>iframe</li>
+</ul>
+</li>
+</ul>
+<p><code>reactant-share</code> is very easy to use, you can use it to quickly build a Shared Web Apps. it greatly reduces the complexity of supporting multi-browser window application architecture.</p>
+<h2 id="How-it-works"><a href="#How-it-works" class="headerlink" title="How it works"></a>How it works</h2><p>When reactant-share starts, it creates a server app instance and multiple client app instances (one per browser window) in the browser, but the only instance that is really running in full is the server app instance, which is responsible for almost all of the application’s logic, and multiple client app instances simply synchronize state and render. The state model of reactant-share uses immutable state, and reactant is based on Redux, so we trigger state sync from server app to client app via Redux’s <code>dispatch</code>.</p>
+<p><img src="/assets/2021-10-03-how-to-make-web-application-support-multiple-browser-windows/workflow.jpg" alt="workflow"></p>
+<ol>
+<li>The user triggers the client app proxy method through DOM events</li>
+<li>This proxy method is executed on the server app.</li>
+<li>The server app state is synchronized back to the client app.</li>
+</ol>
+<h3 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h3><p>The overall workflow of the reactant-share is shown in the figure below. Here is an example of a shared-worker type counter app.</p>
+<ul>
+<li>First, we define a counter app module and view module in <code>app.view.tsx</code></li>
+</ul>
+<pre><code class="tsx">import React from &quot;react&quot;;
+import &#123;
+  ViewModule,
+  createApp,
+  injectable,
+  useConnector,
+  action,
+  state,
+  spawn,
+&#125; from &quot;reactant-share&quot;;
+
+@injectable(&#123; name: &quot;counter&quot; &#125;)
+class Counter &#123;
+  @state
+  count = 0;
+
+  @action
+  increase() &#123;
+    this.count += 1;
+  &#125;
+&#125;
+
+@injectable()
+export class AppView extends ViewModule &#123;
+  constructor(public counter: Counter) &#123;
+    super();
+  &#125;
+
+  component() &#123;
+    const count = useConnector(() =&gt; this.counter.count);
+    return (
+      &lt;button type=&quot;button&quot; onClick=&#123;() =&gt; spawn(this.counter, &quot;increase&quot;, [])&#125;&gt;
+        &#123;count&#125;
+      &lt;/button&gt;
+    );
+  &#125;
+&#125;
+</code></pre>
+<ul>
+<li>Next, we use <code>createSharedApp()</code> to create the client app, whose options must contain <code>workerURL</code>, the worker url that will create a shared worker (if it hasn’t been created yet).</li>
+</ul>
+<pre><code class="tsx">import &#123; render &#125; from &quot;reactant-web&quot;;
+import &#123; createSharedApp &#125; from &quot;reactant-share&quot;;
+import &#123; AppView &#125; from &quot;./app.view&quot;;
+
+createSharedApp(&#123;
+  modules: [],
+  main: AppView,
+  render,
+  share: &#123;
+    name: &quot;SharedWorkerApp&quot;,
+    port: &quot;client&quot;,
+    type: &quot;SharedWorker&quot;,
+    workerURL: &quot;worker.bundle.js&quot;,
+  &#125;,
+&#125;).then((app) =&gt; &#123;
+  // render only
+  app.bootstrap(document.getElementById(&quot;app&quot;));
+&#125;);
+</code></pre>
+<ul>
+<li>Finally, we just create the worker file <code>worker.tsx</code> and build it as <code>worker.bundle.js</code> for the <code>workerURL</code> option.</li>
+</ul>
+<pre><code class="tsx">import &#123; createSharedApp &#125; from &quot;reactant-share&quot;;
+import &#123; AppView &#125; from &quot;./app.view&quot;;
+
+createSharedApp(&#123;
+  modules: [],
+  main: AppView,
+  render: () =&gt; &#123;
+    //
+  &#125;,
+  share: &#123;
+    name: &quot;SharedWorkerApp&quot;,
+    port: &quot;server&quot;,
+    type: &quot;SharedWorker&quot;,
+  &#125;,
+&#125;).then((app) =&gt; &#123;
+  // render less
+&#125;);
+</code></pre>
+<p>The specific workflow of <code>increase</code> looks like this.</p>
+<ol>
+<li>The user clicks the button in client app.</li>
+<li><code>spawn(this.counter, &quot;increase&quot;, [])</code> will be executed, which passes the parameters about the proxy execution to the server app.</li>
+<li>The server app will execute <code>this.counter.increase()</code>, and sync the updated state back to each client apps.</li>
+</ol>
+<p><code>spawn()</code> in reactant-share is inspired by the <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Actor_model">actor model</a>.</p>
+<h2 id="reactant-share-Framework"><a href="#reactant-share-Framework" class="headerlink" title="reactant-share Framework"></a>reactant-share Framework</h2><h3 id="Multiple-modes"><a href="#Multiple-modes" class="headerlink" title="Multiple modes"></a>Multiple modes</h3><ul>
+<li>Shared tab - It is suitable for running in browsers that do not support SharedWorker&#x2F;ServiceWorker. The server app is an instance with rendering that also runs in a browser window. In multiple browser windows, there is also only one server app, and after it is closed or refreshed, one instance of the other client apps will be converted to a server app.</li>
+<li>SharedWorker - If there is no <a target="_blank" rel="noopener" href="https://caniuse.com/?search=sharedworker">browser compatibility</a> requirement, reactant-share is highly recommended to use this mode, and reactant-share also does a graceful degradation, so if the browser does not support SharedWorker then the app will run in Shared-Tab mode.</li>
+<li>ServiceWorker - If Shared Web Apps are intended to be PWA (Progressive Web Apps), then using this mode would be ideal, and it also supports the automatic graceful degradation to Shared-Tab mode.</li>
+<li>Browser extension - The browser extension allows a background thread, the server app of reactant-share can run in this background thread, and the UI can run in the client app.</li>
+<li>Detached window - reactant-share allows sub-applications to run as Detached windows or to be quickly merged into a more complete application.</li>
+<li>iframe - reactant-share allows each child application to run on an iframe.</li>
+</ul>
+<p>Example repo: <a target="_blank" rel="noopener" href="https://github.com/unadlib/reactant/tree/master/examples/reactant-share-sharedworker">SharedWorker&#x2F;Detached window&#x2F;iframe</a></p>
+<h3 id="User-Experience"><a href="#User-Experience" class="headerlink" title="User Experience"></a>User Experience</h3><p>Since reactant-share’s multiple instances are logic-sharing and state-sharing, when a user opens the same reactant-share application in multiple browser windows, the only instance that is actually running in full is the server app.</p>
+<p>The rendering-only client app will be so smooth that it will almost never freeze due to JS code, and the consistent application state will allow users to switch between multiple browser windows without any worries.</p>
+<h3 id="Development-Experience"><a href="#Development-Experience" class="headerlink" title="Development Experience"></a>Development Experience</h3><p>reactant-share provides CLI and full support for Typescript, as well as support for Shared-Tab, SharedWorker, ServiceWorker and Browser extension, and other different types of runtime modes out of the box. Built-in testbed for module testing, Routing and Persistence modules, and module dynamics support for lazy loading of reactant-share applications.</p>
+<h3 id="Service-Discovery-x2F-Communications"><a href="#Service-Discovery-x2F-Communications" class="headerlink" title="Service Discovery &#x2F; Communications"></a>Service Discovery &#x2F; Communications</h3><p>Since reactant-share uses <a target="_blank" rel="noopener" href="http://github.com/unadlib/data-transport">data-transport</a>, reactant-share supports almost all the transports supported by data-transport.The client app and the server app, whichever is loaded first, the client app will wait for the server app to finish starting and get all the initial application state from it.</p>
+<p>Using the actor model in the client app to design spawn(), we can do <code>spawn(counterModule, &#39;increase&#39;, [])</code> to let the server app proxy the execution of the module method and respond and sync both the state and the result back to the client app.</p>
+<p>But if we need direct communication between the client app and the server app, then we need to use the <code>PortDetector</code> module.</p>
+<pre><code class="tsx">class Counter &#123;
+  constructor(public portDetector: PortDetector) &#123;
+    this.portDetector.onServer(async (transport) =&gt; &#123;
+      const result = await transport.emit(&quot;test&quot;, 42);
+      // result should be `hello, 42`
+    &#125;);
+    this.portDetector.onClient((transport) =&gt; &#123;
+      transport.listen(&quot;test&quot;, (num) =&gt; `hello, $&#123;num&#125;`);
+    &#125;);
+  &#125;
+&#125;
+</code></pre>
+<h3 id="Tracking-x2F-Debugging"><a href="#Tracking-x2F-Debugging" class="headerlink" title="Tracking&#x2F;Debugging"></a>Tracking&#x2F;Debugging</h3><p>Since reactant-share is based on Redux, it fully supports Redux DevTools, and the immutable time travel that Redux brings will make debugging easy.</p>
+<h3 id="Fault-Tolerance-x2F-Data-Consistency"><a href="#Fault-Tolerance-x2F-Data-Consistency" class="headerlink" title="Fault Tolerance &#x2F; Data Consistency"></a>Fault Tolerance &#x2F; Data Consistency</h3><p>Since state synchronization after the client app uses <code>spawn()</code> to get the server app proxy to execute each time may cause it to be out of order in edge cases for various reasons, reactant-share integrates <code>reactant-last-action</code>, which provides sequence markers to keep If the client app receives a synchronized action that checks for an exception in the sequence, the client app will launch a full state synchronization to correct the action sequence.</p>
+<p>In addition, when the browser does not support the Worker API, reactant-share will perform a graceful degradation (e.g. SharedWorker mode -&gt; Shared-Tab mode -&gt; SPA mode).</p>
+<h3 id="Isolation"><a href="#Isolation" class="headerlink" title="Isolation"></a>Isolation</h3><p>Regardless of modes such as Shared-Tab, SharedWorker or ServiceWorker, each application instance runs in isolation and their basic interactions can only be triggered by <code>spawn()</code> to synchronize state.</p>
+<h3 id="Configuration"><a href="#Configuration" class="headerlink" title="Configuration"></a>Configuration</h3><p>reactant-share provides CLI, you just need to run <code>npx reactant-cli init shared-worker-example -t shared-worker</code> to get a project of reactant-share with SharedWorker mode. If you want to change its mode, you just need to change the configuration of <code>createSharedApp()</code>.</p>
+<pre><code class="diff">createSharedApp(&#123;
+  modules: [],
+  main: AppView,
+  render,
+  share: &#123;
+    name: &#39;ReactantExampleApp&#39;,
+    port: &#39;client&#39;,
+-   type: &#39;SharedWorker&#39;,
++   type: &#39;ServiceWorker&#39;,
+    workerURL: &#39;worker.bundle.js&#39;,
+  &#125;,
+&#125;).then((app) =&gt; &#123;
+  app.bootstrap(document.getElementById(&#39;app&#39;));
+&#125;);
+</code></pre>
+<p>With that, we can quickly turn SharedWorker mode into ServiceWorker mode.</p>
+<h3 id="Transport-x2F-Performance"><a href="#Transport-x2F-Performance" class="headerlink" title="Transport&#x2F;Performance"></a>Transport&#x2F;Performance</h3><p>Since the client app only renders and receives synchronized state. So the client app keeps running smoothly when the size of each dispatch update state does not exceed 50M. reactant uses <a target="_blank" rel="noopener" href="https://immerjs.github.io/immer/patches/">Immer patch</a> to update, usually this patch will be very small and reactant also does DEV checking for patch minimization updates. In fact, in most scenarios, the patch will not be that large.</p>
+<table>
+<thead>
+<tr>
+<th>Update state size</th>
+<th>Volume of data</th>
+<th>Deserialization</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>30 Array * 1,000 items</td>
+<td>1.4 M</td>
+<td>14 ms</td>
+</tr>
+<tr>
+<td>30 Array * 1,0000 items</td>
+<td>14 M</td>
+<td>130 ms</td>
+</tr>
+<tr>
+<td>1000 Array * 1,000 items</td>
+<td>46 M</td>
+<td>380 ms</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>Notebook: 1 GHz Intel Core M &#x2F; 8 GB 1600 MHz DDR3</p>
+</blockquote>
+<p>benchmarking of the reactant-share module with <a href="(https://reactant.js.org/docs/api/reactant-module/modules/_decorators_computed_)">derived data cache</a></p>
+<table>
+<thead>
+<tr>
+<th>Number of modules and states</th>
+<th>Total number of states</th>
+<th>Each state update</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>100 modules * 20 states</td>
+<td>2,000</td>
+<td>3 ms</td>
+</tr>
+<tr>
+<td>200 modules * 30 states</td>
+<td>6,000</td>
+<td>9 ms</td>
+</tr>
+<tr>
+<td>300 modules * 100 states</td>
+<td>30,000</td>
+<td>44 ms</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>Notebook: 1 GHz Intel Core M &#x2F; 8 GB 1600 MHz DDR3</p>
+</blockquote>
+<p>Therefore, reactant-share still performs well in large projects.</p>
+<h3 id="Complexity"><a href="#Complexity" class="headerlink" title="Complexity"></a>Complexity</h3><p>Whether it’s practicing <a target="_blank" rel="noopener" href="https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html">clean architecture</a>, <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Domain-driven_design">DDD</a>, OOP or even FP, reactant-share has more openness to architect highly complex projects at will. reactant-share provides a few optional features, but the only one that shouldn’t be missed is DI. reactant-share’s DI is inspired by Angular, and it is very similar to Angular’s DI. The complexity of coding that comes with architectural design is often determined by the final specification of the practice, but reactant-share hopes to help with such complex architectural design at the framework level.</p>
+<h3 id="Security"><a href="#Security" class="headerlink" title="Security"></a>Security</h3><p>For reactant-share applications, the communication between server&#x2F;client only serializes and deserializes state and parameters, so it is almost impossible to cause framework-level security issues. Of course, enabling https and using<a target="_blank" rel="noopener" href="https://developer.mozilla.org/zh-CN/docs/Web/Security/Subresource_Integrity">Subresource Integrity</a> are both necessary for any project that values front-end security, and we should also be concerned about <a target="_blank" rel="noopener" href="https://reactjs.org/docs/dom-elements.html#style">XSS security</a> in React documentation.</p>
+<h3 id="Testing"><a href="#Testing" class="headerlink" title="Testing"></a>Testing</h3><p>reactant-share provides <code>testBed()</code> to facilitate module testing. For example,</p>
+<pre><code class="tsx">const &#123; instance &#125; = testBed(&#123;
+  main: Counter,
+  modules: [],
+&#125;);
+</code></pre>
+<p>For integration testing of server app&#x2F;client app interactions, reactant-share also provides <code>mockPairTransports()</code> for mock transport.</p>
+<pre><code class="tsx">const transports = mockPairTransports();
+
+createSharedApp(&#123;
+  modules: [],
+  main: AppView,
+  render,
+  share: &#123;
+    name: &quot;SharedWorkerApp&quot;,
+    port: &quot;client&quot;,
+    type: &quot;SharedWorker&quot;,
+    transports: &#123;
+      client: transports[0],
+    &#125;,
+  &#125;,
+&#125;).then((app) =&gt; &#123;
+  const clientApp = app;
+  // render only
+  app.bootstrap(document.getElementById(&quot;app&quot;));
+&#125;);
+
+createSharedApp(&#123;
+  modules: [],
+  main: AppView,
+  render: () =&gt; &#123;
+    //
+  &#125;,
+  share: &#123;
+    name: &quot;SharedWorkerApp&quot;,
+    port: &quot;server&quot;,
+    type: &quot;SharedWorker&quot;,
+    transports: &#123;
+      client: transports[1],
+    &#125;,
+  &#125;,
+&#125;).then((app) =&gt; &#123;
+  const serverApp = app;
+  // render less
+&#125;);
+</code></pre>
+<p>After mocking transport like this, <code>clientApp</code> and <code>serverApp</code> can be easily tested for integration.</p>
+<h2 id="APIs"><a href="#APIs" class="headerlink" title="APIs"></a>APIs</h2><ul>
+<li><code>@injectable()</code></li>
+</ul>
+<p>You can use <code>@injectable()</code> to decorate a module that can be injected and then use the <code>emitDecoratorMetadata</code> using TypeScript, or <code>@inject()</code> to inject the dependency.</p>
+<ul>
+<li><code>@state</code></li>
+</ul>
+<p><code>@state</code> is used to decorate a class property that will create a reducer for Redux.</p>
+<ul>
+<li><code>@action</code></li>
+</ul>
+<p>It updates the redux state with mutations via the class method.</p>
+<pre><code class="tsx">class Todo &#123;
+  @state
+  list: &#123; text: string &#125;[] = [];
+
+  @action
+  addTodo(text: string) &#123;
+    this.list.push(&#123; text &#125;);
+  &#125;
+&#125;
+</code></pre>
+<ul>
+<li><code>ViewModule</code>&#x2F;<code>useConnector()</code></li>
+</ul>
+<p><code>ViewModule</code> is a view module with a component, which is completely different from React class component. The component of <code>ViewModule</code> is a function component that is used for the state connection between the module and the UI (using <code>useConnector()</code>) and for the application view bootstrap.</p>
+<ul>
+<li><code>spawn()</code></li>
+</ul>
+<p><code>spawn()</code> transfers class methods execution from the client app to the server app and synchronizes the state to all client apps. It is inspired by the Actor model, but unlike other actor models, reactant-share’s <code>spawn()</code> does not create new threads.</p>
+<ul>
+<li><code>createSharedApp()</code></li>
+</ul>
+<p>reactant-share supports multiple modes, and you can use <code>createSharedApp()</code> to create multiple different Shared Web Apps that interact with each other via transport APIs.</p>
+<h2 id="Q-amp-A"><a href="#Q-amp-A" class="headerlink" title="Q&amp;A"></a>Q&amp;A</h2><ul>
+<li>Can reactant-share completely solve the complexity of the architecture?</li>
+</ul>
+<p>Although reactant-share tries to reduce some complexity at the framework level, the complexity of large applications does not depend entirely on the framework itself, so even using reactant-share to architect a large project does not completely guarantee that it is absolutely clean, efficient, and maintainable. It involves testing strategy, code specification, CI&#x2F;CD, development process, module design, and many other point.</p>
+<p>But in terms of module model and shared model, reactant-share already provides as clean a design as possible. If you are interested in <a target="_blank" rel="noopener" href="https://github.com/unadlib/reactant/tree/master/packages/reactant-share">reactant-share</a>, you can try it quickly.</p>
+<ul>
+<li>Does reactant-share have no cons at all? Are there any limitations to using it?</li>
+</ul>
+<p>reactant-share is a framework for building Shared Web Apps. But such a model is not free, and it will face performance issues with data transfer (The high maintenance cost of the SharedArrayBuffer has forced us to abandon it for now as well. In fact this is a problem caused by the fact that JS “multithreading” does not share memory efficiently).</p>
+<p>Although Shared Web Apps lets the client App run in a render-only client thread, it introduces the additional overhead of synchronous state transfer. We must ensure that it is lightweight and efficient enough. While reactant-share does state patch based on Immer, it is always difficult to ensure that each patch is minimally updated.</p>
+<p>reactant-share provides a development option <code>enablePatchesChecker</code>. In development mode, it is enabled by default. Any mutation operation that is not a valid mutation will be alerted, usually eliminating the alert, and reactant-share will try to keep the update size as minimal as possible.</p>
+<h2 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h2><p>Front-end frameworks and architectures are always evolving. With full Worker support in modern browsers and an increasing number of multi-core CPU devices, we have reached a mature stage in our exploration of some multi-threaded running Web Apps. We have reasons to believe that the future Web App will be designed with lower complexity and run smoothly with multiple threads. It can fully utilize the user’s device resources and give the user a good experience, and the developer does not need to have too many multi-threaded programming burden.</p>
+<p>This is what reactant-share wants to try and work on.</p>
+<p>If you think reactant-share is interesting, feel free to give it a star.</p>
+<p>Repo: <a target="_blank" rel="noopener" href="https://github.com/unadlib/reactant">reactant</a></p>
+
+  </div>
+</article>
+
+  </div>
+</div>
+
+
+  <!-- scripts list from theme config.yml -->
+  
+    <script src="/js/attraction.js"></script>
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/codemirror.min.js"></script>
+  
+  <script>
+    var nodes = Array.from(document.querySelectorAll('pre code'));
+    var render = {};
+    var titleSvg = '<svg style="position: absolute;z-index: 1;margin: 12px 0 0 12px;" xmlns="http://www.w3.org/2000/svg" width="54" height="14" viewBox="0 0 54 14"><g fill="none" fill-rule="evenodd" transform="translate(1 1)"><circle cx="6" cy="6" r="6" fill="#FF5F56" stroke="#E0443E" stroke-width=".5"></circle><circle cx="26" cy="6" r="6" fill="#FFBD2E" stroke="#DEA123" stroke-width=".5"></circle><circle cx="46" cy="6" r="6" fill="#27C93F" stroke="#1AAB29" stroke-width=".5"></circle></g></svg>';
+    nodes.forEach((node, index) => {
+      var lang = node.getAttribute('class');
+      var code = node.innerText;
+      var mode = lang;
+      switch(lang) {
+        case 'jsx':
+          lang = 'javascript';
+          mode = 'text/jsx';
+          break;
+        case 'tsx':
+          lang = 'javascript';
+          mode = 'text/typescript-jsx';
+        case 'typescript':
+          lang = 'javascript';
+          mode = 'text/typescript';
+        default:
+          break;
+      }
+      var config = {
+        value: code,
+        mode,
+        theme: 'seti'
+      };
+      if (!lang) return;
+      var hasExisted = nodes.slice(0, index).find(function(node) { return node.getAttribute('class') === lang; });
+      if (hasExisted) {
+        render[lang].push(function() {
+          node.innerHTML = titleSvg;
+          CodeMirror(node, config);
+        });
+        return;
+      }
+      render[lang] = [];
+      var languagePackge = document.createElement('script');
+      languagePackge.src = `https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/mode/${lang}/${lang}.min.js`;
+      languagePackge.onload = () => {
+        setTimeout(() => {
+          node.innerHTML = titleSvg;
+          CodeMirror(node, config);
+          render[lang].forEach(function(callback) { callback(); })
+        }, 0);
+      }
+      document.body.appendChild(languagePackge);
+    });
+  </script>
+
+</body>
+</html>

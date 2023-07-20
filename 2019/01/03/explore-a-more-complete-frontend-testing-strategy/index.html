@@ -1,0 +1,433 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+  <title>Explore a more complete front-end testing strategyunadlib&#39;s Notes</title>
+  <style type="text/css">
+    body, html {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+      font-size: 18px;
+      line-height: 1.8;
+      user-select: none;
+      box-sizing: border-box;
+      touch-action: manipulation;
+      background-color: #f1f3f4;
+    }
+
+    a {
+      color: #000;
+    }
+
+    a.title {
+      text-decoration: none;
+    }
+
+    #content-outer {
+      margin: 4% 14%;
+      padding: 4% 8%;
+      box-shadow: 0 0 3px -1px rgba(0,0,0,.3);
+      border-radius: 5px;
+      box-sizing: border-box;
+      background: #fff;
+      border-bottom: 1px solid #b5b5b5;
+    }
+
+    #content-inner {
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .recent-post-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .recent-post-item .title {
+      overflow: hidden;
+      text-overflow:ellipsis;
+      white-space: nowrap;
+    }
+
+    .recent-post-item .time {
+      color: #ccc;
+      font-size: 14px;
+      line-height: 32px;
+      min-width: 81px;
+      text-align: right;
+    }
+
+    #post img {
+      max-width: 100%;
+    }
+
+    #post h1.title {
+      text-align: center;
+      font-size: 2em;
+      margin-block-start: 0.67em;
+      margin-block-end: 0.67em;
+      line-height: 1;
+    }
+
+    #post .time {
+      text-align: center;
+      color: #ccc;
+      font-size: 14px;
+    }
+
+    #post .content {
+      margin-top: 8%;
+    }
+
+    #post .content blockquote {
+      border-left: 3px solid #eee;
+      padding-left: 20px;
+      color: #666;
+      margin: 0;
+    }
+
+    #post .content .gutter {
+      display: none;
+    }
+
+    code, kbd, pre, samp {
+      font-size: 16px !important;
+    }
+
+    .CodeMirror {
+      height: auto !important;
+      padding: 36px 24px 0;
+      border-radius: 6px;
+    }
+
+    #post .content figure {
+      padding: 0 1em;
+      background-color: #f1f3f4;
+      border: 1px solid #e0e0e0;
+      margin: 0;
+      overflow: auto;
+    }
+
+    #post .content figure table {
+      width: 100%;
+    }
+
+    @media screen and (max-width: 1024px)  {
+      #content-outer {
+        margin: 2% 7%;
+        padding: 2% 4%;
+      }
+
+      .recent-post-item:first-child {
+        margin-top: 16px;
+      }
+    }
+
+    @media screen and (max-width: 480px) {
+      body{
+        -webkit-text-size-adjust: none;
+      }
+
+      #content-outer {
+        margin: 0;
+        padding: 2% 4%;
+        border-radius: 0;
+      }
+
+      .recent-post-item:first-child {
+        margin-top: 32px;
+      }
+
+      .recent-post-item:last-child {
+        border-bottom: none;
+      }
+    }
+  </style>
+  
+    <!-- styles list from theme config.yml -->
+    
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/codemirror.min.css">
+    
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/theme/seti.min.css">
+    
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+<body class="cm-s-seti">
+
+<div id="content-outer">
+  <div id="content-inner">
+    
+<article id="post">
+  <h1 class="title">Explore a more complete front-end testing strategy</h1>
+  <p class="time">2019-01-03</span>
+  <div class="content">
+      <blockquote>
+<p>The assumption in this article is that we are continuously developing a relatively large front-end project, and we have adopted a domain-driven design, as well as an object-oriented programming model. The front-end business logic is split into <strong><code>domain modules</code></strong>&#x2F;<strong><code>UI components</code></strong>. So we may need to have a more complete testing strategy to assure such a front-end project.</p>
+</blockquote>
+<h2 id="General-front-end-testing"><a href="#General-front-end-testing" class="headerlink" title="General front-end testing"></a>General front-end testing</h2><p>Whether it’s a traditional test model or a continuous delivery model, we typically define the following three types of tests:</p>
+<p><img src="/assets/2018-12-18-blog-a-more-complete-front-end-testing-strategy/generic-test.png" alt="generic-test"></p>
+<ul>
+<li>E2E</li>
+</ul>
+<p>End-to-end testing involves ensuring that the integrated components of an application function as expected. The entire application is tested in a real-world scenario such as communicating with the database, network, hardware and other applications.</p>
+<ul>
+<li>IT</li>
+</ul>
+<p>Integration testing is a key software development life cycle strategy. Generally, small software systems are integrated and tested in a single phase, whereas larger systems involve several integration phases to build a complete system, such as integrating modules into low-level subsystems for integration with larger subsystems. Integration testing encompasses all aspects of a software system’s performance, functionality and reliability.</p>
+<ul>
+<li>UT</li>
+</ul>
+<p>Unit testing is a software testing method by which individual units of source code, sets of one or more computer program modules together with associated control data, usage procedures, and operating procedures, are tested to determine whether they are fit for use.</p>
+<h2 id="What’s-wrong-with-the-general-front-end-testing"><a href="#What’s-wrong-with-the-general-front-end-testing" class="headerlink" title="What’s wrong with the general front-end testing?"></a>What’s wrong with the general front-end testing?</h2><p>When we are evaluating the integrity of a test strategy, we try to validate it with some of the following criteria:</p>
+<ul>
+<li>Pass acceptance criteria</li>
+<li>Catch bugs as early as possible</li>
+<li>Faster running speed, especially at the top level of testing</li>
+<li>Find bugs efficiently</li>
+<li>Test writing costs and maintenance costs</li>
+<li>Continuous refactoring risks</li>
+</ul>
+<p>I think a better test strategy should be as consistent as possible with the above items.</p>
+<p>In the general testing strategy mentioned above, E2E can override more AC conditions, but usually it runs less frequently; IT is run more frequently than E2E, but IT often includes an integrated app in almost the entire system, which is often more bloated in this case, and UT typically accounts for a larger proportion of such this strategy, although the logical coverage is good, but in a large refactoring usually UT will also change, of course, most of these UT is not too much of a problem.</p>
+<p>From the point of view of catching bugs as early as possible, does that mean that the general testing strategy can be better improved? Because the E2E test is most likely to run once in a relatively long period of time, rather than every PR or even every code commit, because the e2e run is usually slow and unstable, it is the most expensive automated test to run.</p>
+<p>Sometimes we have some integration tests that start a bloated integrated system, maybe it already includes a lot of mock, and you can keep running tests over and over again, but when there are more and more cases of integration testing, we can’t even guarantee faster completion within each PR, and in a resource-constrained CI environment, it could be half an hour, or even longer.</p>
+<p>As a system becomes more complex, we need a complete testing strategy to tell us what cases failed in these tests, and to enable us to catch bugs more efficiently through test reports. Whether it is network instability, back-end server APIs exceptions, front-end domain modules exceptions or UI components exceptions, and so on, we can quickly catch these bugs. Obviously, the general testing strategy can provide limited help in locating bugs. For example, UT has succeeded, IT has failed, and E2E has failed too. It is difficult for us to analyze clearer information from such test reports.</p>
+<p>The cost of writing test code should be balanced with a continuous delivery development model. When the AC definition is clear, it’s just that our test code should be able to align the information described by AC. In theory, if all AC is fully implemented by E2E, this will also enable the verification of AC. But obviously, this brings with it a highly unbalanced test instability and inefficient operation.</p>
+<p>If the unit tests are adequate enough, will this ensure that our AC can be accepted and become viable? This should depend on the maintenance cost of the unit test, each time we refactor our code, we will have to modify the unit tests involved in these code as well, which means we need a higher level of test to ensure the quality and correctness of these code, despite their fast changing nature.</p>
+<h2 id="What’s-the-key-to-solving-the-problem"><a href="#What’s-the-key-to-solving-the-problem" class="headerlink" title="What’s the key to solving the problem?"></a>What’s the key to solving the problem?</h2><p>Among the issues we mentioned for some test strategies, based on our ATDD sustainable delivery development model, AC’s assurance is clearly the most important, and a good test strategy should ensure that every refactoring is fully confident, while at the same time, there is a good balance between running speed, finding bugs, and maintaining the cost of test code. Among these additional elements, we very much do not recommend going in the extreme way, but rather a way of resembling the <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Liebig%27s_law_of_the_minimum">Liebig’s law</a> to make our test strategy more complete.</p>
+<h2 id="Propose-a-more-complete-testing-strategy"><a href="#Propose-a-more-complete-testing-strategy" class="headerlink" title="Propose a more complete testing strategy"></a>Propose a more complete testing strategy</h2><p><img src="/assets/2018-12-18-blog-a-more-complete-front-end-testing-strategy/new-test-strategy.png" alt="new-test-strategy"></p>
+<ul>
+<li>E2E</li>
+</ul>
+<p>The E2E here should implement the most important AC parts, and it is best to support smoke testing&#x2F;UI testing&#x2F;multi-browser compatibility testing.</p>
+<ul>
+<li>IT3</li>
+</ul>
+<p>IT3 is an integrated test of the overall system based on the mock service, which can run E2E code, but it does not actually start a browser to test, and all tests run in Node.js. Because it’s a mock for back-end server APIs and the browser’s real DOM, so it’s faster than E2E, and it keeps running over and over again. In particular, it is important to note that IT3 is a fully reusable E2E code, and IT is the general testing strategy mentioned above that is often not able to reuse E2E code.</p>
+<ul>
+<li>IT2</li>
+</ul>
+<p>IT2 is an integrated test of the minimum set of UI and the minimum set of domain modules, and it is also based on the mock service (including server APIs&#x2F;DOM&#x2F;BOM), because it is the module that starts the minimum set, so its test run speed and the operational performance of the minimum set can be guaranteed, it is faster than IT3. At the same time, it IT3 and has a good partition, IT2 is responsible for the minimum set, and IT3 is responsible for the overall collection. In addition to the minimum set, writing IT2 and IT3 is not very different, it can satisfy the mapping relationship through AC. Of course, unless there is a problem with the non-dependent module at the bottom, it is actually easier for us to pass the IT2&#x2F;IT3 test report to bugs’s positioning.</p>
+<ul>
+<li>IT1</li>
+</ul>
+<p>IT1 is just the minimum set of modules integration tests, it only requires the mock back-end server APIs, because it only starts the minimum set domain modules, so it is faster than IT2 run. One or more steps in AC are capable of being converted into IT2 tests. Through IT1&#x2F;IT2&#x2F;IT3 ‘s test report, it is also easier to infer the location or cause of bugs.</p>
+<ul>
+<li>UT</li>
+</ul>
+<p>In IT2 talking about testing problems with the underlying modules (less dependent modules or non-dependent modules), we recommend that such modules be suitable for more complete UT, especially core functions, and that the core modules of other modules, or helper functions, can be considered for unit testing, and that in many cases, Can help AC cover more examples. It is an important addition to IT1&#x2F;IT2&#x2F;IT3.</p>
+<p><img src="/assets/2018-12-18-blog-a-more-complete-front-end-testing-strategy/it-cover.png" alt="it-cover"></p>
+<p>Among the different test types, the test factors covered are also different. Then we hope that with such a test strategy can be more complete and efficient to meet the various factors of testing: The E2E test covers almost all of the test factors, IT3 is less than E2E real server APIs and real browsers, IT2 is less than T3 a number of non-essential modules and UI components, IT1 has fewer UI components than IT2, and UT only covers a small number of core logical parts.</p>
+<p>In such a test strategy, we can develop a better strategy to run the test code, we can run ut&#x2F;it1 when submitting commit, we can run PR when we submit the UT&#x2F;IT1&#x2F;IT2 or even IT3, And at the time of our return or when we run the E2E regularly (a week or a few days). In such a operating system, we can ensure that the AC is guaranteed to be verified, but also to ensure a certain degree of operational efficiency balance, while different types of test reports will also contribute to the positioning of the bugs.</p>
+<h2 id="How-to-implement-building-this-more-complete-test"><a href="#How-to-implement-building-this-more-complete-test" class="headerlink" title="How to implement building this more complete test"></a>How to implement building this more complete test</h2><p>Example for business code:</p>
+<pre><code class="javascript">
+@Module()
+class Foo &#123;
+    a() &#123;&#125;
+    _x() &#123;
+        //No dependent module core logic
+    &#125;
+&#125;
+
+@Module(&#123; dependences:[&#39;Foo&#39;] &#125;)
+class Bar() &#123;
+    b() &#123;&#125;
+     _y() &#123;
+        //No dependent module core logic
+    &#125;
+    get name()&#123;&#125;
+&#125;
+
+@Module(&#123; dependences:[&#39;Foo&#39;, &#39;Bar&#39;] &#125;)
+class Foobar() &#123;
+    c() &#123;&#125;
+    get name()&#123;&#125;
+&#125;
+
+const store = createStore(
+    //...factory module
+);
+
+const FoobarContainer = (props) =&gt; (
+    &lt;div onClick=&#123;props.foobar.c&#125;&gt;
+        &#123;props.foobar.name&#125;
+    &lt;/div&gt;
+);
+
+const BarContainer = (props) =&gt; (
+    &lt;div onClick=&#123;props.bar.b&#125;&gt;
+        &#123;props.bar.name&#125;
+    &lt;/div&gt;
+);
+
+class App extends Component &#123;
+    render() &#123;
+        return (
+        &lt;div&gt;
+            &#123;this.props.foobar ? (
+                &lt;FoobarContainer &#123;...this.props&#125;&gt;
+            ): null &#125;
+            &#123;this.props.bar ? (
+                &lt;BarContainer &#123;...this.props&#125;&gt;
+            ): null &#125;
+        &lt;/div&gt;
+        );
+    &#125;
+&#125;
+
+render(
+    &lt;App store=&#123;store&#125; /&gt;,
+    mountNode
+);
+</code></pre>
+<p>Example for acceptance criteria</p>
+<pre><code class="cucumber">Feature: AC
+
+  Scenario Outline:
+    Given User saw &#39;b&#39; node
+    When User click &#39;b&#39;
+    Then User should see &#39;b&#39; changed
+    When User click &#39;f&#39;
+    Then User should see &#39;f&#39; changed
+
+  Scenario Outline:
+    Given User saw &#39;c&#39; node
+    When User click &#39;c&#39;
+    Then User should see &#39;c&#39; changed
+    When User click &#39;e&#39;
+    Then User should see &#39;e&#39; changed
+</code></pre>
+<p>Example for testing</p>
+<pre><code class="javascript">// E2E &amp; IT3
+test(() =&gt; &#123;
+    const app = getApp();
+    app.find(nodeSelectorB).click();
+    expect(result).toBe(expectedValue1);
+    app.find(nodeSelectorF).click();
+    expect(result).toBe(expectedValue2);
+&#125;);
+
+test(() =&gt; &#123;
+    const app = getApp();
+    app.find(nodeSelectorC).click();
+    expect(result).toBe(expectedValue1);
+    app.find(nodeSelectorE).click();
+    expect(result).toBe(expectedValue2);
+&#125;);
+
+// IT2
+test(() =&gt; &#123;
+    const barContainer = getMinimalSet(BarContainer);
+    barContainer.find(nodeSelector).click();
+    expect(result).toBe(expectedValue2);
+&#125;);
+
+test(() =&gt; &#123;
+    const foobarContainer = getMinimalSet(FoobarContainer);
+    foobarContainer.find(nodeSelector).click();
+    expect(result).toBe(expectedValue1);
+&#125;);
+
+
+// IT1
+test(() =&gt; &#123;
+    const app = getMinimalSet(Bar);
+    app.b();
+    expect(result).toBe(expectedValue);
+&#125;);
+
+test(() =&gt; &#123;
+    const app = getMinimalSet(Foobar);
+    app.c();
+    expect(result).toBe(expectedValue);
+&#125;);
+
+// UT
+test(() =&gt; &#123;
+    const result = Foo.prototype._x();
+    expect(result).toBe(expectedValue);
+&#125;);
+
+test(() =&gt; &#123;
+    const result = Bar.prototype._y();
+    expect(result).toBe(expectedValue);
+&#125;);
+</code></pre>
+<h2 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h2><p>There are many factors we need to consider when developing a test strategy. From the point of view of correct verification based on AC, we should also consider the operation strategy, operating efficiency, writing and maintaining the cost of testing, bugs easy to find and refactoring assurance and other important factors, and should not go to extremes. In the case of ensuring a certain AC, we hope that this E2E&#x2F;IT3&#x2F;IT2&#x2F;IT1&#x2F;UT can be guaranteed in many ways to the quality of the code and the quality of the project engineering, while being agile enough for continuous delivery.</p>
+
+  </div>
+</article>
+
+  </div>
+</div>
+
+
+  <!-- scripts list from theme config.yml -->
+  
+    <script src="/js/attraction.js"></script>
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/codemirror.min.js"></script>
+  
+  <script>
+    var nodes = Array.from(document.querySelectorAll('pre code'));
+    var render = {};
+    var titleSvg = '<svg style="position: absolute;z-index: 1;margin: 12px 0 0 12px;" xmlns="http://www.w3.org/2000/svg" width="54" height="14" viewBox="0 0 54 14"><g fill="none" fill-rule="evenodd" transform="translate(1 1)"><circle cx="6" cy="6" r="6" fill="#FF5F56" stroke="#E0443E" stroke-width=".5"></circle><circle cx="26" cy="6" r="6" fill="#FFBD2E" stroke="#DEA123" stroke-width=".5"></circle><circle cx="46" cy="6" r="6" fill="#27C93F" stroke="#1AAB29" stroke-width=".5"></circle></g></svg>';
+    nodes.forEach((node, index) => {
+      var lang = node.getAttribute('class');
+      var code = node.innerText;
+      var mode = lang;
+      switch(lang) {
+        case 'jsx':
+          lang = 'javascript';
+          mode = 'text/jsx';
+          break;
+        case 'tsx':
+          lang = 'javascript';
+          mode = 'text/typescript-jsx';
+        case 'typescript':
+          lang = 'javascript';
+          mode = 'text/typescript';
+        default:
+          break;
+      }
+      var config = {
+        value: code,
+        mode,
+        theme: 'seti'
+      };
+      if (!lang) return;
+      var hasExisted = nodes.slice(0, index).find(function(node) { return node.getAttribute('class') === lang; });
+      if (hasExisted) {
+        render[lang].push(function() {
+          node.innerHTML = titleSvg;
+          CodeMirror(node, config);
+        });
+        return;
+      }
+      render[lang] = [];
+      var languagePackge = document.createElement('script');
+      languagePackge.src = `https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/mode/${lang}/${lang}.min.js`;
+      languagePackge.onload = () => {
+        setTimeout(() => {
+          node.innerHTML = titleSvg;
+          CodeMirror(node, config);
+          render[lang].forEach(function(callback) { callback(); })
+        }, 0);
+      }
+      document.body.appendChild(languagePackge);
+    });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,397 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+  <title>Mutative - 10x faster than Immerunadlib&#39;s Notes</title>
+  <style type="text/css">
+    body, html {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+      font-size: 18px;
+      line-height: 1.8;
+      user-select: none;
+      box-sizing: border-box;
+      touch-action: manipulation;
+      background-color: #f1f3f4;
+    }
+
+    a {
+      color: #000;
+    }
+
+    a.title {
+      text-decoration: none;
+    }
+
+    #content-outer {
+      margin: 4% 14%;
+      padding: 4% 8%;
+      box-shadow: 0 0 3px -1px rgba(0,0,0,.3);
+      border-radius: 5px;
+      box-sizing: border-box;
+      background: #fff;
+      border-bottom: 1px solid #b5b5b5;
+    }
+
+    #content-inner {
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .recent-post-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .recent-post-item .title {
+      overflow: hidden;
+      text-overflow:ellipsis;
+      white-space: nowrap;
+    }
+
+    .recent-post-item .time {
+      color: #ccc;
+      font-size: 14px;
+      line-height: 32px;
+      min-width: 81px;
+      text-align: right;
+    }
+
+    #post img {
+      max-width: 100%;
+    }
+
+    #post h1.title {
+      text-align: center;
+      font-size: 2em;
+      margin-block-start: 0.67em;
+      margin-block-end: 0.67em;
+      line-height: 1;
+    }
+
+    #post .time {
+      text-align: center;
+      color: #ccc;
+      font-size: 14px;
+    }
+
+    #post .content {
+      margin-top: 8%;
+    }
+
+    #post .content blockquote {
+      border-left: 3px solid #eee;
+      padding-left: 20px;
+      color: #666;
+      margin: 0;
+    }
+
+    #post .content .gutter {
+      display: none;
+    }
+
+    code, kbd, pre, samp {
+      font-size: 16px !important;
+    }
+
+    .CodeMirror {
+      height: auto !important;
+      padding: 36px 24px 0;
+      border-radius: 6px;
+    }
+
+    #post .content figure {
+      padding: 0 1em;
+      background-color: #f1f3f4;
+      border: 1px solid #e0e0e0;
+      margin: 0;
+      overflow: auto;
+    }
+
+    #post .content figure table {
+      width: 100%;
+    }
+
+    @media screen and (max-width: 1024px)  {
+      #content-outer {
+        margin: 2% 7%;
+        padding: 2% 4%;
+      }
+
+      .recent-post-item:first-child {
+        margin-top: 16px;
+      }
+    }
+
+    @media screen and (max-width: 480px) {
+      body{
+        -webkit-text-size-adjust: none;
+      }
+
+      #content-outer {
+        margin: 0;
+        padding: 2% 4%;
+        border-radius: 0;
+      }
+
+      .recent-post-item:first-child {
+        margin-top: 32px;
+      }
+
+      .recent-post-item:last-child {
+        border-bottom: none;
+      }
+    }
+  </style>
+  
+    <!-- styles list from theme config.yml -->
+    
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/codemirror.min.css">
+    
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/theme/seti.min.css">
+    
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+<body class="cm-s-seti">
+
+<div id="content-outer">
+  <div id="content-inner">
+    
+<article id="post">
+  <h1 class="title">Mutative - 10x faster than Immer</h1>
+  <p class="time">2022-12-31</span>
+  <div class="content">
+      <p><strong>Mutative</strong> - A JavaScript library for efficient immutable updates, faster than naive handcrafted reducer, and more than 10x faster than Immer.</p>
+<h2 id="Motivation"><a href="#Motivation" class="headerlink" title="Motivation"></a>Motivation</h2><p>Writing immutable updates by hand is usually difficult, prone to errors, and cumbersome. Immer helps us write simpler immutable updates with “mutative” logic.</p>
+<p>But its performance issue causes a runtime performance overhead. Immer must have auto-freeze enabled by default(Performance will be worse if auto-freeze is disabled), such immutable state with Immer is not common. In scenarios such as cross-processing, remote data transfer, etc., we have to constantly freeze these immutable data.</p>
+<p>There are more parts that could be improved, such as better type inference, non-intrusive markup, support for more types of immutability, Safer immutability, <a href="test/immer-non-support.test.ts">more edge cases</a>, and so on.</p>
+<p>This is why Mutative was created.</p>
+<p>Repo: <a target="_blank" rel="noopener" href="https://github.com/unadlib/mutative">https://github.com/unadlib/mutative</a></p>
+<h2 id="Mutative-vs-Immer-Performance"><a href="#Mutative-vs-Immer-Performance" class="headerlink" title="Mutative vs Immer Performance"></a>Mutative vs Immer Performance</h2><blockquote>
+<p>Mutative passed all of Immer’s test cases.</p>
+</blockquote>
+<p>Measure(ops&#x2F;sec) to update 50K arrays and 1K objects, bigger is better(<a target="_blank" rel="noopener" href="https://github.com/unadlib/mutative/blob/main/test/performance/benchmark.ts">view source</a>). [Mutative v0.5.0 vs Immer v10.0.1]</p>
+<p><img src="/assets/2022-12-31-mutative-10x-faster-than-immer/benchmark.jpg" alt="Benchmark"></p>
+<pre><code>Naive handcrafted reducer - No Freeze x 3,692 ops/sec ±1.28% (95 runs sampled)
+Mutative - No Freeze x 5,425 ops/sec ±1.70% (93 runs sampled)
+Immer - No Freeze x 5.08 ops/sec ±0.58% (17 runs sampled)
+
+Mutative - Freeze x 818 ops/sec ±1.49% (96 runs sampled)
+Immer - Freeze x 357 ops/sec ±0.79% (92 runs sampled)
+
+Mutative - Patches and No Freeze x 746 ops/sec ±0.83% (96 runs sampled)
+Immer - Patches and No Freeze x 5.08 ops/sec ±0.25% (17 runs sampled)
+
+Mutative - Patches and Freeze x 408 ops/sec ±0.28% (96 runs sampled)
+Immer - Patches and Freeze x 264 ops/sec ±0.59% (91 runs sampled)
+
+The fastest method is Mutative - No Freeze
+</code></pre>
+<p>Run <code>yarn benchmark</code> to measure performance.</p>
+<blockquote>
+<p>OS: macOS 12.6, CPU: Apple M1 Max, Node.js: 16.14.2</p>
+</blockquote>
+<p>Immer relies on auto-freeze to be enabled, if auto-freeze is disabled, Immer will have a huge performance drop and Mutative will have a huge performance lead, especially with large data structures it will have a performance lead of more than 50x.</p>
+<p>So if you are using Immer, you will have to enable auto-freeze for performance. Mutative is disabled auto-freeze by default. With the default configuration of both, we can see the 17x performance gap between Mutative (<code>6,421 ops/sec</code>) and Immer (<code>365 ops/sec</code>).</p>
+<p>Overall, Mutative has a huge performance lead over Immer in <a target="_blank" rel="noopener" href="https://github.com/unadlib/mutative/tree/main/test/performance">more performance testing scenarios</a>. Run <code>yarn performance</code> to get all the performance results locally.</p>
+<blockquote>
+<p>OS: macOS 12.6, CPU: Apple M1 Max, Node.js: 16.14.2</p>
+</blockquote>
+<p>Immer relies on auto-freeze to be enabled, if auto-freeze is disabled, Immer will have a huge performance drop and Mutative will have a huge performance lead, especially with large data structures it will have a performance lead of more than 50x.</p>
+<p>So if you are using Immer, you will have to enable auto-freeze for performance. Mutative is disabled auto-freeze by default. With the default configuration of both, we can see the performance gap between Mutative (<code>5,323 ops/sec</code>) and Immer (<code>320 ops/sec</code>).</p>
+<p>Overall, Mutative has a huge performance lead over Immer in <a target="_blank" rel="noopener" href="https://github.com/unadlib/mutative/tree/main/test/performance">more performance testing scenarios</a>. Run <code>yarn performance</code> to get all the performance results locally.</p>
+<h2 id="Features-and-Benefits"><a href="#Features-and-Benefits" class="headerlink" title="Features and Benefits"></a>Features and Benefits</h2><ul>
+<li><strong>Mutation makes immutable updates</strong> - Immutable data structures supporting objects, arrays, Sets and Maps.</li>
+<li><strong>High performance</strong> - 10x faster than immer by default, even faster than naive handcrafted reducer.</li>
+<li><strong>Optional freezing state</strong> - No freezing of immutable data by default.</li>
+<li><strong>Support for JSON Patch</strong> - Full compliance with JSON Patch specification.</li>
+<li><strong>Custom shallow copy</strong> - Support for more types of immutable data.</li>
+<li><strong>Support mark for immutable and mutable data</strong> - Allows for non-invasive marking.</li>
+<li><strong>Safer mutable data access in strict mode</strong> - It brings more secure immutable updates.</li>
+<li><strong>Support for reducer</strong> - Support reducer function and any other immutable state library.</li>
+</ul>
+<h2 id="Difference-between-Mutative-and-Immer"><a href="#Difference-between-Mutative-and-Immer" class="headerlink" title="Difference between Mutative and Immer"></a>Difference between Mutative and Immer</h2><table>
+<thead>
+<tr>
+<th align="left"></th>
+<th align="right">Mutative</th>
+<th align="center">Immer</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">Custom shallow copy</td>
+<td align="right">✅</td>
+<td align="center">❌</td>
+</tr>
+<tr>
+<td align="left">Strict mode</td>
+<td align="right">✅</td>
+<td align="center">❌</td>
+</tr>
+<tr>
+<td align="left">No data freeze by default</td>
+<td align="right">✅</td>
+<td align="center">❌</td>
+</tr>
+<tr>
+<td align="left">Non-invasive marking</td>
+<td align="right">✅</td>
+<td align="center">❌</td>
+</tr>
+<tr>
+<td align="left">Complete freeze data</td>
+<td align="right">✅</td>
+<td align="center">❌</td>
+</tr>
+<tr>
+<td align="left">Non-global config</td>
+<td align="right">✅</td>
+<td align="center">❌</td>
+</tr>
+<tr>
+<td align="left">async draft function</td>
+<td align="right">✅</td>
+<td align="center">❌</td>
+</tr>
+<tr>
+<td align="left">Fully compatible with JSON Patch spec</td>
+<td align="right">✅</td>
+<td align="center">❌</td>
+</tr>
+</tbody></table>
+<p>Mutative has fewer bugs such as accidental draft escapes than Immer, <a target="_blank" rel="noopener" href="https://github.com/unadlib/mutative/blob/main/test/immer-non-support.test.ts">view details</a>.</p>
+<h2 id="Installation"><a href="#Installation" class="headerlink" title="Installation"></a>Installation</h2><pre><code class="sh">yarn install mutative # npm install mutative
+</code></pre>
+<h2 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h2><p>Use <code>create()</code> for draft mutation to get a new state, which also supports currying.</p>
+<pre><code class="ts">import &#123; create &#125; from &#39;mutative&#39;;
+
+const baseState = &#123;
+  foo: &#39;bar&#39;,
+  list: [&#123; text: &#39;todo&#39; &#125;],
+&#125;;
+
+const state = create(baseState, (draft) =&gt; &#123;
+  draft.foo = &#39;foobar&#39;;
+  draft.list.push(&#123; text: &#39;learning&#39; &#125;);
+&#125;);
+</code></pre>
+<p>In this basic example, the changes to the draft are ‘mutative’ within the draft callback, and <code>create()</code> is finally executed with a new immutable state.</p>
+<h4 id="create-state-fn-options-Then-options-is-optional"><a href="#create-state-fn-options-Then-options-is-optional" class="headerlink" title="create(state, fn, options) - Then options is optional."></a><code>create(state, fn, options)</code> - Then options is optional.</h4><ul>
+<li><p>strict - <code>boolean</code>, the default is false.</p>
+<blockquote>
+<p>Forbid accessing non-draftable values in strict mode(unless using <a href="#unsafe">unsafe()</a>).</p>
+</blockquote>
+<blockquote>
+<p><strong>It is recommended to enable <code>strict</code> in development mode and disable <code>strict</code> in production mode.</strong> This will ensure safe explicit returns and also keep good performance in the production build. If the value that does not mix any current draft or is <code>undefined</code> is returned, then use <a href="#rawreturn">rawReturn()</a>.</p>
+</blockquote>
+</li>
+<li><p>enablePatches - <code>boolean | &#123; pathAsArray?: boolean; arrayLengthAssignment?: boolean; &#125;</code>, the default is false.</p>
+<blockquote>
+<p>Enable patch, and return the patches&#x2F;inversePatches.</p>
+</blockquote>
+<blockquote>
+<p>If you need to set the shape of the generated patch in more detail, then you can set <code>pathAsArray</code> and <code>arrayLengthAssignment</code>。<code>pathAsArray</code> default value is <code>true</code>, if it’s <code>true</code>, the path will be an array, otherwise it is a string; <code>arrayLengthAssignment</code> default value is <code>true</code>, if it’s <code>true</code>, the array length will be included in the patches, otherwise no include array length(<strong>NOTE</strong>: If <code>arrayLengthAssignment</code> is <code>false</code>, it is fully compatible with JSON Patch spec, but it may have additional performance loss), <a target="_blank" rel="noopener" href="https://github.com/unadlib/mutative/issues/6">view related discussions</a>.</p>
+</blockquote>
+</li>
+<li><p>enableAutoFreeze - <code>boolean</code>, the default is false.</p>
+<blockquote>
+<p>Enable autoFreeze, and return frozen state, and enable circular reference checking only in <code>development</code> mode.</p>
+</blockquote>
+</li>
+<li><p>mark - <code>(target) =&gt; (&#39;mutable&#39;|&#39;immutable&#39;|function)</code></p>
+<blockquote>
+<p>Set a mark to determine if the value is mutable or if an instance is an immutable, and it can also return a shallow copy function(AutoFreeze and Patches should both be disabled).</p>
+</blockquote>
+</li>
+</ul>
+<h2 id="FAQs"><a href="#FAQs" class="headerlink" title="FAQs"></a>FAQs</h2><ul>
+<li>Why does Mutative have such good performance?</li>
+</ul>
+<p>Mutative optimization focus is on shallow copy optimization, more complete lazy drafts, finalization process optimization, and more.</p>
+<ul>
+<li>I’m already using Immer, can I migrate smoothly to Mutative?</li>
+</ul>
+<p>Yes. Unless you have to be compatible with Internet Explorer, Mutative supports almost all of Immer features, and you can easily migrate from Immer to Mutative.</p>
+<blockquote>
+<p>Migration is also not possible for React Native that does not support Proxy.</p>
+</blockquote>
+<h2 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h2><p>Mutative is inspired by Immer.</p>
+<p>Mutative aims at efficient immutable updates, focusing on performance improvements and better APIs to bring better development experience. If you think Mutative is good, feel free to give it a star!</p>
+<p>Repo: <a target="_blank" rel="noopener" href="https://github.com/unadlib/mutative">https://github.com/unadlib/mutative</a></p>
+
+  </div>
+</article>
+
+  </div>
+</div>
+
+
+  <!-- scripts list from theme config.yml -->
+  
+    <script src="/js/attraction.js"></script>
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/codemirror.min.js"></script>
+  
+  <script>
+    var nodes = Array.from(document.querySelectorAll('pre code'));
+    var render = {};
+    var titleSvg = '<svg style="position: absolute;z-index: 1;margin: 12px 0 0 12px;" xmlns="http://www.w3.org/2000/svg" width="54" height="14" viewBox="0 0 54 14"><g fill="none" fill-rule="evenodd" transform="translate(1 1)"><circle cx="6" cy="6" r="6" fill="#FF5F56" stroke="#E0443E" stroke-width=".5"></circle><circle cx="26" cy="6" r="6" fill="#FFBD2E" stroke="#DEA123" stroke-width=".5"></circle><circle cx="46" cy="6" r="6" fill="#27C93F" stroke="#1AAB29" stroke-width=".5"></circle></g></svg>';
+    nodes.forEach((node, index) => {
+      var lang = node.getAttribute('class');
+      var code = node.innerText;
+      var mode = lang;
+      switch(lang) {
+        case 'jsx':
+          lang = 'javascript';
+          mode = 'text/jsx';
+          break;
+        case 'tsx':
+          lang = 'javascript';
+          mode = 'text/typescript-jsx';
+        case 'typescript':
+          lang = 'javascript';
+          mode = 'text/typescript';
+        default:
+          break;
+      }
+      var config = {
+        value: code,
+        mode,
+        theme: 'seti'
+      };
+      if (!lang) return;
+      var hasExisted = nodes.slice(0, index).find(function(node) { return node.getAttribute('class') === lang; });
+      if (hasExisted) {
+        render[lang].push(function() {
+          node.innerHTML = titleSvg;
+          CodeMirror(node, config);
+        });
+        return;
+      }
+      render[lang] = [];
+      var languagePackge = document.createElement('script');
+      languagePackge.src = `https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/mode/${lang}/${lang}.min.js`;
+      languagePackge.onload = () => {
+        setTimeout(() => {
+          node.innerHTML = titleSvg;
+          CodeMirror(node, config);
+          render[lang].forEach(function(callback) { callback(); })
+        }, 0);
+      }
+      document.body.appendChild(languagePackge);
+    });
+  </script>
+
+</body>
+</html>
