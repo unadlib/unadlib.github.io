@@ -191,7 +191,7 @@
 <h2 id="Design-Goals"><a href="#Design-Goals" class="headerlink" title="Design Goals"></a>Design Goals</h2><ul>
 <li>Object Oriented</li>
 <li>Simple &amp; Flexible</li>
-<li>Dependency Detection &amp; Module Lifecycle</li>
+<li>Dependency injection</li>
 </ul>
 <h2 id="Proposal"><a href="#Proposal" class="headerlink" title="Proposal"></a>Proposal</h2><p><strong>Based on the concept of universalization, we propose a new <code>Universal State Module</code> library —— <a target="_blank" rel="noopener" href="https://github.com/unadlib/usm">usm</a>.</strong></p>
 <p>Let’s start with a typical Redux example of a counter:</p>
@@ -214,23 +214,24 @@ store.dispatch(&#123; type: &#39;INCREMENT&#39; &#125;)
 store.dispatch(&#123; type: &#39;DECREMENT&#39; &#125;)
 </code></pre>
 <p>USM supports Redux, MobX, Vuex and Angular. It provides <code>usm</code>, <code>usm-redux</code>, <code>usm-mobx</code> and <code>usm-vuex</code> packages. Here is the same counter using <code>usm-redux</code>:</p>
-<pre><code class="javascript">import Module, &#123; state, action &#125; from &#39;usm-redux&#39;;
+<pre><code class="javascript">import &#123; state, action, createStore &#125; from &#39;usm&#39;;
+// You can also use `usm-redux`, `usm-mobx`, or`usm-vuex`.
 
-class Counter extends Module &#123;
-  @state count = 0;
-
-  @action
-  increase(state) &#123;
-    state.count += 1;
-  &#125;
+class Counter &#123;
+  @state
+  count = &#123; sum: 0 &#125;;
 
   @action
-  decrease(state) &#123;
-    state.count -= 1;
+  increase() &#123;
+    this.count.sum += 1;
   &#125;
 &#125;
 
-const counter = Counter.create();
+const counter = new Counter();
+
+const store = createStore(&#123;
+  modules: [counter],
+&#125;);
 
 counter.increase();
 counter.decrease();
@@ -239,10 +240,8 @@ counter.decrease();
 <p>USM has four sub-packages, namly <code>usm</code>, <code>usm-redux</code>, <code>usm-mobx</code> and <code>usm-vuex</code>. <code>usm-redux</code> is used in this example, which is based on the use of <a target="_blank" rel="noopener" href="https://github.com/mweststrate/immer">Immer</a> that enables modifying the immutable redux state in a mutable manner.</p>
 <p>The following code demonstrate how the <code>usm-redux</code> module can be used with the connector from <code>react-redux</code>:</p>
 <pre><code class="javascript">// index.js
-export const counter = Counter.create();
-
 ReactDOM.render(
-  &lt;Provider store=&#123;counter.store&#125;&gt;
+  &lt;Provider store=&#123;store&#125;&gt;
     &lt;App /&gt;
   &lt;/Provider&gt;,
   document.getElementById(&#39;root&#39;)
@@ -285,111 +284,22 @@ export default observer(() =&gt;
 );
 </code></pre>
 <p>The use of <code>usm-redux</code> and <code>usm-mobx</code> to connect with <code>react-redux</code> and <code>mobx-react</code> respectfully demonstrated that the core implementations of the state module is the same even when the connectors used are different. This is the core principle of the Universal State Module that we propose.</p>
-<p>** USM currently supports Redux, MobX, Vuex and Angular.**</p>
-<h3 id="Features"><a href="#Features" class="headerlink" title="Features"></a>Features</h3><ul>
-<li>Universal State Management</li>
-<li>Standardized Module Lifecycle</li>
-<li>Optional Event System</li>
-<li>Support Stateless Model</li>
-<li>Support React&#x2F;Vue&#x2F;Angular</li>
-</ul>
 <h3 id="Decorators"><a href="#Decorators" class="headerlink" title="Decorators"></a>Decorators</h3><p><code>usm</code> provides decorator <code>@state</code> to wrap a variable with a state, and decorator <code>@action</code> is used to wrap a function that changes state.</p>
-<pre><code class="javascript">class Shop extends Module &#123;
-  @state goods = [];
-  @state status = &#39;close&#39;;
+<pre><code class="javascript">class Shop &#123;
+  @state
+  goods = [];
+  
+  @state
+  status = &#39;close&#39;;
 
   @action
   operate(item, status, state) &#123;
-    state.goods.push(item);
-    state.status = status;
+    this.goods.push(item);
+    this.status = status;
   &#125;
   // call function -&gt; this.operate(&#123; name: &#39;fruits&#39;, amount: 10 &#125;, &#39;open&#39;);
 &#125;
 </code></pre>
-<h3 id="Module-lifecycle"><a href="#Module-lifecycle" class="headerlink" title="Module lifecycle"></a>Module lifecycle</h3><p><code>usm</code> provides these lifecycle events:</p>
-<ul>
-<li><code>moduleWillInitialize</code></li>
-<li><code>moduleWillInitializeSuccess</code></li>
-<li><code>moduleDidInitialize</code></li>
-<li><code>moduleWillReset</code></li>
-<li><code>moduleDidReset</code></li>
-</ul>
-<p>The order in which they are run is shown in the following flow chart:</p>
-<p><img src="/assets/2019-02-25-practice-oop-to-front-end-universal-state-module/usm_lifecycle.png" alt="lifecycle"></p>
-<p>These module lifecycles can be used to coordinate module initialization dependencies.</p>
-<pre><code class="javascript">class TodoList extends Module &#123;  
-  async moduleWillInitialize() &#123;
-    console.log(
-      &#39;TodoList -&gt; moduleWillInitialize&#39;,
-      `pending: $&#123;this.pending&#125;`, `ready: $&#123;this.ready&#125;`
-    );
-  &#125;
-
-  async moduleWillInitializeSuccess() &#123;
-    console.log(
-      &#39;TodoList -&gt; moduleWillInitializeSuccess&#39;,
-      `pending: $&#123;this.pending&#125;`, `ready: $&#123;this.ready&#125;`
-      );
-  &#125;
-
-  async moduleDidInitialize() &#123;
-    console.log(
-      &#39;TodoList -&gt; moduleDidInitialize&#39;,
-      `pending: $&#123;this.pending&#125;`, `ready: $&#123;this.ready&#125;`
-      );
-  &#125;
-&#125;
-
-
-class App extends Module&#123;
-  async moduleWillInitialize() &#123;
-    console.log(
-      &#39;App -&gt; moduleWillInitialize&#39;,
-      `pending: $&#123;this.pending&#125;`, `ready: $&#123;this.ready&#125;`
-    );
-  &#125;
-
-  async moduleWillInitializeSuccess() &#123;
-    console.log(
-      &#39;App -&gt; moduleWillInitializeSuccess&#39;,
-      `pending: $&#123;this.pending&#125;`, `ready: $&#123;this.ready&#125;`
-    );
-  &#125;
-
-  async moduleDidInitialize() &#123;
-    console.log(
-      &#39;App -&gt; moduleDidInitialize&#39;,
-      `pending: $&#123;this.pending&#125;`, `ready: $&#123;this.ready&#125;`
-    );
-  &#125;
-&#125;
-
-const todoList = new TodoList();
-
-const app = App.create(&#123;
-  modules: &#123;
-    todoList
-  &#125;
-&#125;);
-</code></pre>
-<p>console.log results:</p>
-<pre><code>App -&gt; moduleWillInitialize pending: false ready: false
-TodoList -&gt; moduleWillInitialize pending: false ready: false
-TodoList -&gt; moduleWillInitializeSuccess pending: true ready: false
-App -&gt; moduleWillInitializeSuccess pending: true ready: false
-TodoList -&gt; moduleDidInitialize pending: false ready: true
-App -&gt; moduleDidInitialize pending: false ready: true
-</code></pre>
-<h3 id="An-ideal-architecture"><a href="#An-ideal-architecture" class="headerlink" title="An ideal architecture"></a>An ideal architecture</h3><p><img src="/assets/2019-02-25-practice-oop-to-front-end-universal-state-module/flow_chart.png" alt="flow chart"></p>
-<p>In a complex front-end application, a typical modular architecture may contain the following:</p>
-<ul>
-<li>Lifecycle</li>
-<li>Store Subscriber</li>
-<li>Event System</li>
-<li>State</li>
-<li>Module dependency</li>
-<li>Domain Models</li>
-</ul>
 <h2 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h2><p><code>usm</code> is a module design that wants to bridge together the differences of using Redux, Mobx, and Vuex in conjunction with different view layers such as React, Vue and Angular. It is designed to help you build libraries that will work with any front-end architecture.</p>
 <p>Modules built with <code>usm</code> should be free of boilerplates, especially the type that is introduced by state libraries like Redux. More importantly, the object-oriented nature of <code>usm</code> makes modules simple and intuitive. <code>usm</code> also makes your modules compatible with various state libraries and view layers, allowing you to share your business logic libraries across projects regardless of the frameworks they are using.</p>
 <p>USM’s repo: <a target="_blank" rel="noopener" href="https://github.com/unadlib/usm">https://github.com/unadlib/usm</a></p>
