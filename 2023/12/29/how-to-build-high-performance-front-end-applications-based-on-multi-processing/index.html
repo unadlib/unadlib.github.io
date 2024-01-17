@@ -1,0 +1,451 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+  <title>How to build high-performance front-end applications based on multi-processingunadlib&#39;s Notes</title>
+  <style type="text/css">
+    body, html {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+      font-size: 18px;
+      line-height: 1.8;
+      user-select: none;
+      box-sizing: border-box;
+      touch-action: manipulation;
+      background-color: #f1f3f4;
+    }
+
+    a {
+      color: #000;
+    }
+
+    a.title {
+      text-decoration: none;
+    }
+
+    #content-outer {
+      margin: 4% 14%;
+      padding: 4% 8%;
+      box-shadow: 0 0 3px -1px rgba(0,0,0,.3);
+      border-radius: 5px;
+      box-sizing: border-box;
+      background: #fff;
+      border-bottom: 1px solid #b5b5b5;
+    }
+
+    #content-inner {
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .recent-post-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .recent-post-item .title {
+      overflow: hidden;
+      text-overflow:ellipsis;
+      white-space: nowrap;
+    }
+
+    .recent-post-item .time {
+      color: #ccc;
+      font-size: 14px;
+      line-height: 32px;
+      min-width: 81px;
+      text-align: right;
+    }
+
+    #post img {
+      max-width: 100%;
+    }
+
+    #post h1.title {
+      text-align: center;
+      font-size: 2em;
+      margin-block-start: 0.67em;
+      margin-block-end: 0.67em;
+      line-height: 1;
+    }
+
+    #post .time {
+      text-align: center;
+      color: #ccc;
+      font-size: 14px;
+    }
+
+    #post .content {
+      margin-top: 8%;
+    }
+
+    #post .content blockquote {
+      border-left: 3px solid #eee;
+      padding-left: 20px;
+      color: #666;
+      margin: 0;
+    }
+
+    #post .content .gutter {
+      display: none;
+    }
+
+    code, kbd, pre, samp {
+      font-size: 16px !important;
+    }
+
+    .CodeMirror {
+      height: auto !important;
+      padding: 36px 24px 0;
+      border-radius: 6px;
+    }
+
+    #post .content figure {
+      padding: 0 1em;
+      background-color: #f1f3f4;
+      border: 1px solid #e0e0e0;
+      margin: 0;
+      overflow: auto;
+    }
+
+    #post .content figure table {
+      width: 100%;
+    }
+
+    @media screen and (max-width: 1024px)  {
+      #content-outer {
+        margin: 2% 7%;
+        padding: 2% 4%;
+      }
+
+      .recent-post-item:first-child {
+        margin-top: 16px;
+      }
+    }
+
+    @media screen and (max-width: 480px) {
+      body{
+        -webkit-text-size-adjust: none;
+      }
+
+      #content-outer {
+        margin: 0;
+        padding: 2% 4%;
+        border-radius: 0;
+      }
+
+      .recent-post-item:first-child {
+        margin-top: 32px;
+      }
+
+      .recent-post-item:last-child {
+        border-bottom: none;
+      }
+    }
+  </style>
+  
+    <!-- styles list from theme config.yml -->
+    
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/codemirror.min.css">
+    
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/theme/seti.min.css">
+    
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+<body class="cm-s-seti">
+
+<div id="content-outer">
+  <div id="content-inner">
+    
+<article id="post">
+  <h1 class="title">How to build high-performance front-end applications based on multi-processing</h1>
+  <p class="time">2023-12-29</span>
+  <div class="content">
+      <h2 id="Motivation"><a href="#Motivation" class="headerlink" title="Motivation"></a>Motivation</h2><p>As modern front-end applications become larger, making full use of the device’s CPU multi-cores to improve performance may become an important trend.</p>
+<p>Front-end applications often run in a single browser window, and JavaScript runs on a single thread. This means that common web applications cannot take full advantage of a CPU’s multiple-cores. As applications become larger and more complex, this can lead to performance problems and a poor user experience.</p>
+<p>However, there is good news (the gradual phasing out of IE and Safari v16 support for Shared Worker). Modern browsers widely support various types of Workers, including Shared Workers. Shared Workers are a mature technology that allows multiple threads of JavaScript code to share data and communicate with each other. This makes them ideal for building multi-process front-end applications.</p>
+<p>Multi-process front-end applications have several benefits. They can better resolve computation-intensive and slow-running JavaScript, which can improve performance and fluidity. They can also increase the number of concurrent requests that can be processed, which can improve the responsiveness of the application.</p>
+<p>So we aim to explore a Web application framework that leverages multi-processing.</p>
+<h2 id="Web-application-with-Multi-Processing"><a href="#Web-application-with-Multi-Processing" class="headerlink" title="Web application with Multi-Processing"></a>Web application with Multi-Processing</h2><p>In a multi-process web architecture, we can leverage the Shared Web Apps concept of reactant-share to extend general multi-process programming.</p>
+<p>Shared Web Apps allows running web applications in multiple browser windows or workers. It uses a unique front-end server (like a Shared Worker) to share web apps, whether it’s code sharing, local storage sharing, state sharing, and so on. Regardless of how many browser windows are opened, there’s always only one server application instance shared among multiple client applications for the Shared Web Apps. It enables Web Tabs to only perform rendering separation, thus making better use of the device’s multi-cores and ensuring smooth operation of the web application.</p>
+<p>Shared Web Apps provides the following benefits:</p>
+<ul>
+<li>Reduces the mental burden of multi-process programming by implementing Isomorphism with a universal modular model. Isomorphism is the ability to execute the same code on both the server process, client process or other process, which simplifies multi-process programming.</li>
+<li>Ensures smooth operation of the front-end server process by transferring compute-intensive tasks to another process. This frees up the front-end server process to focus on business logic and the client process to focus on rendering, which improves performance and responsiveness.</li>
+<li>Improves request concurrency by using a better multi-process model. This allows the web application to handle more requests simultaneously.</li>
+</ul>
+<h2 id="Coworker-based-on-reactant-share"><a href="#Coworker-based-on-reactant-share" class="headerlink" title="Coworker based on reactant-share"></a>Coworker based on reactant-share</h2><p>Based on reactant-share, we have implemented the Coworker model, which facilitates state sharing across multiple processes, synchronizes state, and minimizes state changes with patches to ensure optimal performance in multi-process execution.</p>
+<p><img src="/assets/2023-12-29-how-to-build-high-performance-front-end-applications-based-on-multi-processing/workflow.png" alt="Workflow"></p>
+<p>The Coworker model consists of three types of processes:</p>
+<ul>
+<li>Client Process: The rendering process, which accepts shared state and only renders the web UI. It is lightweight to ensure smooth rendering.</li>
+<li>Server Process: The main process, which executes most of the application business logic. It should also ensure smooth running.</li>
+<li>Coworker Process: The process responsible for compute-intensive business or request-intensive logic. This process frees up the server process to focus on business logic. The server process can reduce blocking caused by JavaScript and is less susceptible to the effects of request-intensive logic.</li>
+</ul>
+<p>In “Base” mode, Reactant Shared Apps has only two processes: the Tab process and the Coworker process. The Coworker process uses a Web Worker by default.</p>
+<h2 id="Implementation-of-Coworker"><a href="#Implementation-of-Coworker" class="headerlink" title="Implementation of Coworker"></a>Implementation of Coworker</h2><p>For the related principles of Reactant-Share, please see the following link: <a target="_blank" rel="noopener" href="https://reactant.js.org/blog/2021/10/03/how-to-make-web-application-support-multiple-browser-windows">https://reactant.js.org/blog/2021/10/03/how-to-make-web-application-support-multiple-browser-windows</a></p>
+<p>Coworker consists of two modules:</p>
+<ul>
+<li><strong>CoworkerAdapter</strong>: Provides transport for communication between the server process and the coworker process.</li>
+<li><strong>CoworkerExecutor</strong>: Handles synchronization of shared state between processes and custom Coworker type modules (used for proxy execution of coworkers). Coworkers are synchronously sent to the main process in one direction. Each time a Coworker syncs its state, it carries a sequence tag. If the sequence is abnormal, a complete Coworker state synchronization is triggered automatically to ensure the consistency of the shared state between the Coworker and the main process.</li>
+</ul>
+<h2 id="Core-Concepts-and-Advantages-of-Coworker"><a href="#Core-Concepts-and-Advantages-of-Coworker" class="headerlink" title="Core Concepts and Advantages of Coworker"></a>Core Concepts and Advantages of Coworker</h2><ul>
+<li><strong>Isomorphism</strong>: All processes execute the same code, which enhances the maintainability of multi-process programming in JavaScript.</li>
+<li><strong>Process Interaction based on the Actor Model</strong>: Relying on the Actor model, this method reduces the cognitive load of multi-process programming in JavaScript.</li>
+<li><strong>Generic Transport Model</strong>: Coworker supports any transport based on data-transport (<a target="_blank" rel="noopener" href="https://github.com/unadlib/data-transport">https://github.com/unadlib/data-transport</a>), so it can run in any container that supports transport, including SharedWorker. The following is a list of supported transports:<ul>
+<li>iframe</li>
+<li>Broadcast</li>
+<li>Web Worker</li>
+<li>Service Worker</li>
+<li>Shared Worker</li>
+<li>Browser Extension</li>
+<li>Node.js</li>
+<li>WebRTC</li>
+<li>Electron</li>
+<li>Any other port based on data-transport</li>
+</ul>
+</li>
+<li><strong>High Performance Based on Mutative</strong>: Mutative is faster than the naive handcrafted reducer and 10x faster than Immer. Updates to immutable data based on Mutative also maintain good performance. The patches obtained from the shared state update are used for state synchronization.</li>
+<li><strong>High Performance</strong>: Due to Coworker taking on a large number of requests and compute-intensive tasks, the main process and rendering process maintain extremely high performance and user experience.</li>
+<li><strong>Support for Large Applications</strong>: Reactant provides a complete module model design, including dependency injection and class first, as well as various modular design and dynamic module injections.</li>
+<li><strong>Separation of Service and Rendering View Modules</strong>: Service modules, which are primarily based on business logic, can execute separately from view modules. This not only achieves separation of concerns but also allows the process to have its own containerization.</li>
+<li><strong>Graceful Degradation</strong>： If the JavaScript host environment does not support SharedWorker, Coworker reverts to a regular SPA. This does not affect the behavior of any current application.</li>
+</ul>
+<h2 id="API"><a href="#API" class="headerlink" title="API"></a>API</h2><p><code>spawn()</code> - It will forward execution to the module and specified function proxies in Coworker, inspired by the Actor model.</p>
+<h2 id="Examples"><a href="#Examples" class="headerlink" title="Examples"></a>Examples</h2><p>We will create a Counter application with Coworker based on the ‘Base‘ pattern.</p>
+<ol>
+<li>Firstly, create app.tsx that contains the ProxyCounter module which needs to be executed in Coworker.</li>
+</ol>
+<p>Its calling method <code>spawn(this.proxyCounter, &#39;increase&#39;, [])</code> is exactly the same as that of general Shared Web Apps. Whether it will be executed with a proxy in Coworker depends on the configuration of createApp.</p>
+<pre><code class="tsx">import React from &quot;react&quot;;
+import &#123;
+  ViewModule,
+  injectable,
+  useConnector,
+  action,
+  state,
+  spawn,
+&#125; from &quot;reactant-share&quot;;
+
+@injectable(&#123;
+  name: &quot;ProxyCounter&quot;,
+&#125;)
+export class ProxyCounter &#123;
+  @state
+  count = 0;
+
+  @action
+  increase() &#123;
+    this.count += 1;
+  &#125;
+&#125;
+
+@injectable(&#123;
+  name: &quot;AppView&quot;,
+&#125;)
+export class AppView extends ViewModule &#123;
+  constructor(public proxyCounter: ProxyCounter) &#123;
+    super();
+  &#125;
+
+  @state
+  count = 0;
+
+  @action
+  increase() &#123;
+    this.count += 1;
+  &#125;
+
+  component(this: AppView) &#123;
+    const [count, proxyCount] = useConnector(() =&gt; [
+      this.count,
+
+      this.proxyCounter.count,
+    ]);
+
+    return (
+      &lt;&gt;
+        &lt;div&gt;&#123;count&#125;&lt;/div&gt;
+        &lt;button type=&quot;button&quot; onClick=&#123;() =&gt; spawn(this, &quot;increase&quot;, [])&#125;&gt;
+          +
+        &lt;/button&gt;
+        &lt;p&gt;proxy in coworker&lt;/p&gt;
+        &lt;div&gt;&#123;proxyCount&#125;&lt;/div&gt;
+        &lt;button
+          type=&quot;button&quot;
+          onClick=&#123;() =&gt; spawn(this.proxyCounter, &quot;increase&quot;, [])&#125;
+        &gt;
+          +
+        &lt;/button&gt;
+      &lt;/&gt;
+    );
+  &#125;
+&#125;
+</code></pre>
+<ol start="2">
+<li>Create the main file <code>index.ts</code>. Here, we set <code>ProxyCounter</code> as a module of Coworker, and set <code>isCoworker</code> to <code>false</code>.</li>
+</ol>
+<pre><code class="tsx">import &#123; render &#125; from &#39;reactant-web&#39;;
+import &#123;
+  createSharedApp,
+  Coworker,
+  CoworkerOptions,
+  ICoworkerOptions,
+&#125; from &#39;reactant-share&#39;;
+import &#123; AppView, ProxyCounter &#125; from &#39;./app&#39;;
+
+createSharedApp(&#123;
+  modules: [
+    Coworker,
+    &#123;
+      provide: CoworkerOptions,
+      useValue: &#123;
+        useModules: [ProxyCounter],
+        worker: new Worker(new URL(&#39;./coworker.ts&#39;, import.meta.url)),
+        isCoworker: false,
+      &#125; as ICoworkerOptions,
+    &#125;,
+  ],
+  main: AppView,
+  render,
+  share: &#123;
+    name: &#39;SharedWorkerApp&#39;,
+    type: &#39;Base&#39;,
+  &#125;,
+&#125;).then((app) =&gt; &#123;
+  app.bootstrap(document.getElementById(&#39;app&#39;));
+  window.app = app;
+&#125;);
+</code></pre>
+<ol start="3">
+<li>Create the Coworker file <code>coworker.ts</code>. Here, we also set ProxyCounter as a module of Coworker, but set <code>isCoworker</code> to <code>true</code>.</li>
+</ol>
+<pre><code class="tsx">import &#123;
+  createSharedApp,
+  Coworker,
+  CoworkerOptions,
+  ICoworkerOptions,
+&#125; from &#39;reactant-share&#39;;
+import &#123; AppView, ProxyCounter &#125; from &#39;./app&#39;;
+
+createSharedApp(&#123;
+  modules: [
+    Coworker,
+    &#123;
+      provide: CoworkerOptions,
+      useValue: &#123;
+        useModules: [ProxyCounter],
+        isCoworker: true,
+      &#125; as ICoworkerOptions,
+    &#125;,
+  ],
+  main: AppView,
+  render: () =&gt; &#123;&#125;,
+  share: &#123;
+    name: &#39;SharedWorkerApp&#39;,
+    type: &#39;Base&#39;,
+  &#125;,
+&#125;).then((app) =&gt; &#123;
+  self.app = app;
+&#125;);
+</code></pre>
+<p>So far, we have completed a basic application with a Coworker. Users trigger the <code>spawn(this.proxyCounter, &#39;increase&#39;, [])</code> in the main process via the UI. It will be forwarded to the coworker to execute the increase function of proxyCounter, and the shared state will automatically synchronize back to the main process. The rendering update is completed by the <code>useConnector()</code> Hook.</p>
+<h2 id="Q-amp-A"><a href="#Q-amp-A" class="headerlink" title="Q&amp;A"></a>Q&amp;A</h2><ol>
+<li><p>What are the challenges of multi-process programming with Coworker based on reactant-share?<br>State sharing and synchronization among processes in multi-process programming are relatively complex. Fortunately, Reactant-share ensures robustness through a shared state design with consistency. The dependencies between isomorphic modules of Coworker should also be taken into account. In development, concepts such as Domain-Driven Design should be practiced as much as possible to avoid incorrect module design.</p>
+</li>
+<li><p>What are the possible use case types for Coworker?</p>
+</li>
+</ol>
+<ul>
+<li><strong>Request Queue</strong> - Coworker is particularly suitable for modules with intensive requests. Running these in Coworker ensures they don’t occupy the main process’s request queue, allowing other main process requests to execute.</li>
+<li><strong>Large Task Execution Blocking</strong> - When a computationally intensive task is executed, the application’s main process should not be blocked. Such tasks are well suited for asynchronous execution in Coworker.</li>
+<li><strong>Isolatable Modules</strong> - Coworker can also be used as a sandbox to isolate execution of some modules.</li>
+</ul>
+<ol start="3">
+<li>Are there any specific examples to demonstrate that Coworkers can improve application performance?</li>
+</ol>
+<p>In production, we’ve introduced Coworker into some specific scenarios for modules related to large data volume text matching. It resulted in a substantial performance improvement, even up to 10x more, significantly enhancing the user experience.</p>
+<p>Such computationally intensive text matching used to require users to wait more than 1s in the past, with the webpage being completely blocked. However, after using Coworker, the webpage blockage was reduced to less than 100ms (of course, the actual degree of improvement varies with different data sizes).</p>
+<ol start="4">
+<li>Is Coworker usable across different browsers, or does it only support within browser tabs? Can Coworker be used across tabs in different domains?<br>Coworker is a multi-process model based on reactant-share, and reactant-share is based on data-transport. Therefore, we only need to use WebRTC transport from data-transport in CoworkerAdapter within Coworker to achieve cross-browser support. Additionally, to support usage across tabs in different domains, we can implement the use of Coworker under cross-domain tabs with an approach using iframe + shared worker.</li>
+</ol>
+<h2 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h2><p>Front-end development is at a turning point, driven by advances in front-end technology and browser capabilities. Multi-core CPUs and multi-process tools such as Shared Workers and other Workers are now being used to great effect in front-end development. The emergence of Shared Web Apps with Coworker introduces a new multi-process model for front-end applications, which significantly improves application performance, user experience, and code maintainability. For developers, this means more technical choices and challenges, but also more opportunities and potential.</p>
+<p>Multi-process programming for front-end applications is likely to become a key solution for improving front-end performance. This would result in a smoother, more efficient, and more responsive user experience.</p>
+<p>reactant-share Document：<a target="_blank" rel="noopener" href="https://reactant.js.org/docs/shared-app">https://reactant.js.org/docs/shared-app</a><br>reactant-share Repo: <a target="_blank" rel="noopener" href="https://github.com/unadlib/reactant/tree/master/packages/reactant-share">https://github.com/unadlib/reactant/tree/master/packages/reactant-share</a></p>
+
+  </div>
+</article>
+
+  </div>
+</div>
+
+
+  <!-- scripts list from theme config.yml -->
+  
+    <script src="/js/attraction.js"></script>
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/codemirror.min.js"></script>
+  
+  <script>
+    var nodes = Array.from(document.querySelectorAll('pre code'));
+    var render = {};
+    var titleSvg = '<svg style="position: absolute;z-index: 1;margin: 12px 0 0 12px;" xmlns="http://www.w3.org/2000/svg" width="54" height="14" viewBox="0 0 54 14"><g fill="none" fill-rule="evenodd" transform="translate(1 1)"><circle cx="6" cy="6" r="6" fill="#FF5F56" stroke="#E0443E" stroke-width=".5"></circle><circle cx="26" cy="6" r="6" fill="#FFBD2E" stroke="#DEA123" stroke-width=".5"></circle><circle cx="46" cy="6" r="6" fill="#27C93F" stroke="#1AAB29" stroke-width=".5"></circle></g></svg>';
+    nodes.forEach((node, index) => {
+      var lang = node.getAttribute('class');
+      var code = node.innerText;
+      var mode = lang;
+      switch(lang) {
+        case 'jsx':
+          lang = 'javascript';
+          mode = 'text/jsx';
+          break;
+        case 'tsx':
+          lang = 'javascript';
+          mode = 'text/typescript-jsx';
+        case 'typescript':
+          lang = 'javascript';
+          mode = 'text/typescript';
+        default:
+          break;
+      }
+      var config = {
+        value: code,
+        mode,
+        theme: 'seti'
+      };
+      if (!lang) return;
+      var hasExisted = nodes.slice(0, index).find(function(node) { return node.getAttribute('class') === lang; });
+      if (hasExisted) {
+        render[lang].push(function() {
+          node.innerHTML = titleSvg;
+          CodeMirror(node, config);
+        });
+        return;
+      }
+      render[lang] = [];
+      var languagePackge = document.createElement('script');
+      languagePackge.src = `https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/mode/${lang}/${lang}.min.js`;
+      languagePackge.onload = () => {
+        setTimeout(() => {
+          node.innerHTML = titleSvg;
+          CodeMirror(node, config);
+          render[lang].forEach(function(callback) { callback(); })
+        }, 0);
+      }
+      document.body.appendChild(languagePackge);
+    });
+  </script>
+
+</body>
+</html>
