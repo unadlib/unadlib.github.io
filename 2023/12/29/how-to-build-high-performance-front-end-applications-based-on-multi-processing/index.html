@@ -361,25 +361,19 @@ createSharedApp(&#123;
 &#125;);
 </code></pre>
 <p>So far, we have completed a basic application with a Coworker. Users trigger the <code>spawn(this.proxyCounter, &#39;increase&#39;, [])</code> in the main process via the UI. It will be forwarded to the coworker to execute the increase function of proxyCounter, and the shared state will automatically synchronize back to the main process. The rendering update is completed by the <code>useConnector()</code> Hook.</p>
-<h2 id="Q-amp-A"><a href="#Q-amp-A" class="headerlink" title="Q&amp;A"></a>Q&amp;A</h2><ol>
-<li><p>What are the challenges of multi-process programming with Coworker based on reactant-share?<br>State sharing and synchronization among processes in multi-process programming are relatively complex. Fortunately, Reactant-share ensures robustness through a shared state design with consistency. The dependencies between isomorphic modules of Coworker should also be taken into account. In development, concepts such as Domain-Driven Design should be practiced as much as possible to avoid incorrect module design.</p>
-</li>
-<li><p>What are the possible use case types for Coworker?</p>
-</li>
-</ol>
+<h2 id="Q-amp-A"><a href="#Q-amp-A" class="headerlink" title="Q&amp;A"></a>Q&amp;A</h2><p><strong>1. What are the challenges of multi-process programming with Coworker based on reactant-share?</strong></p>
+<p>State sharing and synchronization among processes in multi-process programming are relatively complex. Fortunately, Reactant-share ensures robustness through a shared state design with consistency. The dependencies between isomorphic modules of Coworker should also be taken into account. In development, concepts such as Domain-Driven Design should be practiced as much as possible to avoid incorrect module design.</p>
+<p><strong>2. What are the possible use case types for Coworker?</strong></p>
 <ul>
 <li><strong>Request Queue</strong> - Coworker is particularly suitable for modules with intensive requests. Running these in Coworker ensures they don’t occupy the main process’s request queue, allowing other main process requests to execute.</li>
 <li><strong>Large Task Execution Blocking</strong> - When a computationally intensive task is executed, the application’s main process should not be blocked. Such tasks are well suited for asynchronous execution in Coworker.</li>
 <li><strong>Isolatable Modules</strong> - Coworker can also be used as a sandbox to isolate execution of some modules.</li>
 </ul>
-<ol start="3">
-<li>Are there any specific examples to demonstrate that Coworkers can improve application performance?</li>
-</ol>
+<p><strong>3. Are there any specific examples to demonstrate that Coworkers can improve application performance?</strong></p>
 <p>In production, we’ve introduced Coworker into some specific scenarios for modules related to large data volume text matching. It resulted in a substantial performance improvement, even up to 10x more, significantly enhancing the user experience.</p>
 <p>Such computationally intensive text matching used to require users to wait more than 1s in the past, with the webpage being completely blocked. However, after using Coworker, the webpage blockage was reduced to less than 100ms (of course, the actual degree of improvement varies with different data sizes).</p>
-<ol start="4">
-<li>Is Coworker usable across different browsers, or does it only support within browser tabs? Can Coworker be used across tabs in different domains?<br>Coworker is a multi-process model based on reactant-share, and reactant-share is based on data-transport. Therefore, we only need to use WebRTC transport from data-transport in CoworkerAdapter within Coworker to achieve cross-browser support. Additionally, to support usage across tabs in different domains, we can implement the use of Coworker under cross-domain tabs with an approach using iframe + shared worker.</li>
-</ol>
+<p><strong>4. Is Coworker usable across different browsers, or does it only support within browser tabs? Can Coworker be used across tabs in different domains?</strong></p>
+<p>Coworker is a multi-process model based on reactant-share, and reactant-share is based on data-transport. Therefore, we only need to use WebRTC transport from data-transport in CoworkerAdapter within Coworker to achieve cross-browser support. Additionally, to support usage across tabs in different domains, we can implement the use of Coworker under cross-domain tabs with an approach using iframe + shared worker.</p>
 <h2 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h2><p>Front-end development is at a turning point, driven by advances in front-end technology and browser capabilities. Multi-core CPUs and multi-process tools such as Shared Workers and other Workers are now being used to great effect in front-end development. The emergence of Shared Web Apps with Coworker introduces a new multi-process model for front-end applications, which significantly improves application performance, user experience, and code maintainability. For developers, this means more technical choices and challenges, but also more opportunities and potential.</p>
 <p>Multi-process programming for front-end applications is likely to become a key solution for improving front-end performance. This would result in a smoother, more efficient, and more responsive user experience.</p>
 <p>reactant-share Document：<a target="_blank" rel="noopener" href="https://reactant.js.org/docs/shared-app">https://reactant.js.org/docs/shared-app</a><br>reactant-share Repo: <a target="_blank" rel="noopener" href="https://github.com/unadlib/reactant/tree/master/packages/reactant-share">https://github.com/unadlib/reactant/tree/master/packages/reactant-share</a></p>
