@@ -1,0 +1,446 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+  <title>How to build high-performance front-end applications based on multithreadingunadlib&#39;s Notes</title>
+  <style type="text/css">
+    body, html {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+      font-size: 18px;
+      line-height: 1.8;
+      user-select: none;
+      box-sizing: border-box;
+      touch-action: manipulation;
+      background-color: #f1f3f4;
+    }
+
+    a {
+      color: #000;
+    }
+
+    a.title {
+      text-decoration: none;
+    }
+
+    #content-outer {
+      margin: 4% 14%;
+      padding: 4% 8%;
+      box-shadow: 0 0 3px -1px rgba(0,0,0,.3);
+      border-radius: 5px;
+      box-sizing: border-box;
+      background: #fff;
+      border-bottom: 1px solid #b5b5b5;
+    }
+
+    #content-inner {
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .recent-post-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .recent-post-item .title {
+      overflow: hidden;
+      text-overflow:ellipsis;
+      white-space: nowrap;
+    }
+
+    .recent-post-item .time {
+      color: #ccc;
+      font-size: 14px;
+      line-height: 32px;
+      min-width: 81px;
+      text-align: right;
+    }
+
+    #post img {
+      max-width: 100%;
+    }
+
+    #post h1.title {
+      text-align: center;
+      font-size: 2em;
+      margin-block-start: 0.67em;
+      margin-block-end: 0.67em;
+      line-height: 1;
+    }
+
+    #post .time {
+      text-align: center;
+      color: #ccc;
+      font-size: 14px;
+    }
+
+    #post .content {
+      margin-top: 8%;
+    }
+
+    #post .content blockquote {
+      border-left: 3px solid #eee;
+      padding-left: 20px;
+      color: #666;
+      margin: 0;
+    }
+
+    #post .content .gutter {
+      display: none;
+    }
+
+    code, kbd, pre, samp {
+      font-size: 16px !important;
+    }
+
+    .CodeMirror {
+      height: auto !important;
+      padding: 36px 24px 0;
+      border-radius: 6px;
+    }
+
+    #post .content figure {
+      padding: 0 1em;
+      background-color: #f1f3f4;
+      border: 1px solid #e0e0e0;
+      margin: 0;
+      overflow: auto;
+    }
+
+    #post .content figure table {
+      width: 100%;
+    }
+
+    @media screen and (max-width: 1024px)  {
+      #content-outer {
+        margin: 2% 7%;
+        padding: 2% 4%;
+      }
+
+      .recent-post-item:first-child {
+        margin-top: 16px;
+      }
+    }
+
+    @media screen and (max-width: 480px) {
+      body{
+        -webkit-text-size-adjust: none;
+      }
+
+      #content-outer {
+        margin: 0;
+        padding: 2% 4%;
+        border-radius: 0;
+      }
+
+      .recent-post-item:first-child {
+        margin-top: 32px;
+      }
+
+      .recent-post-item:last-child {
+        border-bottom: none;
+      }
+    }
+  </style>
+  
+    <!-- styles list from theme config.yml -->
+    
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/codemirror.min.css">
+    
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/theme/seti.min.css">
+    
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+<body class="cm-s-seti">
+
+<div id="content-outer">
+  <div id="content-inner">
+    
+<article id="post">
+  <h1 class="title">How to build high-performance front-end applications based on multithreading</h1>
+  <p class="time">2023-12-29</span>
+  <div class="content">
+      <h2 id="Motivation"><a href="#Motivation" class="headerlink" title="Motivation"></a>Motivation</h2><p>As modern front-end applications become larger, leveraging the device’s CPU multi-cores to improve performance is becoming an important trend.</p>
+<p>Front-end applications often run in a single browser window, where JavaScript executes on a single thread. This means that common web applications cannot fully utilize a CPU’s multiple cores. As applications become larger and more complex, this can lead to performance problems and a poor user experience.</p>
+<p>However, there is good news: modern browsers widely support various types of workers, including Shared Workers, as IE and Safari v16 are gradually being phased out (regarding Shared Worker support). Shared Workers are a mature technology allowing multiple threads of JavaScript code to share data and communicate with each other. This makes them ideal for building multithreaded front-end applications.</p>
+<p>Multithreaded front-end applications offer several benefits. They can better handle computation-intensive and slow-running JavaScript, which can improve performance and responsiveness. They can also increase the number of concurrent requests that can be processed, which can further improve the application’s responsiveness.</p>
+<p>Therefore, we aim to explore a web application framework that leverages multithreading.</p>
+<h2 id="Web-application-with-Multithreading"><a href="#Web-application-with-Multithreading" class="headerlink" title="Web application with Multithreading"></a>Web application with Multithreading</h2><p>In a multithreaded web architecture, we can leverage the Shared Web Apps concept of reactant-share to expand upon general multithreading programming.</p>
+<p>Shared Web Apps allows web applications to run in multiple browser windows or workers. It uses a unique front-end server (such as a Shared Worker) to facilitate sharing across web apps, including code, local storage, state, and more. Regardless of the number of browser windows opened, there is always only one server application instance shared among multiple client applications in Shared Web Apps. This enables web tabs to focus solely on rendering, thereby better utilizing the device’s multi-cores and ensuring the smooth operation of the web application.</p>
+<p>Shared Web Apps offers the following benefits:</p>
+<ul>
+<li>Reduces the mental burden of multithreading programming by implementing Isomorphism through a universal modular model. Isomorphism refers to the ability to execute the same code on the server thread, client thread, or other threads, simplifying multithreading programming.</li>
+<li>Ensures the smooth operation of the front-end server thread by transferring compute-intensive tasks to another thread. This frees up the front-end server thread to focus on business logic and the client thread on rendering, improving performance and responsiveness.</li>
+<li>Improves request concurrency through a more efficient multithreading model.</li>
+</ul>
+<h2 id="Coworker-based-on-reactant-share"><a href="#Coworker-based-on-reactant-share" class="headerlink" title="Coworker based on reactant-share"></a>Coworker based on reactant-share</h2><p>Building upon reactant-share, we have implemented the Coworker model, which facilitates state sharing across multiple threads, synchronizes state, and minimizes state changes using patches to ensure optimal performance in multithreaded execution.</p>
+<p><img src="/assets/2023-12-29-how-to-build-high-performance-front-end-applications-based-on-multithreading/workflow.png" alt="Workflow"></p>
+<p>The Coworker model comprises three types of threads:</p>
+<ul>
+<li>client thread: The rendering thread, responsible for accepting shared state and solely rendering the web UI. Its lightweight nature ensures smooth rendering.</li>
+<li>server thread: The main thread, responsible for executing the majority of the application’s business logic. Smooth operation is also crucial for this thread.</li>
+<li>Coworker thread: This thread handles compute-intensive business logic or request-intensive logic. This frees the server thread to focus on business logic. This allows the server thread to reduce blocking caused by JavaScript and makes it less susceptible to the impact of request-intensive logic.</li>
+</ul>
+<p>In ‘Base’ mode, Reactant Shared Apps has only two threads: the Tab thread and the Coworker thread. By default, the Coworker thread utilizes a Web Worker.</p>
+<h2 id="Implementation-of-Coworker"><a href="#Implementation-of-Coworker" class="headerlink" title="Implementation of Coworker"></a>Implementation of Coworker</h2><p>For details on the underlying principles of Reactant-Share, please refer to the following link: <a target="_blank" rel="noopener" href="https://reactant.js.org/blog/2021/10/03/how-to-make-web-application-support-multiple-browser-windows">https://reactant.js.org/blog/2021/10/03/how-to-make-web-application-support-multiple-browser-windows</a></p>
+<p>Coworker comprises two modules:</p>
+<ul>
+<li><strong>CoworkerAdapter:</strong> Provides a communication channel between the server thread and the coworker thread.</li>
+<li><strong>CoworkerExecutor:</strong> Manages the synchronization of shared state between threads and custom Coworker type modules (used for proxy execution of coworkers). Coworker state is synchronously sent to the main thread in one direction. Each time a Coworker synchronizes its state, it includes a sequence tag. If the sequence is out of order, a complete Coworker state synchronization is automatically triggered to ensure the consistency of the shared state between the Coworker and the main thread.</li>
+</ul>
+<h2 id="Core-Concepts-and-Advantages-of-Coworker"><a href="#Core-Concepts-and-Advantages-of-Coworker" class="headerlink" title="Core Concepts and Advantages of Coworker"></a>Core Concepts and Advantages of Coworker</h2><ul>
+<li><strong>Isomorphism:</strong> The ability for all threads to execute the same code enhances the maintainability of multithreading programming in JavaScript.</li>
+<li><strong>Thread Interaction based on the Actor Model:</strong> By leveraging the Actor model, this approach reduces the cognitive load associated with multithreading programming in JavaScript.</li>
+<li><strong>Generic Transport Model:</strong> Coworker supports any transport mechanism based on data-transport (<a target="_blank" rel="noopener" href="https://github.com/unadlib/data-transport">https://github.com/unadlib/data-transport</a>), enabling it to run in any container that supports transport, including SharedWorker. The following is a list of supported transports:<ul>
+<li>iframe</li>
+<li>Broadcast</li>
+<li>Web Worker</li>
+<li>Service Worker</li>
+<li>Shared Worker</li>
+<li>Browser Extension</li>
+<li>Node.js</li>
+<li>WebRTC</li>
+<li>Electron</li>
+<li>Any other port based on data-transport</li>
+</ul>
+</li>
+<li><strong>High Performance Based on Mutative:</strong> <a target="_blank" rel="noopener" href="https://github.com/unadlib/mutative">Mutative</a> offers high performance, being faster than a naive handcrafted reducer and 10 times faster than Immer. Mutative also maintains good performance when updating immutable data. Patches generated from shared state updates are used for state synchronization.</li>
+<li><strong>High Performance:</strong> Because Coworker handles a large number of requests and compute-intensive tasks, the main thread and rendering thread can maintain extremely high performance and a superior user experience.</li>
+<li><strong>Support for Large Applications:</strong> Reactant offers a complete module model design, including dependency injection and a class-first approach, along with various modular design patterns and dynamic module injection capabilities.</li>
+<li><strong>Separation of Service and Rendering View Modules:</strong> Service modules, primarily focused on business logic, can execute independently from view modules. This not only achieves separation of concerns but also allows each thread to have its own containerization.</li>
+<li><strong>Graceful Degradation:</strong> If the JavaScript host environment does not support SharedWorker, Coworker gracefully degrades to a regular SPA. This does not affect the behavior of existing applications.</li>
+</ul>
+<h2 id="API"><a href="#API" class="headerlink" title="API"></a>API</h2><p><code>delegate()</code> - This function forwards execution to the specified module and function proxies within the Coworker, drawing inspiration from the Actor model.</p>
+<h2 id="Examples"><a href="#Examples" class="headerlink" title="Examples"></a>Examples</h2><p>We will create a Counter application using Coworker based on the ‘Base’ pattern.</p>
+<ol>
+<li>First, create <code>app.tsx</code>, which contains the <code>ProxyCounter</code> module that will be executed in the Coworker.</li>
+</ol>
+<p>Its calling method, <code>delegate(this.proxyCounter, &#39;increase&#39;, [])</code>, is identical to that used in general Shared Web Apps. Whether it is executed with a proxy in the Coworker depends on the configuration of <code>createApp</code>.</p>
+<pre><code class="tsx">import React from &quot;react&quot;;
+import &#123;
+  ViewModule,
+  injectable,
+  useConnector,
+  action,
+  state,
+  delegate,
+&#125; from &quot;reactant-share&quot;;
+
+@injectable(&#123;
+  name: &quot;ProxyCounter&quot;,
+&#125;)
+export class ProxyCounter &#123;
+  @state
+  count = 0;
+
+  @action
+  increase() &#123;
+    this.count += 1;
+  &#125;
+&#125;
+
+@injectable(&#123;
+  name: &quot;AppView&quot;,
+&#125;)
+export class AppView extends ViewModule &#123;
+  constructor(public proxyCounter: ProxyCounter) &#123;
+    super();
+  &#125;
+
+  @state
+  count = 0;
+
+  @action
+  increase() &#123;
+    this.count += 1;
+  &#125;
+
+  component(this: AppView) &#123;
+    const [count, proxyCount] = useConnector(() =&gt; [
+      this.count,
+      this.proxyCounter.count,
+    ]);
+
+    return (
+      &lt;&gt;
+        &lt;div&gt;&#123;count&#125;&lt;/div&gt;
+        &lt;button type=&quot;button&quot; onClick=&#123;() =&gt; delegate(this, &quot;increase&quot;, [])&#125;&gt;
+          +
+        &lt;/button&gt;
+        &lt;p&gt;proxy in coworker&lt;/p&gt;
+        &lt;div&gt;&#123;proxyCount&#125;&lt;/div&gt;
+        &lt;button
+          type=&quot;button&quot;
+          onClick=&#123;() =&gt; delegate(this.proxyCounter, &quot;increase&quot;, [])&#125;
+        &gt;
+          +
+        &lt;/button&gt;
+      &lt;/&gt;
+    );
+  &#125;
+&#125;
+</code></pre>
+<ol start="2">
+<li>Create the main file, <code>index.ts</code>. Here, we configure <code>ProxyCounter</code> as a module of Coworker and set <code>isCoworker</code> to <code>false</code>.</li>
+</ol>
+<pre><code class="tsx">import &#123; render &#125; from &#39;reactant-web&#39;;
+import &#123;
+  createSharedApp,
+  Coworker,
+  CoworkerOptions,
+  ICoworkerOptions,
+&#125; from &#39;reactant-share&#39;;
+import &#123; AppView, ProxyCounter &#125; from &#39;./app&#39;;
+
+createSharedApp(&#123;
+  modules: [
+    Coworker,
+    &#123;
+      provide: CoworkerOptions,
+      useValue: &#123;
+        useModules: [ProxyCounter],
+        worker: new Worker(new URL(&#39;./coworker.ts&#39;, import.meta.url)),
+        isCoworker: false,
+      &#125; as ICoworkerOptions,
+    &#125;,
+  ],
+  main: AppView,
+  render,
+  share: &#123;
+    name: &#39;SharedWorkerApp&#39;,
+    type: &#39;Base&#39;,
+  &#125;,
+&#125;).then((app) =&gt; &#123;
+  app.bootstrap(document.getElementById(&#39;app&#39;));
+  window.app = app;
+&#125;);
+</code></pre>
+<ol start="3">
+<li>Create the Coworker file, <code>coworker.ts</code>. Here, we also configure <code>ProxyCounter</code> as a module of Coworker, but this time set <code>isCoworker</code> to <code>true</code>.</li>
+</ol>
+<pre><code class="tsx">import &#123;
+  createSharedApp,
+  Coworker,
+  CoworkerOptions,
+  ICoworkerOptions,
+&#125; from &#39;reactant-share&#39;;
+import &#123; AppView, ProxyCounter &#125; from &#39;./app&#39;;
+
+createSharedApp(&#123;
+  modules: [
+    Coworker,
+    &#123;
+      provide: CoworkerOptions,
+      useValue: &#123;
+        useModules: [ProxyCounter],
+        isCoworker: true,
+      &#125; as ICoworkerOptions,
+    &#125;,
+  ],
+  main: AppView,
+  render: () =&gt; &#123;&#125;,
+  share: &#123;
+    name: &#39;SharedWorkerApp&#39;,
+    type: &#39;Base&#39;,
+  &#125;,
+&#125;).then((app) =&gt; &#123;
+  self.app = app;
+&#125;);
+</code></pre>
+<p>Thus far, we have created a basic application using a Coworker. Users trigger the <code>delegate(this.proxyCounter, &#39;increase&#39;, [])</code> function in the main thread via the UI. This action is forwarded to the coworker to execute the <code>increase</code> function of <code>proxyCounter</code>, and the shared state automatically synchronizes back to the main thread. The rendering update is handled by the <code>useConnector()</code> Hook.</p>
+<h2 id="Q-amp-A"><a href="#Q-amp-A" class="headerlink" title="Q&amp;A"></a>Q&amp;A</h2><p><strong>1. What are the challenges of multithreaded programming with Coworker based on reactant-share?</strong></p>
+<p>State sharing and synchronization among threads in multithreaded programming are inherently complex. Fortunately, Reactant-share ensures robustness through a consistent shared state design. The dependencies between isomorphic modules within Coworker should also be considered. During development, adopting concepts like Domain-Driven Design is recommended to prevent improper module design.</p>
+<p><strong>2. What are the potential use cases for Coworker?</strong></p>
+<ul>
+<li><strong>Request Queue:</strong> Coworker is particularly well-suited for modules handling a high volume of requests. Running these within Coworker prevents them from occupying the main thread’s request queue, allowing other main thread requests to execute unimpeded.</li>
+<li><strong>Large Task Execution Blocking:</strong> To avoid blocking the application’s main thread during the execution of computationally intensive tasks, such tasks are ideal for asynchronous execution within Coworker.</li>
+<li><strong>Isolatable Modules:</strong> Coworker can also serve as a sandbox to isolate the execution of specific modules.</li>
+</ul>
+<p><strong>3. Are there specific examples demonstrating how Coworker can improve application performance?</strong></p>
+<p>In production, we have implemented Coworker in specific scenarios for modules involving text matching with large data volumes. This resulted in a substantial performance improvement, in some cases up to 10x, significantly enhancing the user experience. Previously, such computationally intensive text matching would require users to wait over 1 second, during which the webpage would be completely blocked. However, after implementing Coworker, the webpage blockage was reduced to less than 100ms (the actual degree of improvement varies depending on data size).</p>
+<p><strong>4. Is Coworker usable across different browsers, or is its support limited to within browser tabs? Can Coworker be used across tabs in different domains?</strong></p>
+<p>Coworker is a multithreaded model built upon reactant-share, which in turn is based on data-transport. Therefore, utilizing the WebRTC transport from data-transport within Coworker’s CoworkerAdapter is sufficient to achieve cross-browser support. Additionally, to enable usage across tabs in different domains, we can implement Coworker under cross-domain tabs using an iframe and shared worker approach.</p>
+<h2 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h2><p>Front-end development is at a turning point, driven by advancements in front-end technology and browser capabilities. Multi-core CPUs and multithreading tools like Shared Workers and other Workers are now being utilized effectively in front-end development. The emergence of Shared Web Apps with Coworker introduces a novel multithreading model for front-end applications, significantly improving application performance, user experience, and code maintainability. For developers, this signifies more technical choices and challenges, but also greater opportunities and potential.</p>
+<p>Multithreaded programming for front-end applications is likely to become a key solution for enhancing front-end performance. This will result in a smoother, more efficient, and more responsive user experience.</p>
+<ul>
+<li>reactant-share Document：<a target="_blank" rel="noopener" href="https://reactant.js.org/docs/shared-app">https://reactant.js.org/docs/shared-app</a></li>
+<li>reactant-share Repo: <a target="_blank" rel="noopener" href="https://github.com/unadlib/reactant/tree/master/packages/reactant-share">https://github.com/unadlib/reactant/tree/master/packages/reactant-share</a></li>
+</ul>
+
+  </div>
+</article>
+
+  </div>
+</div>
+
+
+  <!-- scripts list from theme config.yml -->
+  
+    <script src="/js/attraction.js"></script>
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/codemirror.min.js"></script>
+  
+  <script>
+    var nodes = Array.from(document.querySelectorAll('pre code'));
+    var render = {};
+    var titleSvg = '<svg style="position: absolute;z-index: 1;margin: 12px 0 0 12px;" xmlns="http://www.w3.org/2000/svg" width="54" height="14" viewBox="0 0 54 14"><g fill="none" fill-rule="evenodd" transform="translate(1 1)"><circle cx="6" cy="6" r="6" fill="#FF5F56" stroke="#E0443E" stroke-width=".5"></circle><circle cx="26" cy="6" r="6" fill="#FFBD2E" stroke="#DEA123" stroke-width=".5"></circle><circle cx="46" cy="6" r="6" fill="#27C93F" stroke="#1AAB29" stroke-width=".5"></circle></g></svg>';
+    nodes.forEach((node, index) => {
+      var lang = node.getAttribute('class');
+      var code = node.innerText;
+      var mode = lang;
+      switch(lang) {
+        case 'jsx':
+          lang = 'javascript';
+          mode = 'text/jsx';
+          break;
+        case 'tsx':
+          lang = 'javascript';
+          mode = 'text/typescript-jsx';
+        case 'typescript':
+          lang = 'javascript';
+          mode = 'text/typescript';
+        default:
+          break;
+      }
+      var config = {
+        value: code,
+        mode,
+        theme: 'seti'
+      };
+      if (!lang) return;
+      var hasExisted = nodes.slice(0, index).find(function(node) { return node.getAttribute('class') === lang; });
+      if (hasExisted) {
+        render[lang].push(function() {
+          node.innerHTML = titleSvg;
+          CodeMirror(node, config);
+        });
+        return;
+      }
+      render[lang] = [];
+      var languagePackge = document.createElement('script');
+      languagePackge.src = `https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/mode/${lang}/${lang}.min.js`;
+      languagePackge.onload = () => {
+        setTimeout(() => {
+          node.innerHTML = titleSvg;
+          CodeMirror(node, config);
+          render[lang].forEach(function(callback) { callback(); })
+        }, 0);
+      }
+      document.body.appendChild(languagePackge);
+    });
+  </script>
+
+</body>
+</html>
