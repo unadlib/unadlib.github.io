@@ -1,0 +1,739 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+  <title>Build an AI-based Browser Phone Extensionunadlib&#39;s Notes</title>
+  <style type="text/css">
+    body, html {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+      font-size: 18px;
+      line-height: 1.8;
+      user-select: none;
+      box-sizing: border-box;
+      touch-action: manipulation;
+      background-color: #f1f3f4;
+    }
+
+    a {
+      color: #000;
+    }
+
+    a.title {
+      text-decoration: none;
+    }
+
+    #content-outer {
+      margin: 4% 14%;
+      padding: 4% 8%;
+      box-shadow: 0 0 3px -1px rgba(0,0,0,.3);
+      border-radius: 5px;
+      box-sizing: border-box;
+      background: #fff;
+      border-bottom: 1px solid #b5b5b5;
+    }
+
+    #content-inner {
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .recent-post-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .recent-post-item .title {
+      overflow: hidden;
+      text-overflow:ellipsis;
+      white-space: nowrap;
+    }
+
+    .recent-post-item .time {
+      color: #ccc;
+      font-size: 14px;
+      line-height: 32px;
+      min-width: 81px;
+      text-align: right;
+    }
+
+    #post img {
+      max-width: 100%;
+    }
+
+    #post h1.title {
+      text-align: center;
+      font-size: 2em;
+      margin-block-start: 0.67em;
+      margin-block-end: 0.67em;
+      line-height: 1;
+    }
+
+    #post .time {
+      text-align: center;
+      color: #ccc;
+      font-size: 14px;
+    }
+
+    #post .content {
+      margin-top: 8%;
+    }
+
+    #post .content blockquote {
+      border-left: 3px solid #eee;
+      padding-left: 20px;
+      color: #666;
+      margin: 0;
+    }
+
+    #post .content .gutter {
+      display: none;
+    }
+
+    code, kbd, pre, samp {
+      font-size: 16px !important;
+    }
+
+    .CodeMirror {
+      height: auto !important;
+      padding: 36px 24px 0;
+      border-radius: 6px;
+    }
+
+    #post .content figure {
+      padding: 0 1em;
+      background-color: #f1f3f4;
+      border: 1px solid #e0e0e0;
+      margin: 0;
+      overflow: auto;
+    }
+
+    #post .content figure table {
+      width: 100%;
+    }
+
+    @media screen and (max-width: 1024px)  {
+      #content-outer {
+        margin: 2% 7%;
+        padding: 2% 4%;
+      }
+
+      .recent-post-item:first-child {
+        margin-top: 16px;
+      }
+    }
+
+    @media screen and (max-width: 480px) {
+      body{
+        -webkit-text-size-adjust: none;
+      }
+
+      #content-outer {
+        margin: 0;
+        padding: 2% 4%;
+        border-radius: 0;
+      }
+
+      .recent-post-item:first-child {
+        margin-top: 32px;
+      }
+
+      .recent-post-item:last-child {
+        border-bottom: none;
+      }
+    }
+  </style>
+  
+    <!-- styles list from theme config.yml -->
+    
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/codemirror.min.css">
+    
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/theme/seti.min.css">
+    
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+<body class="cm-s-seti">
+
+<div id="content-outer">
+  <div id="content-inner">
+    
+<article id="post">
+  <h1 class="title">Build an AI-based Browser Phone Extension</h1>
+  <p class="time">2023-05-01</span>
+  <div class="content">
+      <h2 id="Motivation"><a href="#Motivation" class="headerlink" title="Motivation"></a>Motivation</h2><p>On March 14, 2023, OpenAI released GPT-4, a transformer-based model that is more reliable, intelligent, and capable of handling nuanced instructions compared to GPT-3.5. GPT-4 has consistently outperformed other Large Language Models (LLMs) in various benchmarks, leading to a surge in diverse AI-powered applications built upon it. Among these applications, the “phone” remains a fundamental human communication need and a core communication service for businesses. The potential for AI to enhance communication efficiency and quality in phone interactions is significant and worth exploring.</p>
+<p>Compared to traditional phone applications, we aim to build an AI-driven Browser Phone Extension. This extension is envisioned to leverage AI to assist in every stage of the phone call process, ultimately improving the user’s calling experience.</p>
+<ol>
+<li>Before a call, we want it to help us extract contact information from any third-party webpage, especially complex ones. Crucially, it should provide intelligent analysis of relevant contact data (call recordings, voicemails, SMS, etc.) associated with each identified contact. This would enable us to understand sentiment analysis or potential draft summaries for upcoming calls, and more.</li>
+<li>During a call, the spoken dialogue will be transcribed into text in real-time. Based on this live text conversation, the extension should offer effective intelligent prompts and assistance. It could even intelligently deploy an AI voicebot to participate in the conversation.</li>
+<li>After a call concludes, it will intelligently generate a call sentiment assessment, conversation summary, and to-do list based on the current call information, the conversation transcript, and potentially past interactions with the contact. It will also provide automatic form filling in any CRM page forms.</li>
+</ol>
+<p>Once this Browser Phone Extension delivers these functionalities, we will see a seamless integration of phone workflows with relevant platforms. This demonstrates the practical application of AI in optimizing the entire call workflow.</p>
+<h2 id="Integrated-AI-Services-and-Capabilities"><a href="#Integrated-AI-Services-and-Capabilities" class="headerlink" title="Integrated AI Services and Capabilities"></a>Integrated AI Services and Capabilities</h2><p>Before implementing this extension, we should clearly define the AI services and capabilities we plan to integrate:</p>
+<ul>
+<li>OpenAI SDK: Provides the chat&#x2F;completions API for intelligent content generation.</li>
+<li>OpenAI SDK: Provides the audio&#x2F;transcriptions API for transcribing audio files to text.</li>
+<li>Azure: Additionally offers real-time STT (Speech-to-Text) and TTS (Text-to-Speech) APIs.</li>
+</ul>
+<h2 id="Flowchart"><a href="#Flowchart" class="headerlink" title="Flowchart"></a>Flowchart</h2><p>Based on the above three sets of APIs, combined with Browser Extension APIs, let’s design the overall business process:</p>
+<p><img src="/assets/2023-05-01-build-an-ai-based-browser-phone-extension/flowchart.png" alt="BDD"></p>
+<h2 id="Implementation"><a href="#Implementation" class="headerlink" title="Implementation"></a>Implementation</h2><h3 id="Creating-a-Basic-Browser-Phone-Extension-Project"><a href="#Creating-a-Basic-Browser-Phone-Extension-Project" class="headerlink" title="Creating a Basic Browser Phone Extension Project"></a>Creating a Basic Browser Phone Extension Project</h3><p>We can base our project on the open-source browser-extension-boilerplate, which supports building browser extensions for multiple browsers:</p>
+<ul>
+<li>Chrome</li>
+<li>Firefox</li>
+<li>Opera (Chrome Build)</li>
+<li>Edge (Chrome Build)</li>
+<li>Brave</li>
+<li>Safari</li>
+</ul>
+<p>We will designate content.js as the JavaScript file that the extension will inject by default into any tabs. We will designate background.js as the browser’s service worker, which will be used to pop up a separate page (client.js) that can function as the Phone app.</p>
+<p>Taking the manifest.json configuration of a Chrome MV3 extension as an example:</p>
+<pre><code class="javascript">&#123;
+  &quot;manifest_version&quot;: 3,
+  &quot;name&quot;: &quot;demo&quot;,
+  &quot;version&quot;: &quot;0.0.1&quot;,
+  &quot;description&quot;: &quot;A browser extension demo&quot;,
+  &quot;background&quot;: &#123;
+    &quot;service_worker&quot;: &quot;background.js&quot;
+  &#125;,
+  &quot;action&quot;: &#123;&#125;,
+  &quot;icons&quot;: &#123;
+    &quot;128&quot;: &quot;logo.png&quot;
+  &#125;,
+  &quot;permissions&quot;: [&quot;tabs&quot;, &quot;activeTab&quot;, &quot;debugger&quot;, &quot;management&quot;],
+  &quot;host_permissions&quot;: [&quot;http://*/&quot;, &quot;https://*/&quot;],
+  &quot;content_scripts&quot;: [
+    &#123;
+      &quot;matches&quot;: [&quot;http://*/*&quot;, &quot;https://*/*&quot;, &quot;&lt;all_urls&gt;&quot;],
+      &quot;js&quot;: [&quot;content.js&quot;],
+      &quot;css&quot;: [&quot;content.styles.css&quot;]
+    &#125;
+  ],
+  &quot;web_accessible_resources&quot;: [
+    &#123;
+      &quot;resources&quot;: [&quot;content.styles.css&quot;, &quot;logo.png&quot;],
+      &quot;matches&quot;: []
+    &#125;,
+    &#123;
+      &quot;resources&quot;: [&quot;client.html&quot;, &quot;redirect.html&quot;, &quot;logo.png&quot;],
+      &quot;matches&quot;: [&quot;&lt;all_urls&gt;&quot;]
+    &#125;
+  ]
+&#125;
+</code></pre>
+<p>We should primarily focus on the permissions section:</p>
+<ul>
+<li>tabs and activeTab are mainly used for tab communication and status capture, etc.</li>
+<li>debugger will primarily be used for automating webpage operations.</li>
+</ul>
+<h3 id="Implementing-Contact-Information-Extraction-from-Any-Webpage"><a href="#Implementing-Contact-Information-Extraction-from-Any-Webpage" class="headerlink" title="Implementing Contact Information Extraction from Any Webpage"></a>Implementing Contact Information Extraction from Any Webpage</h3><p>In <code>content.js</code>, we will implement basic content extraction from webpages:</p>
+<pre><code class="javascript">chrome.runtime.onMessage.addListener((message, sender, sendResponse) =&gt; &#123;
+  const type = message.type;
+  if (type === &quot;get-webpage-text&quot;) &#123;
+    sendResponse(document.body.innerText);
+  &#125;
+&#125;);
+</code></pre>
+<p>And in <code>client.js</code>, we will implement the corresponding request for webpage content:</p>
+<pre><code class="javascript">async function getActiveTab() &#123;
+  const &#123; id &#125; = await chrome.tabs.getCurrent();
+  const [activeTab] = (await chrome.tabs.query(&#123; active: true &#125;)).filter(
+    (item) =&gt; item.id !== id
+  );
+  return activeTab;
+&#125;
+
+async function getPageText() &#123;
+  const activeTab = await getActiveTab();
+  if (!activeTab) &#123;
+    throw new Error(&quot;No active tab found&quot;);
+  &#125;
+  const response = await chrome.tabs.sendMessage(activeTab.id!, &#123;
+    type: &quot;get-webpage-text&quot;,
+  &#125;);
+  return response;
+&#125;
+</code></pre>
+<p>We only used the simple API document.body.innerText. A more complete extraction should consider content visibility, iframe content, and many other factors. Due to space limitations, we won’t elaborate further here.</p>
+<p>Next, we will submit the extracted content to the OpenAI API to extract contact information:</p>
+<pre><code class="javascript">async function fetchContactsInfo() &#123;
+  const text = await getPageText();
+  const content = `The following is the text of a web page using &#39;document.body.innerText&#39;, please help me to extract the information about the contact \n&#39;$&#123;text&#125;&#39;, result should be Array JSON format and data format be like below
+  
+      &#123;
+        name: string;
+        title: string;
+        phone: string;
+        email: string[];
+      &#125;[]
+  
+      IMPORTANT: only respond to the Array JSON result.
+      `;
+  const result = await fetchGPT(&#123;
+    content,
+  &#125;);
+  return result;
+&#125;
+</code></pre>
+<p>It’s worth mentioning that here we used a TypeScript interface as the prompt to ensure OpenAI returns a stable JSON data structure.</p>
+<p>fetchGPT can be implemented independently. You can install the OpenAI SDK (openai) and set up your own API server.</p>
+<h3 id="Intelligent-Contact-Analysis-and-Sorting"><a href="#Intelligent-Contact-Analysis-and-Sorting" class="headerlink" title="Intelligent Contact Analysis and Sorting"></a>Intelligent Contact Analysis and Sorting</h3><p>Once we have obtained contact information, we can match it with contacts in the current phone system and also match the corresponding call recordings, voicemails, and SMS messages. SMS messages are typically text-based, so we can organize this information and submit it directly to OpenAI. However, call recordings and voicemails are audio files, so we will need to use the OpenAI audio&#x2F;transcriptions API.</p>
+<pre><code class="javascript">async function transcriptVoicemail(files) &#123;
+  const results = await Promise.allSettled(
+    files.map(async (file) =&gt; &#123;
+      const body = &#123;
+        file: file.file,
+        model: &quot;whisper-1&quot;,
+        temperature: 0,
+        response_format: &quot;json&quot;,
+      &#125;;
+      const formData = new FormData();
+      for (const [name, value] of Object.entries(body)) &#123;
+        formData.append(name, value as never);
+      &#125;
+      const data = await firstValueFrom(
+        defer(async () =&gt; &#123;
+          const response = await fetch(`$&#123;baseUrl&#125;/v1/audio/transcriptions`, &#123;
+            method: &quot;POST&quot;,
+            headers: &#123;
+              &quot;Access-Control-Allow-Origin&quot;: &quot;*&quot;,
+              Authorization: &quot;Bearer your-api-key&quot;,
+            &#125;,
+            body: formData,
+          &#125;);
+
+          if (!response.ok) &#123;
+            throw new Error(&quot;fetch API failed&quot;);
+          &#125;
+
+          const data: &#123;
+            text: string;
+          &#125; = await response.json();
+
+          return data;
+        &#125;).pipe(retry(3))
+      );
+
+      return &#123; text: data.text, url: file.url &#125;;
+    &#125;)
+  );
+
+  const voiceMailTranscriptions = results.reduce((acc, result, i) =&gt; &#123;
+    if (result.status === &quot;fulfilled&quot;) &#123;
+      const id = voiceMails[i].id!;
+      const value = result.value;
+      acc[id] = &#123;
+        ...voiceMails[i],
+        transcription: value.text,
+        playURL: value.url,
+      &#125;;
+    &#125;
+    return acc;
+  &#125;, &#123;&#125;);
+
+  return voiceMailTranscriptions;
+&#125;
+</code></pre>
+<p>This way, we can obtain transcriptions of voicemails. Similarly, we can also get transcriptions of call recordings.</p>
+<p>Next, we will submit this information to OpenAI to analyze emotion:</p>
+<pre><code class="javascript">async function getEmotion(callRecordings, voiceMails, sms) &#123;
+  const content = `
+  Please give me the user&#39;s emotion based on Below Call recordings, Voicemails and SMS, the emotion score between 0 to 100, angry is 0, peaceful is 100.
+
+  Call recordings:
+  $&#123;callRecordings&#125;
+
+  Voicemails:
+  $&#123;voiceMails&#125;
+
+  SMS:
+  $&#123;sms&#125;
+
+  Your response result should be JSON format and the data type be like below:
+  &#123;
+    score: number;
+    description: string;
+  &#125;
+
+  IMPORTANT: only give me the json result
+  `;
+  const result = await fetchGPT(&#123;
+    content,
+  &#125;);
+  return result;
+&#125;
+</code></pre>
+<p>Once we obtain the emotion analysis for each contact, we can sort these analyses to let users know the potential emotions associated with customer communication for each contact. This could indicate the ease or difficulty of communication, allowing users to plan their call strategies and schedules accordingly.</p>
+<h3 id="Real-time-STT"><a href="#Real-time-STT" class="headerlink" title="Real-time STT"></a>Real-time STT</h3><p>Azure provides real-time STT and TTS services. We will use the official SDK, <code>microsoft-cognitiveservices-speech-sdk</code>, to implement STT:</p>
+<pre><code class="javascript">import * as sdk from &quot;microsoft-cognitiveservices-speech-sdk&quot;;
+
+function startSpeechRecognition() &#123;
+  const speechConfig = sdk.SpeechConfig.fromSubscription(
+    subscriptionKey,
+    region
+  );
+  speechConfig.speechRecognitionLanguage = language;
+
+  const stream = getMediaStream();
+  if (!stream) return null;
+
+  const audioConfig = sdk.AudioConfig.fromStreamInput(stream);
+  const newRecognizer = new sdk.SpeechRecognizer(speechConfig, audioConfig);
+
+  newRecognizer.recognizing = (s, e) =&gt; &#123;
+    console.log(`Recognizing: $&#123;e.result.text&#125;`);
+  &#125;;
+
+  newRecognizer.recognized = (s, e) =&gt; &#123;
+    console.log(`Recognized: $&#123;e.result.text&#125;`);
+    if (e.result.text !== undefined) &#123;
+      setTranscript(e.result.text);
+    &#125;
+  &#125;;
+
+  newRecognizer.canceled = (s, e) =&gt; &#123;
+    if (e.errorCode === sdk.CancellationErrorCode.ErrorAPIKey) &#123;
+      console.error(&quot;Invalid or incorrect subscription key&quot;);
+    &#125; else &#123;
+      console.log(`Canceled: $&#123;e.errorDetails&#125;`);
+    &#125;
+    setIsListening(false);
+  &#125;;
+
+  newRecognizer.sessionStopped = (s, e) =&gt; &#123;
+    console.log(&quot;Session stopped&quot;);
+    newRecognizer.stopContinuousRecognitionAsync();
+    setIsListening(false);
+  &#125;;
+
+  newRecognizer.startContinuousRecognitionAsync(
+    () =&gt; &#123;
+      console.log(&quot;Listening...&quot;);
+    &#125;,
+    (error) =&gt; &#123;
+      console.log(`Error: $&#123;error&#125;`);
+      newRecognizer.stopContinuousRecognitionAsync();
+      setIsListening(false);
+    &#125;
+  );
+
+  setRecognizer(newRecognizer);
+&#125;
+</code></pre>
+<p>In this way, using sdk.AudioConfig.fromStreamInput(stream) with our WebRTC stream allows us to achieve real-time STT. Furthermore, by calling this method separately for both the input and output streams of WebRTC, we can obtain real-time text content for both sides of the conversation.</p>
+<p>It’s worth noting that <code>microsoft-cognitiveservices-speech-sdk</code> provides a remarkably comprehensive set of input and output stream configurations to accommodate a wide range of STT scenarios.</p>
+<h3 id="Intelligent-Hints-During-Calls"><a href="#Intelligent-Hints-During-Calls" class="headerlink" title="Intelligent Hints During Calls"></a>Intelligent Hints During Calls</h3><p>In the Azure SDK, the recognized event represents an intermediate, paused result in the ongoing speech recognition. When this event is triggered, we can submit the in-progress conversation text to OpenAI to help provide potential information:</p>
+<pre><code class="javascript">async function getHint(conversation) &#123;
+  const content = `
+  You are a conversational intelligent assistant, please give possible hints based on the following conversation:
+
+  $&#123;conversation&#125;
+
+  Your response result should be JSON format and the data type be like below:
+  &#123;
+    hint: string;
+  &#125;
+
+  IMPORTANT: only give me the json result
+  `;
+  const result = await fetchGPT(&#123;
+    content,
+  &#125;);
+  return result;
+&#125;
+</code></pre>
+<p>The hints we obtain will also be displayed in the conversation UI, shown to the user in real-time to provide this intelligent assistance. For example, if the conversation involves discussing discount calculations, the AI will provide the calculated results.</p>
+<h3 id="Generating-Emotion-Summary-and-To-Do-List-After-the-Call"><a href="#Generating-Emotion-Summary-and-To-Do-List-After-the-Call" class="headerlink" title="Generating Emotion, Summary, and To-Do List After the Call"></a>Generating Emotion, Summary, and To-Do List After the Call</h3><p>We will generate reports such as emotion analysis and summaries by using the complete conversation text as part of the prompt for OpenAI:</p>
+<pre><code class="javascript">async function getReport(conversation) &#123;
+  const content = `
+  Please help me to &quot;summarize&quot;, &quot;improvements&quot;, and &quot;evaluate&quot; the quality of the customer service from the following conversation,
+
+  $&#123;conversation&#125;
+
+  result should be JSON format,
+  summary and improvement please be more detailed, and format be like below
+
+  interface Report &#123;
+    summary: string;
+    improvements: string[];
+    evaluation: Evaluation;
+  &#125;
+
+  interface Evaluation &#123;
+    sellResult: &#39;Deal&#39; | &#39;Lost deal&#39; | &#39;Follow up&#39;;
+    customerEmotion: &#39;Happy&#39; | &#39;Sad&#39; | &#39;Unhappy&#39;;
+  &#125;
+
+  IMPORTANT: only give me the json result
+  `;
+  const result = await fetchGPT(&#123;
+    content,
+  &#125;);
+  return result;
+&#125;
+</code></pre>
+<p>In a similar manner, we will also generate a to-do list for the current conversation:</p>
+<pre><code class="javascript">async function getTodoList(conversation) &#123;
+  const content = `
+  I am a sales agent. Please Help me generate a todo list in customer relationship management platform for the following conversation.
+
+  $&#123;conversations&#125;
+
+  result should be Array JSON format, and checked, processing to be false
+
+  type ToDoListItem = &#123;
+    id: string;
+    checked: boolean;
+    message: string;
+    processing: boolean;
+  &#125;[];
+
+  IMPORTANT: only give me the Array JSON result, make sure that only the above conversation is relevant.
+  `;
+  const result = await fetchGPT(&#123;
+    content,
+  &#125;);
+  return result;
+&#125;
+</code></pre>
+<h3 id="Intelligently-Filling-Out-Forms"><a href="#Intelligently-Filling-Out-Forms" class="headerlink" title="Intelligently Filling Out Forms"></a>Intelligently Filling Out Forms</h3><p>As a fundamental communication service for businesses, phone systems are commonly integrated with third-party CRM platforms. Therefore, intelligently auto-filling CRM forms can efficiently assist collaboration for ToB (business-to-business) users.</p>
+<p>To implement intelligent form filling, the first step is to address how to extract and compress DOM information from form pages of any third-party CRM. Here, we reference TaxyAI’s DOM compression model:</p>
+<p>By traversing all nodes in the DOM and analyzing their validity, we retain valid attribute information and assign a DI (presumably “DOM Identifier”) tag to each valid node.</p>
+<pre><code class="javascript">const allowedAttributes = [
+  &quot;aria-label&quot;,
+  &quot;data-name&quot;,
+  &quot;name&quot;,
+  &quot;type&quot;,
+  &quot;placeholder&quot;,
+  &quot;value&quot;,
+  &quot;role&quot;,
+  &quot;title&quot;,
+];
+
+const sample = `
+&lt;div&gt;
+  &lt;button
+    aria-label=&quot;Add to wishlist: Brinnon, Washington&quot;
+    type=&quot;button&quot;
+    id=&quot;1396&quot;
+  &gt;&lt;/button&gt;
+  &lt;div aria-label=&quot;Photo 1 of 6&quot;&gt;&lt;/div&gt;
+&lt;/div&gt;
+`;
+</code></pre>
+<p>Once we have the compressed DOM information, we can also obtain the webpage labels by analyzing it (through analyzing attributes such as visibility, effective width and height, and operability). Then, we submit this to OpenAI:</p>
+<pre><code class="javascript">async function getFieldValues(
+  labels,
+  domainInfo,
+  callInfo,
+  conversation,
+  summary
+) &#123;
+  const content = `
+  You are a browser DOM automation assistant. Your goal is to help me fill in the customer relationship management Task form based on the conversation I provided.
+
+  In the summary field, input the summary of the conversation, and the call transcription.
+
+  This is an example of the field
+  &#123; key: &#39;Title&#39; &#125;
+
+  This is an example of the response
+  &#123; key: &#39;Title&#39;, value: &#39;Here is the value for title&#39; &#125;
+
+  You must always keep result should be JSON format and data format be like below:
+  &#123;
+    key: string;
+    value: string;
+  &#125;[]
+
+  the list of input fields:
+  $&#123;JSON.stringify(labels, null, 2)&#125;
+
+  Domain information:
+  $&#123;domainInfo&#125;
+
+  Call information:
+  $&#123;callInfo&#125;
+
+  Conversation:
+  $&#123;conversation&#125;
+
+  Summary:
+  $&#123;summary&#125;
+  `;
+  const result = await fetchGPT(&#123;
+    content,
+  &#125;);
+  return result;
+&#125;
+</code></pre>
+<p>Once we have fieldValues, we submit the current page and fieldValues to OpenAI, so that it can generate the values for the corresponding input fields:</p>
+<pre><code class="javascript">async function getInputValues(fieldValues, dom) &#123;
+  const content = `
+  You are a browser automation assistant.
+
+  You will be given a webpage DOM data and a list of input data. You should tell me how I can fill in the field based on the information.
+
+  This is an example of the DOM:
+  &lt;div id=&quot;1101&quot;&gt;Title&lt;input id=&quot;1102&quot;&gt;&lt;div&gt;
+
+  This is an example of the input data:
+  &#123; key: &#39;Title&#39;, value: &#39;Here is the value for title&#39; &#125;
+
+  This is an example of the response:
+  &#123; id: &#39;1102&#39;, value: &#39;Here is the value for title&#39; &#125;
+
+  Here is the list of input data:
+  $&#123;fieldValues&#125;
+
+  Here is the webpage DOM:
+  $&#123;dom&#125;
+
+  Your response result should be JSON format and the data type be like below:
+  &#123;
+    id: string;
+    value: string;
+  &#125;[]
+
+  IMPORTANT: only give me the json result
+  `;
+  const result = await fetchGPT(&#123;
+    content,
+  &#125;);
+  return result;
+&#125;
+</code></pre>
+<p>Then, we send these values to the current CRM form page to complete the automatic form filling.</p>
+<p>In <code>client.js</code>, we send inputValues:</p>
+<pre><code class="javascript">async function sendInputValues() &#123;
+  await chrome.tabs.sendMessage(activeTab.id!, &#123;
+    type: &#39;auto-run-action&#39;,
+    action: inputValues.filter((item) =&gt; item.value),
+  &#125;);
+&#125;
+</code></pre>
+<p>In <code>content.js</code>, complete the final input filling:</p>
+<pre><code class="javascript">chrome.runtime.onMessage.addListener((message, sender, sendResponse) =&gt; &#123;
+  const &#123; type, action &#125; = message;
+  if (type === &quot;auto-run-action&quot;) &#123;
+    action.forEach((&#123; id, value &#125;) =&gt; &#123;
+      const inputElement = getElementById(id);
+      if (!inputElement) &#123;
+        console.error(&quot;Could not find element with id&quot;, id);
+        return;
+      &#125;
+      inputElement.value = value;
+      inputElement.dispatchEvent(new Event(&quot;change&quot;, &#123; bubbles: true &#125;));
+    &#125;);
+    sendResponse();
+  &#125;
+&#125;);
+</code></pre>
+<p>We omit the details of handling more complex form types.</p>
+<h3 id="Browser-Automated-To-Do-Execution"><a href="#Browser-Automated-To-Do-Execution" class="headerlink" title="Browser Automated To-Do Execution"></a>Browser Automated To-Do Execution</h3><p>We leverage the TaxyAI automated execution DOM operation model mentioned earlier, which utilizes OpenAI to control the browser and perform repetitive actions on behalf of the user.</p>
+<p>By appending Thought and Action contextual prompts, OpenAI will iteratively and logically deduce the next DOM operation until the current to-do item is fulfilled.</p>
+<p>This is the crucial function for formatting the prompt:</p>
+<pre><code class="javascript">function formatPrompt(taskInstructions, previousActions, pageContents) &#123;
+  let previousActionsString = &quot;&quot;;
+
+  if (previousActions.length &gt; 0) &#123;
+    const serializedActions = previousActions
+      .map(
+        (action) =&gt;
+          `&lt;Thought&gt;$&#123;action.thought&#125;&lt;/Thought&gt;\n&lt;Action&gt;$&#123;action.action&#125;&lt;/Action&gt;`
+      )
+      .join(&quot;\n\n&quot;);
+    previousActionsString = `You have already taken the following actions: \n$&#123;serializedActions&#125;\n\n`;
+  &#125;
+
+  return `The user requests the following task:
+
+$&#123;taskInstructions&#125;
+
+$&#123;previousActionsString&#125;
+
+Current time: $&#123;new Date().toLocaleString()&#125;
+
+Current page contents:
+$&#123;pageContents&#125;`;
+&#125;
+</code></pre>
+<h2 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h2><p>At this point, we have essentially implemented an AI-based Browser Phone Extension that covers the entire phone call workflow.</p>
+<p>This article serves as a Proof of Concept (PoC) and aims to outline the general implementation of the relevant processes. However, the application still has many details requiring improvement in areas such as cost, privacy and security, and performance. For instance, cost control might be achieved through techniques like pre-calculating tokens for segmented requests, and privacy concerns could be addressed by employing local Web LLM-based de-sensitization processing, and so on.</p>
+
+  </div>
+</article>
+
+  </div>
+</div>
+
+
+  <!-- scripts list from theme config.yml -->
+  
+    <script src="/js/attraction.js"></script>
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/codemirror.min.js"></script>
+  
+  <script>
+    var nodes = Array.from(document.querySelectorAll('pre code'));
+    var render = {};
+    var titleSvg = '<svg style="position: absolute;z-index: 1;margin: 12px 0 0 12px;" xmlns="http://www.w3.org/2000/svg" width="54" height="14" viewBox="0 0 54 14"><g fill="none" fill-rule="evenodd" transform="translate(1 1)"><circle cx="6" cy="6" r="6" fill="#FF5F56" stroke="#E0443E" stroke-width=".5"></circle><circle cx="26" cy="6" r="6" fill="#FFBD2E" stroke="#DEA123" stroke-width=".5"></circle><circle cx="46" cy="6" r="6" fill="#27C93F" stroke="#1AAB29" stroke-width=".5"></circle></g></svg>';
+    nodes.forEach((node, index) => {
+      var lang = node.getAttribute('class');
+      var code = node.innerText;
+      var mode = lang;
+      switch(lang) {
+        case 'jsx':
+          lang = 'javascript';
+          mode = 'text/jsx';
+          break;
+        case 'tsx':
+          lang = 'javascript';
+          mode = 'text/typescript-jsx';
+        case 'typescript':
+          lang = 'javascript';
+          mode = 'text/typescript';
+        default:
+          break;
+      }
+      var config = {
+        value: code,
+        mode,
+        theme: 'seti'
+      };
+      if (!lang) return;
+      var hasExisted = nodes.slice(0, index).find(function(node) { return node.getAttribute('class') === lang; });
+      if (hasExisted) {
+        render[lang].push(function() {
+          node.innerHTML = titleSvg;
+          CodeMirror(node, config);
+        });
+        return;
+      }
+      render[lang] = [];
+      var languagePackge = document.createElement('script');
+      languagePackge.src = `https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/mode/${lang}/${lang}.min.js`;
+      languagePackge.onload = () => {
+        setTimeout(() => {
+          node.innerHTML = titleSvg;
+          CodeMirror(node, config);
+          render[lang].forEach(function(callback) { callback(); })
+        }, 0);
+      }
+      document.body.appendChild(languagePackge);
+    });
+  </script>
+
+</body>
+</html>
