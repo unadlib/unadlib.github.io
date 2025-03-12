@@ -6,7 +6,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="initial-scale=1, maximum-scale=1">
-  <title>Build an AI-based Browser Phone Extensionunadlib&#39;s Notes</title>
+  <title>Build an AI-based browser phone extensionunadlib&#39;s Notes</title>
   <style type="text/css">
     body, html {
       margin: 0;
@@ -169,17 +169,17 @@
   <div id="content-inner">
     
 <article id="post">
-  <h1 class="title">Build an AI-based Browser Phone Extension</h1>
+  <h1 class="title">Build an AI-based browser phone extension</h1>
   <p class="time">2023-05-01</span>
   <div class="content">
       <h2 id="Motivation"><a href="#Motivation" class="headerlink" title="Motivation"></a>Motivation</h2><p>On March 14, 2023, OpenAI released GPT-4, a transformer-based model that is more reliable, intelligent, and capable of handling nuanced instructions compared to GPT-3.5. GPT-4 has consistently outperformed other Large Language Models (LLMs) in various benchmarks, leading to a surge in diverse AI-powered applications built upon it. Among these applications, the “phone” remains a fundamental human communication need and a core communication service for businesses. The potential for AI to enhance communication efficiency and quality in phone interactions is significant and worth exploring.</p>
-<p>Compared to traditional phone applications, we aim to build an AI-driven Browser Phone Extension. This extension is envisioned to leverage AI to assist in every stage of the phone call process, ultimately improving the user’s calling experience.</p>
+<p>Compared to traditional phone applications, we aim to build an AI-driven browser phone extension. This extension is envisioned to leverage AI to assist in every stage of the phone call process, ultimately improving the user’s calling experience.</p>
 <ol>
 <li>Before a call, we want it to help us extract contact information from any third-party webpage, especially complex ones. Crucially, it should provide intelligent analysis of relevant contact data (call recordings, voicemails, SMS, etc.) associated with each identified contact. This would enable us to understand sentiment analysis or potential draft summaries for upcoming calls, and more.</li>
 <li>During a call, the spoken dialogue will be transcribed into text in real-time. Based on this live text conversation, the extension should offer effective intelligent prompts and assistance. It could even intelligently deploy an AI voicebot to participate in the conversation.</li>
 <li>After a call concludes, it will intelligently generate a call sentiment assessment, conversation summary, and to-do list based on the current call information, the conversation transcript, and potentially past interactions with the contact. It will also provide automatic form filling in any CRM page forms.</li>
 </ol>
-<p>Once this Browser Phone Extension delivers these functionalities, we will see a seamless integration of phone workflows with relevant platforms. This demonstrates the practical application of AI in optimizing the entire call workflow.</p>
+<p>Once this browser phone extension delivers these functionalities, we will see a seamless integration of phone workflows with relevant platforms. This demonstrates the practical application of AI in optimizing the entire call workflow.</p>
 <h2 id="Integrated-AI-Services-and-Capabilities"><a href="#Integrated-AI-Services-and-Capabilities" class="headerlink" title="Integrated AI Services and Capabilities"></a>Integrated AI Services and Capabilities</h2><p>Before implementing this extension, we should clearly define the AI services and capabilities we plan to integrate:</p>
 <ul>
 <li>OpenAI SDK: Provides the chat&#x2F;completions API for intelligent content generation.</li>
@@ -188,7 +188,7 @@
 </ul>
 <h2 id="Flowchart"><a href="#Flowchart" class="headerlink" title="Flowchart"></a>Flowchart</h2><p>Based on the above three sets of APIs, combined with Browser Extension APIs, let’s design the overall business process:</p>
 <p><img src="/assets/2023-05-01-build-an-ai-based-browser-phone-extension/flowchart.png" alt="BDD"></p>
-<h2 id="Implementation"><a href="#Implementation" class="headerlink" title="Implementation"></a>Implementation</h2><h3 id="Creating-a-Basic-Browser-Phone-Extension-Project"><a href="#Creating-a-Basic-Browser-Phone-Extension-Project" class="headerlink" title="Creating a Basic Browser Phone Extension Project"></a>Creating a Basic Browser Phone Extension Project</h3><p>We can base our project on the open-source browser-extension-boilerplate, which supports building browser extensions for multiple browsers:</p>
+<h2 id="Implementation"><a href="#Implementation" class="headerlink" title="Implementation"></a>Implementation</h2><h3 id="Creating-a-Basic-browser-phone-extension-Project"><a href="#Creating-a-Basic-browser-phone-extension-Project" class="headerlink" title="Creating a Basic browser phone extension Project"></a>Creating a Basic browser phone extension Project</h3><p>We can base our project on the open-source browser-extension-boilerplate, which supports building browser extensions for multiple browsers:</p>
 <ul>
 <li>Chrome</li>
 <li>Firefox</li>
@@ -669,7 +669,7 @@ Current page contents:
 $&#123;pageContents&#125;`;
 &#125;
 </code></pre>
-<h2 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h2><p>At this point, we have essentially implemented an AI-based Browser Phone Extension that covers the entire phone call workflow.</p>
+<h2 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h2><p>At this point, we have essentially implemented an AI-based browser phone extension that covers the entire phone call workflow.</p>
 <p>This article serves as a Proof of Concept (PoC) and aims to outline the general implementation of the relevant processes. However, the application still has many details requiring improvement in areas such as cost, privacy and security, and performance. For instance, cost control might be achieved through techniques like pre-calculating tokens for segmented requests, and privacy concerns could be addressed by employing local Web LLM-based de-sensitization processing, and so on.</p>
 
   </div>
