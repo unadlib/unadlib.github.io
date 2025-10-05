@@ -1,0 +1,945 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+  <title>Rethinking Undo/Redo - Why We Need Travelsunadlib&#39;s Notes</title>
+  <style type="text/css">
+    body, html {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+      font-size: 18px;
+      line-height: 1.8;
+      user-select: none;
+      box-sizing: border-box;
+      touch-action: manipulation;
+      background-color: #f1f3f4;
+    }
+
+    a {
+      color: #000;
+    }
+
+    a.title {
+      text-decoration: none;
+    }
+
+    #content-outer {
+      margin: 4% 14%;
+      padding: 4% 8%;
+      box-shadow: 0 0 3px -1px rgba(0,0,0,.3);
+      border-radius: 5px;
+      box-sizing: border-box;
+      background: #fff;
+      border-bottom: 1px solid #b5b5b5;
+    }
+
+    #content-inner {
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .recent-post-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .recent-post-item .title {
+      overflow: hidden;
+      text-overflow:ellipsis;
+      white-space: nowrap;
+    }
+
+    .recent-post-item .time {
+      color: #ccc;
+      font-size: 14px;
+      line-height: 32px;
+      min-width: 81px;
+      text-align: right;
+    }
+
+    #post img {
+      max-width: 100%;
+    }
+
+    #post h1.title {
+      text-align: center;
+      font-size: 2em;
+      margin-block-start: 0.67em;
+      margin-block-end: 0.67em;
+      line-height: 1;
+    }
+
+    #post .time {
+      text-align: center;
+      color: #ccc;
+      font-size: 14px;
+    }
+
+    #post .content {
+      margin-top: 8%;
+    }
+
+    #post .content blockquote {
+      border-left: 3px solid #eee;
+      padding-left: 20px;
+      color: #666;
+      margin: 0;
+    }
+
+    #post .content .gutter {
+      display: none;
+    }
+
+    code, kbd, pre, samp {
+      font-size: 16px !important;
+    }
+
+    .CodeMirror {
+      height: auto !important;
+      padding: 36px 24px 0;
+      border-radius: 6px;
+    }
+
+    #post .content figure {
+      padding: 0 1em;
+      background-color: #f1f3f4;
+      border: 1px solid #e0e0e0;
+      margin: 0;
+      overflow: auto;
+    }
+
+    #post .content figure table {
+      width: 100%;
+    }
+
+    @media screen and (max-width: 1024px)  {
+      #content-outer {
+        margin: 2% 7%;
+        padding: 2% 4%;
+      }
+
+      .recent-post-item:first-child {
+        margin-top: 16px;
+      }
+    }
+
+    @media screen and (max-width: 480px) {
+      body{
+        -webkit-text-size-adjust: none;
+      }
+
+      #content-outer {
+        margin: 0;
+        padding: 2% 4%;
+        border-radius: 0;
+      }
+
+      .recent-post-item:first-child {
+        margin-top: 32px;
+      }
+
+      .recent-post-item:last-child {
+        border-bottom: none;
+      }
+    }
+  </style>
+  
+    <!-- styles list from theme config.yml -->
+    
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/codemirror.min.css">
+    
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/theme/seti.min.css">
+    
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+<body class="cm-s-seti">
+
+<div id="content-outer">
+  <div id="content-inner">
+    
+<article id="post">
+  <h1 class="title">Rethinking Undo/Redo - Why We Need Travels</h1>
+  <p class="time">2025-10-05</span>
+  <div class="content">
+      <blockquote>
+<p>TL;DR: If your app state is large (&gt;10KB), needs persistence, or you care about memory usage and performance with long histories, Travels’ JSON Patch approach is worth considering. For simple scenarios, the default snapshot modes in Redux-undo or Zundo are actually simpler and more efficient.</p>
+</blockquote>
+<h2 id="Where-the-Problem-Starts"><a href="#Where-the-Problem-Starts" class="headerlink" title="Where the Problem Starts"></a>Where the Problem Starts</h2><p>Implementing usable undo&#x2F;redo sounds easy: store a full snapshot for every state change and restore it on undo. The problem is that when the state object is large and changes are small (the usual case), snapshot memory &#x3D; object size × history length. That linear growth is unacceptable for big objects. Worse, repeatedly deep-copying&#x2F;patch-diffing complex structures pushes the main thread toward jank—this isn’t something you “optimize a bit” to fix; it’s a category error.</p>
+<p>Travels starts by making JSON Patch (RFC 6902) a first-class citizen: generate patches&#x2F;inversePatches incrementally as changes happen, trading compute for storage and serialization efficiency—preserving full reversibility while drastically shrinking history size.</p>
+<p>Travels was created to resolve a fundamental tension: how to retain a complete history while minimizing memory and performance overhead.</p>
+<h2 id="How-Mainstream-Approaches-Work"><a href="#How-Mainstream-Approaches-Work" class="headerlink" title="How Mainstream Approaches Work"></a>How Mainstream Approaches Work</h2><p>Let’s first look at how two popular community solutions work in practice.</p>
+<h3 id="Redux-undo-Reference-Based-Snapshot-Storage"><a href="#Redux-undo-Reference-Based-Snapshot-Storage" class="headerlink" title="Redux-undo: Reference-Based Snapshot Storage"></a>Redux-undo: Reference-Based Snapshot Storage</h3><p>Redux-undo is the classic solution in the Redux ecosystem. Its core logic looks like:</p>
+<pre><code class="javascript">// redux-undo/src/reducer.js
+function insert(history, state, limit, group) &#123;
+  const newPast = [...pastSliced, _latestUnfiltered];
+  return newHistory(newPast, state, [], group);
+&#125;
+</code></pre>
+<p>Its strategy: <strong>store references to each state object</strong>.</p>
+<pre><code class="javascript">&#123;
+  past: [state1, state2, state3],    // array of object references
+  present: state4,
+  future: [state5, state6]
+&#125;
+</code></pre>
+<p>There’s no deep copy here; it relies on Redux’s immutable update pattern:</p>
+<ul>
+<li>Reducers return new objects each time</li>
+<li>Structural sharing reduces memory copying</li>
+<li><code>past</code> only holds references</li>
+</ul>
+<p><strong>Pros:</strong></p>
+<ul>
+<li>Simple, straightforward implementation</li>
+<li>Efficient enough for small state</li>
+<li>Supports fine-grained controls like <code>filter</code> and <code>groupBy</code></li>
+</ul>
+<p><strong>Limitations:</strong></p>
+<ul>
+<li>With Redux-undo plus Immer or immutable updates, unmodified subtrees share references. But each change still creates new objects for the changed node and all of its ancestors. For deep structures, even a single-field change can rebuild an entire parent chain.</li>
+<li>Each history entry is effectively a full state snapshot</li>
+<li>Tightly coupled to Redux; not usable elsewhere</li>
+</ul>
+<p>For a simple counter, this is perfectly fine. But for a complex document object, 100 history entries imply 100 state references <strong>plus</strong> each one’s memory footprint.</p>
+<h3 id="Zundo-Optional-Diff-Optimization"><a href="#Zundo-Optional-Diff-Optimization" class="headerlink" title="Zundo: Optional Diff Optimization"></a>Zundo: Optional Diff Optimization</h3><p>Zundo is a tiny (&lt;700B) and flexible undo&#x2F;redo middleware for Zustand.</p>
+<p>Core code:</p>
+<pre><code class="typescript">// zundo/src/temporal.ts
+_handleSet: (pastState, replace, currentState, deltaState) =&gt; &#123;
+  set(&#123;
+    pastStates: get().pastStates.concat(deltaState || pastState),
+    futureStates: [],
+  &#125;);
+&#125;;
+</code></pre>
+<p>Note <code>deltaState || pastState</code>:</p>
+<ul>
+<li><strong>Default stores the full state</strong> (<code>pastState</code>)</li>
+<li><strong>Optionally stores a diff</strong> (<code>deltaState</code>, computed via user-provided <code>diff</code>)</li>
+</ul>
+<p>Although Zundo exposes a diff option, you must pick and configure a diff library and translate results yourself. For many developers, that adds learning cost. More importantly, diffing a large state tree frequently can itself become a performance bottleneck.</p>
+<p>It’s a clever design:</p>
+<ul>
+<li><strong>Zero-cost abstraction</strong>: don’t opt in to diffs, pay no cost</li>
+<li><strong>Flexibility</strong>: choose any diff algorithm (microdiff, fast-json-patch, etc.) or roll your own</li>
+<li><strong>Control</strong>: pair with <code>partialize</code> to track only part of the state</li>
+</ul>
+<p><strong>Pros:</strong></p>
+<ul>
+<li>Supports diff-based storage; can optimize memory</li>
+<li>Elegant API</li>
+<li>Deep integration with Zustand</li>
+</ul>
+<p><strong>Limitations:</strong></p>
+<ul>
+<li><strong>You must implement the diff logic yourself</strong>—not trivial</li>
+<li>Zustand-only</li>
+<li>Default behavior still stores full snapshots</li>
+</ul>
+<p>The catch: building a reliable diff is non-trivial. You must:</p>
+<ol>
+<li>Pick the right diff library</li>
+<li>Write transformation code (like the example)</li>
+<li>Handle edge cases (null, undefined, cycles, etc.)</li>
+<li>Ensure reversibility (correct undo&#x2F;redo)</li>
+</ol>
+<p>And for very large trees, the diff stage itself can be expensive.</p>
+<h2 id="Travels-JSON-Patch-as-a-First-Class-Citizen"><a href="#Travels-JSON-Patch-as-a-First-Class-Citizen" class="headerlink" title="Travels: JSON Patch as a First-Class Citizen"></a>Travels: JSON Patch as a First-Class Citizen</h2><p>This is where Travels comes in. Its core idea: <strong>use JSON Patch as the built-in, default storage format</strong>.</p>
+<pre><code class="typescript">import &#123; createTravels &#125; from &#39;travels&#39;;
+
+const travels = createTravels(&#123;
+  title: &#39;My Doc&#39;,
+  content: &#39;...&#39;,
+  // ... potentially a very large object
+&#125;);
+
+travels.setState((draft) =&gt; &#123;
+  draft.title = &#39;New Title&#39;;
+&#125;);
+
+// Internally, Travels stores:
+// &#123;
+//   patches: [&#123; op: &quot;replace&quot;, path: [&quot;title&quot;], value: &quot;New Title&quot; &#125;],
+//   inversePatches: [&#123; op: &quot;replace&quot;, path: [&quot;title&quot;], value: &quot;My Doc&quot; &#125;]
+// &#125;
+
+// You can set &#123; patchesOptions: &#123; pathAsArray: true &#125; &#125; to make `path` a JSON path string.
+</code></pre>
+<p>No configuration required—JSON Patch is default.</p>
+<h3 id="Why-Mutative"><a href="#Why-Mutative" class="headerlink" title="Why Mutative?"></a>Why Mutative?</h3><p>Travels is built on <a target="_blank" rel="noopener" href="https://github.com/unadlib/mutative">Mutative</a>. That choice matters:</p>
+<pre><code class="typescript">// Mutative core capability
+import &#123; create &#125; from &#39;mutative&#39;;
+
+const [nextState, patches, inversePatches] = create(
+  &#123; count: 0 &#125;,
+  (draft) =&gt; &#123;
+    draft.count++;
+  &#125;,
+  &#123; enablePatches: true &#125;
+);
+
+// patches: [&#123; op: &quot;replace&quot;, path: [&quot;count&quot;], value: 1 &#125;]
+// inversePatches: [&#123; op: &quot;replace&quot;, path: [&quot;count&quot;], value: 0 &#125;]
+</code></pre>
+<p>Mutative provides:</p>
+<ol>
+<li><strong>Draft API</strong> – identical ergonomics to Immer</li>
+<li><strong>Native JSON Patch generation</strong> – no extra diff library</li>
+<li><strong>High performance</strong> – official benchmarks show up to 10× over Immer</li>
+<li><strong>Zero configuration</strong> – patch generation is built-in, not optional</li>
+</ol>
+<p>This lets Travels leverage Mutative’s strengths directly, without forcing users to implement diffs like Zundo.</p>
+<h3 id="Real-Memory-Differences"><a href="#Real-Memory-Differences" class="headerlink" title="Real Memory Differences"></a>Real Memory Differences</h3><p>A test with a 100KB complex object and 100 tiny edits (2 fields per edit):</p>
+<p><strong>Redux-undo:</strong></p>
+<pre><code class="javascript">// Stores full-state references
+pastStates: [
+  &#123; /* 100KB object */ &#125;,
+  &#123; /* 100KB object */ &#125;,
+  // ...
+];
+// 100 history entries: ~11.8 MB growth
+</code></pre>
+<p><strong>Zundo (no diff):</strong></p>
+<pre><code class="typescript">// Default stores full state
+pastStates: [
+  &#123; /* 100KB object */ &#125;,
+  &#123; /* 100KB object */ &#125;,
+  // ...
+];
+// 100 history entries: ~11.8 MB growth
+</code></pre>
+<p><strong>Zundo (with diff):</strong></p>
+<pre><code class="typescript">// Must implement manually
+diff: (past, current) =&gt; &#123;
+  const diff = require(&#39;microdiff&#39;)(past, current);
+  // ... translate diff to your shape
+&#125;;
+// 100 histories: ~0.26 MB growth (≈97.8% saved)
+// But you must supply diff logic, and for huge trees the diff stage can bottleneck
+</code></pre>
+<p><strong>Travels:</strong></p>
+<pre><code class="typescript">// Automatically stores JSON Patches
+patches: [
+  [&#123; op: &#39;replace&#39;, path: [&#39;field1&#39;], value: &#39;new&#39; &#125;],   // ~50 bytes
+  [&#123; op: &#39;replace&#39;, path: [&#39;field2&#39;], value: &#39;newer&#39; &#125;], // ~50 bytes
+  // ...
+];
+// 100 histories: ~0.31 MB growth (≈97.4% saved)
+// After serialization only ~20.6 KB (≈99.8% smaller than snapshots)
+</code></pre>
+<p>The gap is stark. For large objects with small edits, Travels can deliver ~40× memory savings, and <strong>500×+</strong> on serialized size.</p>
+<h3 id="Framework-Agnostic-by-Design"><a href="#Framework-Agnostic-by-Design" class="headerlink" title="Framework-Agnostic by Design"></a>Framework-Agnostic by Design</h3><p>Another advantage: Travels is framework-agnostic. The core is a plain state manager:</p>
+<pre><code class="typescript">// React
+import &#123; useSyncExternalStore &#125; from &#39;react&#39;;
+
+function useTravel(travels) &#123;
+  const state = useSyncExternalStore(
+    travels.subscribe.bind(travels),
+    travels.getState.bind(travels),
+    travels.getState.bind(travels) // for SSR
+  );
+  return [state, travels.setState.bind(travels), travels.getControls()];
+&#125;
+
+// Vue
+import &#123; ref &#125; from &#39;vue&#39;;
+
+function useTravel(travels) &#123;
+  const state = ref(travels.getState());
+  travels.subscribe((newState) =&gt; &#123;
+    state.value = newState;
+  &#125;);
+  return &#123; state, travels &#125;;
+&#125;
+
+// Plain JS
+travels.subscribe((state) =&gt; &#123;
+  document.querySelector(&#39;#app&#39;).innerHTML = render(state);
+&#125;);
+</code></pre>
+<p>Use it anywhere: React, Vue, Svelte, Angular, or vanilla JS.</p>
+<h2 id="Side-by-Side-Comparison"><a href="#Side-by-Side-Comparison" class="headerlink" title="Side-by-Side Comparison"></a>Side-by-Side Comparison</h2><table>
+<thead>
+<tr>
+<th>Dimension</th>
+<th>Redux-undo</th>
+<th>Zundo</th>
+<th>Travels</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Storage model</strong></td>
+<td>Snapshot references</td>
+<td>Snapshot by default, diff</td>
+<td>Built-in JSON Patch</td>
+</tr>
+<tr>
+<td><strong>Config complexity</strong></td>
+<td>Low</td>
+<td>Medium (you write the diff)</td>
+<td>Low</td>
+</tr>
+<tr>
+<td><strong>Memory efficiency</strong></td>
+<td>Medium (sharing helps)</td>
+<td>Low→High (depends on diff)</td>
+<td>High (out of the box)</td>
+</tr>
+<tr>
+<td><strong>Persistence fit</strong></td>
+<td>Poor (large data)</td>
+<td>Poor (large data)</td>
+<td>Excellent (compact + standard)</td>
+</tr>
+<tr>
+<td><strong>Frameworks</strong></td>
+<td>Redux only</td>
+<td>Zustand only</td>
+<td>Framework-agnostic</td>
+</tr>
+<tr>
+<td><strong>Highlights</strong></td>
+<td>filter, groupBy</td>
+<td>partialize, custom diff</td>
+<td>Auto&#x2F;manual archive, mutable mode</td>
+</tr>
+<tr>
+<td><strong>Core LOC (approx.)</strong></td>
+<td>~440</td>
+<td>~250</td>
+<td>~640</td>
+</tr>
+</tbody></table>
+<h2 id="A-Few-Neat-Designs-in-Travels"><a href="#A-Few-Neat-Designs-in-Travels" class="headerlink" title="A Few Neat Designs in Travels"></a>A Few Neat Designs in Travels</h2><h3 id="1-Auto-x2F-Manual-Archive-Modes"><a href="#1-Auto-x2F-Manual-Archive-Modes" class="headerlink" title="1) Auto&#x2F;Manual Archive Modes"></a>1) Auto&#x2F;Manual Archive Modes</h3><pre><code class="typescript">// Auto: each setState becomes a history entry
+const travels = createTravels(&#123; count: 0 &#125;);
+travels.setState(&#123; count: 1 &#125;); // +1 history
+travels.setState(&#123; count: 2 &#125;); // +1 history
+
+// Manual: batch multiple changes into one entry
+const travels = createTravels(&#123; count: 0 &#125;, &#123; autoArchive: false &#125;);
+travels.setState(&#123; count: 1 &#125;);
+travels.setState(&#123; count: 2 &#125;);
+travels.setState(&#123; count: 3 &#125;);
+travels.archive(); // record only 0→3 as one history entry
+</code></pre>
+<p>Manual mode is ideal for complex interactions. E.g., a drag operation might trigger dozens of updates, but you want it to undo as one unit.</p>
+<h3 id="2-Mutable-Mode-for-Reactive-Frameworks"><a href="#2-Mutable-Mode-for-Reactive-Frameworks" class="headerlink" title="2) Mutable Mode for Reactive Frameworks"></a>2) Mutable Mode for Reactive Frameworks</h3><p>In Vue&#x2F;MobX (Proxy-based reactivity), replacing object references breaks reactivity. Travels offers <code>mutable</code> mode:</p>
+<pre><code class="typescript">// Vue example
+import &#123; reactive &#125; from &#39;vue&#39;;
+
+const travels = createTravels(reactive(&#123; count: 0 &#125;), &#123; mutable: true &#125;);
+
+// Travels mutates in place, keeping the Proxy reference
+travels.setState((draft) =&gt; &#123;
+  draft.count++;
+&#125;);
+// Vue reactivity stays intact
+</code></pre>
+<p>Implementation sketch:</p>
+<pre><code class="typescript">if (this.mutable) &#123;
+  apply(this.state as object, patches, &#123; mutable: true &#125;);
+  this.pendingState = this.state; // keep the reference stable
+&#125; else &#123;
+  this.state = apply(this.state as object, patches) as S;
+&#125;
+</code></pre>
+<p>This allows seamless use in reactive frameworks.</p>
+<h3 id="3-Sliding-Window-via-maxHistory"><a href="#3-Sliding-Window-via-maxHistory" class="headerlink" title="3) Sliding Window via maxHistory"></a>3) Sliding Window via <code>maxHistory</code></h3><pre><code class="typescript">const travels = createTravels(&#123; count: 0 &#125;, &#123; maxHistory: 3 &#125;);
+
+// 5 consecutive ops
+increment(); // 1
+increment(); // 2
+increment(); // 3
+increment(); // 4
+increment(); // 5
+
+// History window: [2, 3, 4, 5]
+// You can undo back to 2, but not to 0 or 1 due to the window size
+// however, reset() can return to the initial state 0.
+</code></pre>
+<p>Great for memory-constrained environments.</p>
+<h2 id="Hands-On-Experience"><a href="#Hands-On-Experience" class="headerlink" title="Hands-On Experience"></a>Hands-On Experience</h2><p>I refactored a collaborative editor with Travels. Based on benchmark projections for a 100KB doc over 100 edits:</p>
+<ul>
+<li><strong>Memory</strong>: ~11.8MB (snapshots) → ~0.31MB (<strong>−97.4%</strong>)</li>
+<li><strong>Persistence size</strong>: ~11.6MB → ~121KB (<strong>−99%</strong>)</li>
+<li><strong>Serialization speed</strong>: ~12ms → ~0.07ms (<strong>×180 faster</strong>)</li>
+<li><strong>Code volume</strong>: ~40% less (no custom diff code)</li>
+<li><strong>Undo&#x2F;redo</strong>: millisecond-level per op (~0.88ms average), effectively imperceptible</li>
+</ul>
+<p>And the API is intuitive:</p>
+<pre><code class="typescript">const travels = createTravels(initialState);
+
+// Update
+travels.setState((draft) =&gt; &#123;
+  draft.title = &#39;New&#39;;
+  draft.sections[0].content = &#39;Updated&#39;;
+&#125;);
+
+// Time travel
+travels.back();     // undo
+travels.forward();  // redo
+travels.go(5);      // jump to position 5
+travels.reset();    // back to initial
+
+// History info
+travels.getHistory();
+travels.getPosition();
+travels.canBack();
+travels.canForward();
+</code></pre>
+<p>If you’ve used Immer or Mutative, there’s essentially no learning curve.</p>
+<h2 id="Benchmarks"><a href="#Benchmarks" class="headerlink" title="Benchmarks"></a>Benchmarks</h2><p>To validate the analysis, I wrote comprehensive benchmarks. Setup:</p>
+<ul>
+<li><strong>Object size</strong>: ~100KB (nested objects&#x2F;arrays)</li>
+<li><strong>Ops</strong>: 100 tiny edits (2 fields per op)</li>
+<li><strong>Env</strong>: Node.js v22.17.1</li>
+<li><strong>Memory</strong>: measured precisely with <code>--expose-gc</code></li>
+</ul>
+<p>Full code: <a target="_blank" rel="noopener" href="https://github.com/mutativejs/travels/tree/main/benchmarks"><code>./benchmarks/</code></a></p>
+<h3 id="Results"><a href="#Results" class="headerlink" title="Results"></a>Results</h3><h4 id="1-Memory-Growth"><a href="#1-Memory-Growth" class="headerlink" title="1) Memory Growth"></a>1) Memory Growth</h4><table>
+<thead>
+<tr>
+<th>Approach</th>
+<th>Memory Growth</th>
+<th>Savings</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Redux-undo (snapshot)</td>
+<td>11.8 MB</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Zundo (snapshot)</td>
+<td>11.8 MB</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Zundo (diff)</td>
+<td>0.26 MB</td>
+<td><strong>97.8%</strong> ⭐</td>
+</tr>
+<tr>
+<td>Travels (JSON Patch)</td>
+<td>0.31 MB</td>
+<td><strong>97.4%</strong> ⭐</td>
+</tr>
+</tbody></table>
+<p><strong>Key take:</strong> for 100 tiny edits on a 100KB object, snapshots take ~12MB; JSON Patch takes ~0.3MB—<strong>97%+ saved</strong>.</p>
+<h4 id="2-setState-Throughput"><a href="#2-setState-Throughput" class="headerlink" title="2) setState Throughput"></a>2) <code>setState</code> Throughput</h4><table>
+<thead>
+<tr>
+<th>Approach</th>
+<th>100 Ops Time</th>
+<th>Relative</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Redux-undo</td>
+<td>42.4 ms</td>
+<td><strong>Baseline</strong> ⭐</td>
+</tr>
+<tr>
+<td>Zundo (snapshot)</td>
+<td>43.4 ms</td>
+<td>close</td>
+</tr>
+<tr>
+<td>Zundo (diff)</td>
+<td>51.4 ms</td>
+<td>21% slower</td>
+</tr>
+<tr>
+<td>Travels</td>
+<td>87.9 ms</td>
+<td>107% slower</td>
+</tr>
+</tbody></table>
+<p><strong>Trade-off:</strong> Travels’ <code>setState</code> is slower because it generates JSON Patches in real time. The cost is amortized per operation and still in the millisecond range. In return you get:</p>
+<ul>
+<li>97% memory savings</li>
+<li>Extremely fast serialization</li>
+<li>A standardized operation log</li>
+</ul>
+<h4 id="3-Undo-x2F-Redo"><a href="#3-Undo-x2F-Redo" class="headerlink" title="3) Undo&#x2F;Redo"></a>3) Undo&#x2F;Redo</h4><table>
+<thead>
+<tr>
+<th>Approach</th>
+<th>Undo (×50)</th>
+<th>Redo (×50)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Redux-undo</td>
+<td>0.09 ms</td>
+<td>0.12 ms ⭐</td>
+</tr>
+<tr>
+<td>Zundo (snapshot)</td>
+<td>0.06 ms</td>
+<td>0.02 ms ⭐</td>
+</tr>
+<tr>
+<td>Zundo (diff)</td>
+<td>0.05 ms</td>
+<td>0.01 ms ⭐</td>
+</tr>
+<tr>
+<td>Travels</td>
+<td>18.88 ms</td>
+<td>19.00 ms</td>
+</tr>
+</tbody></table>
+<p>Snapshot undo&#x2F;redo is O(1) (swap references). Travels applies patches (O(n)). In practice:</p>
+<ul>
+<li>~18ms latency is barely noticeable</li>
+<li>You gain huge wins in persistence and memory</li>
+</ul>
+<h4 id="4-Serialization-Persistence-Critical"><a href="#4-Serialization-Persistence-Critical" class="headerlink" title="4) Serialization (Persistence-Critical)"></a>4) Serialization (Persistence-Critical)</h4><table>
+<thead>
+<tr>
+<th>Approach</th>
+<th>JSON Size</th>
+<th><code>stringify</code></th>
+<th><code>parse</code></th>
+<th>Savings</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Redux-undo</td>
+<td>11,627 KB</td>
+<td>12.58 ms</td>
+<td>23.91 ms</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Zundo (snapshot)</td>
+<td>11,627 KB</td>
+<td>12.27 ms</td>
+<td>24.45 ms</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Zundo (diff)</td>
+<td>118.81 KB</td>
+<td>0.58 ms</td>
+<td>0.42 ms</td>
+<td><strong>99.0%</strong></td>
+</tr>
+<tr>
+<td>Travels</td>
+<td>20.6 KB</td>
+<td>0.07 ms</td>
+<td>0.14 ms</td>
+<td><strong>99.8%</strong> ⭐</td>
+</tr>
+</tbody></table>
+<p><strong>Key take:</strong></p>
+<ul>
+<li>Travels serializes to <strong>~20.6KB</strong> vs 11MB+ for snapshots (<strong>99.8% smaller</strong>)</li>
+<li><code>stringify</code> is <strong>×180 faster</strong> (0.07ms vs 12ms)</li>
+<li><code>parse</code> is <strong>×170 faster</strong> (0.14ms vs 24ms)</li>
+</ul>
+<h3 id="Performance-Conclusion"><a href="#Performance-Conclusion" class="headerlink" title="Performance Conclusion"></a>Performance Conclusion</h3><p><strong>Snapshot approaches (Redux-undo &#x2F; default Zundo):</strong></p>
+<ul>
+<li>✅ Fastest <code>setState</code></li>
+<li>✅ Fastest undo&#x2F;redo</li>
+<li>❌ Huge memory</li>
+<li>❌ Large serialized payloads</li>
+<li>❌ Poor fit for persistence</li>
+</ul>
+<p><strong>Diff approach (Zundo + microdiff):</strong></p>
+<ul>
+<li>⚠️ Slower <code>setState</code> (diff cost)</li>
+<li>✅ Fast undo&#x2F;redo</li>
+<li>✅ Low memory</li>
+<li>✅ Smaller persistence payloads</li>
+<li>⚠️ You own the diff complexity</li>
+</ul>
+<p><strong>Travels (built-in JSON Patch):</strong></p>
+<ul>
+<li>⚠️ Slower <code>setState</code> (patch generation)</li>
+<li>⚠️ Slower undo&#x2F;redo (patch application)</li>
+<li>✅ Low memory</li>
+<li>✅ Extremely small persistence ⭐</li>
+<li>✅ Zero-config, out of the box</li>
+<li>✅ Standard format, great for storage&#x2F;analytics</li>
+</ul>
+<p><strong>Recommendation:</strong></p>
+<ul>
+<li>Simple apps, unconcerned with memory → Redux-undo&#x2F;Zundo default</li>
+<li>Need memory optimization and willing to write diffs → Zundo + custom diff</li>
+<li>Need persistence, cross-framework, plug-and-play → <strong>Travels</strong></li>
+</ul>
+<h2 id="When-to-Use-It"><a href="#When-to-Use-It" class="headerlink" title="When to Use It"></a>When to Use It</h2><p>Travels isn’t a silver bullet; it shines when:</p>
+<p><strong>✅ Good fit:</strong></p>
+<ul>
+<li>State objects are large (&gt;10KB)</li>
+<li>You need cross-framework reuse</li>
+<li>Memory-sensitive environments (mobile, embedded)</li>
+<li>You want fine-grained history control (manual archive, custom windows)</li>
+</ul>
+<p><strong>❌ Less ideal:</strong></p>
+<ul>
+<li>Very simple state (a few fields—Redux-undo is simpler)</li>
+<li>Deeply invested in Zustand and happy to write diffs (Zundo is lighter)</li>
+<li>You don’t care about memory</li>
+</ul>
+<h2 id="Comparison-Summary"><a href="#Comparison-Summary" class="headerlink" title="Comparison Summary"></a>Comparison Summary</h2><p><strong>Redux-undo</strong> is a dependable standard in the Redux ecosystem but is Redux-bound.</p>
+<p><strong>Zundo</strong> is elegantly designed and supports diff optimization, but pushes diff complexity onto users.</p>
+<p><strong>Travels</strong> treats JSON Patch as a first-class citizen—out-of-the-box memory savings, framework-agnostic, and high-performance where it matters for persistence.</p>
+<p>If you’re building:</p>
+<ul>
+<li>Rich text editors</li>
+<li>Graphics&#x2F;design tools</li>
+<li>Collaborative editing apps</li>
+<li>Complex form systems</li>
+</ul>
+<p>—i.e., anything with frequent undo&#x2F;redo—Travels is worth a try.</p>
+<h2 id="Technical-Details"><a href="#Technical-Details" class="headerlink" title="Technical Details"></a>Technical Details</h2><h3 id="JSON-Patch-Reversibility"><a href="#JSON-Patch-Reversibility" class="headerlink" title="JSON Patch Reversibility"></a>JSON Patch Reversibility</h3><p>Travels stores both <code>patches</code> and <code>inversePatches</code>:</p>
+<pre><code class="typescript">// Change: count: 0 -&gt; 1
+patches: [&#123; op: &#39;replace&#39;, path: [&#39;count&#39;], value: 1 &#125;];
+inversePatches: [&#123; op: &#39;replace&#39;, path: [&#39;count&#39;], value: 0 &#125;];
+
+// Redo: apply patches
+// Undo: apply inversePatches
+</code></pre>
+<p>This guarantees reliable time travel.</p>
+<h3 id="Why-Mutative-Is-Fast"><a href="#Why-Mutative-Is-Fast" class="headerlink" title="Why Mutative Is Fast"></a>Why Mutative Is Fast</h3><p>Mutative’s performance comes from:</p>
+<ol>
+<li><strong>Copy-on-write</strong> – only copy what changes</li>
+<li><strong>Shallow copy</strong> – shallow by default; deep when needed</li>
+<li><strong>Incremental patch generation</strong> – not a post-hoc diff</li>
+</ol>
+<p>This is typically faster than Immer and far more efficient than <code>JSON.parse(JSON.stringify())</code>.</p>
+<h3 id="Why-JSON-Patch-Excels-at-Persistence"><a href="#Why-JSON-Patch-Excels-at-Persistence" class="headerlink" title="Why JSON Patch Excels at Persistence"></a>Why JSON Patch Excels at Persistence</h3><p>Another key advantage: <strong>JSON Patch is extremely well suited to persistence</strong>.</p>
+<p>Suppose you want “save the entire edit history locally and resume it on next launch”:</p>
+<p><strong>Redux-undo &#x2F; Zundo (full snapshots):</strong></p>
+<pre><code class="typescript">// Data to persist
+const dataToSave = &#123;
+  past: [
+    &#123; title: &quot;Doc&quot;, content: &quot;...&quot;, metadata: &#123;...&#125; &#125;,        // 100KB
+    &#123; title: &quot;Doc v2&quot;, content: &quot;...&quot;, metadata: &#123;...&#125; &#125;,     // 100KB
+    // ... 100 histories
+  ],
+  present: &#123; /* current state */ &#125;,
+  future: []
+&#125;;
+
+// Write to localStorage/IndexedDB
+localStorage.setItem(&#39;history&#39;, JSON.stringify(dataToSave));
+// Problem: 10MB+ of serialized JSON
+</code></pre>
+<p><strong>Travels (JSON Patch):</strong></p>
+<pre><code class="typescript">// Data to persist
+const dataToSave = &#123;
+  state: travels.getState(),        // current state
+  patches: travels.getPatches(),    // only patches, just a few KB
+  position: travels.getPosition(),  // index
+&#125;;
+
+localStorage.setItem(&#39;travels-state&#39;, JSON.stringify(dataToSave.state));
+localStorage.setItem(&#39;travels-patches&#39;, JSON.stringify(dataToSave.patches));
+localStorage.setItem(&#39;travels-position&#39;, String(dataToSave.position));
+
+// Restore
+const travels = createTravels(
+  JSON.parse(localStorage.getItem(&#39;travels-state&#39;)),
+  &#123;
+    initialPatches: JSON.parse(localStorage.getItem(&#39;travels-patches&#39;)),
+    initialPosition: Number(localStorage.getItem(&#39;travels-position&#39;)),
+  &#125;
+);
+</code></pre>
+<p><strong>Practical comparison (100 histories, from the benchmark):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Redux-undo</th>
+<th>Zundo</th>
+<th>Travels</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>localStorage usage</td>
+<td>~11.6 MB</td>
+<td>~11.6 MB</td>
+<td>~100KB state + 20.6KB patches</td>
+</tr>
+<tr>
+<td><code>JSON.stringify</code> time</td>
+<td>~12.6 ms</td>
+<td>~12.3 ms</td>
+<td>~0.07 ms (<strong>×180 faster</strong>) ⭐</td>
+</tr>
+<tr>
+<td><code>JSON.parse</code> time</td>
+<td>~23.9 ms</td>
+<td>~24.5 ms</td>
+<td>~0.14 ms (<strong>×170 faster</strong>) ⭐</td>
+</tr>
+<tr>
+<td>Storage savings</td>
+<td>–</td>
+<td>–</td>
+<td><strong>99.8%</strong> ⭐</td>
+</tr>
+<tr>
+<td>IndexedDB write speed</td>
+<td>Slow</td>
+<td>Slow</td>
+<td>Fast (500×+ less data)</td>
+</tr>
+</tbody></table>
+<p>Why such a gap?</p>
+<ol>
+<li><strong>Size</strong>: Patches are inherently compact</li>
+<li><strong>(De)serialization</strong>: tiny payloads make JSON faster</li>
+<li><strong>Quotas</strong>: localStorage caps at 5–10MB; Travels stores far more history</li>
+</ol>
+<h3 id="Real-World-Patterns"><a href="#Real-World-Patterns" class="headerlink" title="Real-World Patterns"></a>Real-World Patterns</h3><p>This matters in many cases:</p>
+<p><strong>1) Offline-first apps</strong></p>
+<pre><code class="typescript">// Save to local storage on every change
+travels.subscribe(() =&gt; &#123;
+  // Always-on autosave is feasible because data is tiny
+  saveToLocalStorage(&#123;
+    state: travels.getState(),
+    patches: travels.getPatches(),
+    position: travels.getPosition(),
+  &#125;);
+&#125;);
+
+// Next launch resumes with full undo/redo history
+</code></pre>
+<p><strong>2) Collaborative editing operation logs</strong></p>
+<pre><code class="typescript">// Sync patches to server
+travels.subscribe((state, patches, position) =&gt; &#123;
+  // patches are standard JSON Patch (RFC 6902)
+  // Send for:
+  // - Operational history
+  // - Conflict resolution
+  // - Playback/replay
+  api.syncPatches(patches);
+&#125;);
+</code></pre>
+<p><strong>3) Versioning &amp; audit</strong></p>
+<pre><code class="typescript">// JSON Patch doubles as an operation log
+const auditLog = travels.getPatches().patches.map((patch, index) =&gt; (&#123;
+  timestamp: Date.now(),
+  user: currentUser,
+  changes: patch, // standard, easy to review
+  position: index,
+&#125;));
+
+// Can export to human-friendly formats:
+/*
+2024-01-01 10:00:00 - User A:
+  - Changed /title from &quot;Draft&quot; to &quot;Final&quot;
+  - Added /tags/0 = &quot;published&quot;
+
+2024-01-01 10:05:00 - User B:
+  - Replaced /content/paragraphs/3
+*/
+</code></pre>
+<p><strong>4) Product analytics</strong></p>
+<pre><code class="typescript">// Analyze editing patterns
+const stats = analyzePatches(travels.getPatches());
+/*
+&#123;
+  totalOperations: 150,
+  avgPatchSize: 45,  // bytes
+  mostEditedFields: [&quot;/title&quot;, &quot;/content/section[0]&quot;],
+  undoRate: 0.15
+&#125;
+*/
+</code></pre>
+<p>Here, JSON Patch’s standardized, compact format is a huge win. Snapshot-based Redux-undo&#x2F;Zundo are simple, but become unwieldy once persistence enters the picture.</p>
+<h2 id="Resources"><a href="#Resources" class="headerlink" title="Resources"></a>Resources</h2><ul>
+<li><strong>Travels</strong>: <a target="_blank" rel="noopener" href="https://github.com/mutativejs/travels">https://github.com/mutativejs/travels</a></li>
+<li><strong>use-travel</strong>: <a target="_blank" rel="noopener" href="https://github.com/mutativejs/use-travel">https://github.com/mutativejs/use-travel</a> (React hook)</li>
+<li><strong>zustand-travel</strong>: <a target="_blank" rel="noopener" href="https://github.com/mutativejs/zustand-travel">https://github.com/mutativejs/zustand-travel</a> (Zustand middleware)</li>
+<li><strong>Mutative</strong>: <a target="_blank" rel="noopener" href="https://github.com/unadlib/mutative">https://github.com/unadlib/mutative</a></li>
+</ul>
+<h2 id="Final-Thoughts"><a href="#Final-Thoughts" class="headerlink" title="Final Thoughts"></a>Final Thoughts</h2><p>Before writing this post, I read the source code of all three libraries carefully. Redux-undo and Zundo are both excellent and have their places.</p>
+<p>Travels isn’t a silver bullet; it targets a specific problem: <strong>when you need long histories, how do you minimize memory usage, reduce performance overhead, and stay as general and feature-complete as possible?</strong> Its philosophy is to trade compute for memory, which pays off the most when state is large, changes are small, and histories are long. No need to pick a diff library, write conversion logic, or wrangle edge cases—those are built in.</p>
+<p>If you’re implementing or optimizing undo&#x2F;redo—especially for collaborative editors, visual design tools, game editors, or any app that needs long operation histories and hits memory&#x2F;perf ceilings—Travels is worth a try. It may not be the only answer, but it’s certainly one to consider.</p>
+<blockquote>
+<p>This article is based on source reviews of redux-undo v1.1.0, zundo v2.3.0, and travels v0.5.0. If anything is inaccurate, corrections are welcome.</p>
+</blockquote>
+
+  </div>
+</article>
+
+  </div>
+</div>
+
+
+  <!-- scripts list from theme config.yml -->
+  
+    <script src="/js/attraction.js"></script>
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/codemirror.min.js"></script>
+  
+  <script>
+    var nodes = Array.from(document.querySelectorAll('pre code'));
+    var render = {};
+    var titleSvg = '<svg style="position: absolute;z-index: 1;margin: 12px 0 0 12px;" xmlns="http://www.w3.org/2000/svg" width="54" height="14" viewBox="0 0 54 14"><g fill="none" fill-rule="evenodd" transform="translate(1 1)"><circle cx="6" cy="6" r="6" fill="#FF5F56" stroke="#E0443E" stroke-width=".5"></circle><circle cx="26" cy="6" r="6" fill="#FFBD2E" stroke="#DEA123" stroke-width=".5"></circle><circle cx="46" cy="6" r="6" fill="#27C93F" stroke="#1AAB29" stroke-width=".5"></circle></g></svg>';
+    nodes.forEach((node, index) => {
+      var lang = node.getAttribute('class');
+      var code = node.innerText;
+      var mode = lang;
+      switch(lang) {
+        case 'jsx':
+          lang = 'javascript';
+          mode = 'text/jsx';
+          break;
+        case 'tsx':
+          lang = 'javascript';
+          mode = 'text/typescript-jsx';
+        case 'typescript':
+          lang = 'javascript';
+          mode = 'text/typescript';
+        default:
+          break;
+      }
+      var config = {
+        value: code,
+        mode,
+        theme: 'seti'
+      };
+      if (!lang) return;
+      var hasExisted = nodes.slice(0, index).find(function(node) { return node.getAttribute('class') === lang; });
+      if (hasExisted) {
+        render[lang].push(function() {
+          node.innerHTML = titleSvg;
+          CodeMirror(node, config);
+        });
+        return;
+      }
+      render[lang] = [];
+      var languagePackge = document.createElement('script');
+      languagePackge.src = `https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/mode/${lang}/${lang}.min.js`;
+      languagePackge.onload = () => {
+        setTimeout(() => {
+          node.innerHTML = titleSvg;
+          CodeMirror(node, config);
+          render[lang].forEach(function(callback) { callback(); })
+        }, 0);
+      }
+      document.body.appendChild(languagePackge);
+    });
+  </script>
+
+</body>
+</html>
