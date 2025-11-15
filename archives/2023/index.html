@@ -7,6 +7,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="initial-scale=1, maximum-scale=1">
   <title>Archives: 2023unadlib&#39;s Notes</title>
+  <script>
+    (function() {
+      try {
+        var themeKey = 'attraction-theme';
+        var savedTheme = localStorage.getItem(themeKey);
+        var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        var theme = savedTheme || (prefersDark ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', theme);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
   <style type="text/css">
     body, html {
       margin: 0;

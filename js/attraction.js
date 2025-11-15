@@ -85,16 +85,9 @@ class ThemeManager {
   }
 }
 
-// Initialize theme manager after page load
-document.addEventListener('DOMContentLoaded', () => {
-  new ThemeManager();
-});
-
-// If page is already loaded, initialize immediately
+// Initialize theme manager as soon as possible
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    new ThemeManager();
-  });
+  document.addEventListener('DOMContentLoaded', () => new ThemeManager());
 } else {
   new ThemeManager();
 }
