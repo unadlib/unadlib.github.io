@@ -305,15 +305,6 @@ pastStates: [
 ];
 // 100 history entries: ~11.8 MB growth
 </code></pre>
-<p><strong>Zundo (with diff):</strong></p>
-<pre><code class="typescript">// Must implement manually
-diff: (past, current) =&gt; &#123;
-  const diff = require(&#39;microdiff&#39;)(past, current);
-  // ... translate diff to your shape
-&#125;;
-// 100 histories: ~0.26 MB growth (≈97.8% saved)
-// But you must supply diff logic, and for huge trees the diff stage can bottleneck
-</code></pre>
 <p><strong>Travels:</strong></p>
 <pre><code class="typescript">// Automatically stores JSON Patches
 patches: [
@@ -321,7 +312,7 @@ patches: [
   [&#123; op: &#39;replace&#39;, path: [&#39;field2&#39;], value: &#39;newer&#39; &#125;], // ~50 bytes
   // ...
 ];
-// 100 histories: ~0.31 MB growth (≈97.4% saved)
+// 100 histories: ~0.32 MB growth (≈97.3% saved)
 // After serialization only ~20.6 KB (≈99.8% smaller than snapshots)
 </code></pre>
 <p>The gap is stark. For large objects with small edits, Travels can deliver ~40× memory savings, and <strong>500×+</strong> on serialized size.</p>
@@ -457,11 +448,11 @@ increment(); // 5
 <p>Great for memory-constrained environments.</p>
 <h2 id="Hands-On-Experience"><a href="#Hands-On-Experience" class="headerlink" title="Hands-On Experience"></a>Hands-On Experience</h2><p>I refactored a collaborative editor with Travels. Based on benchmark projections for a 100KB doc over 100 edits:</p>
 <ul>
-<li><strong>Memory</strong>: ~11.8MB (snapshots) → ~0.31MB (<strong>−97.4%</strong>)</li>
-<li><strong>Persistence size</strong>: ~11.6MB → ~121KB (<strong>−99%</strong>)</li>
-<li><strong>Serialization speed</strong>: ~12ms → ~0.07ms (<strong>×180 faster</strong>)</li>
+<li><strong>Memory</strong>: ~11.8MB (snapshots) → ~0.32MB (<strong>−97%</strong>)</li>
+<li><strong>Persistence size</strong>: ~11.7MB → ~116KB (<strong>−99%</strong>)</li>
+<li><strong>Serialization speed</strong>: ~12ms → ~0.06ms (<strong>≈200× faster</strong>)</li>
 <li><strong>Code volume</strong>: ~40% less (no custom diff code)</li>
-<li><strong>Undo&#x2F;redo</strong>: millisecond-level per op (~0.88ms average), effectively imperceptible</li>
+<li><strong>Undo&#x2F;redo</strong>: still sub-millisecond (≈0.69ms undo &#x2F; 0.27ms redo in the real-library test)</li>
 </ul>
 <p>And the API is intuitive:</p>
 <pre><code class="typescript">const travels = createTravels(initialState);
@@ -489,153 +480,122 @@ travels.canForward();
 <ul>
 <li><strong>Object size</strong>: ~100KB (nested objects&#x2F;arrays)</li>
 <li><strong>Ops</strong>: 100 tiny edits (2 fields per op)</li>
-<li><strong>Env</strong>: Node.js v22.17.1</li>
+<li><strong>Env</strong>: Node.js v22.21.1</li>
 <li><strong>Memory</strong>: measured precisely with <code>--expose-gc</code></li>
 </ul>
 <p>Full code: <a target="_blank" rel="noopener" href="https://github.com/mutativejs/travels/tree/main/benchmarks"><code>./benchmarks/</code></a></p>
-<h3 id="Results"><a href="#Results" class="headerlink" title="Results"></a>Results</h3><h4 id="1-Memory-Growth"><a href="#1-Memory-Growth" class="headerlink" title="1) Memory Growth"></a>1) Memory Growth</h4><table>
+<h3 id="Results"><a href="#Results" class="headerlink" title="Results"></a>Results</h3><p>The latest runs (Node v22.21.1) come from executing <code>yarn test:all</code>, which runs both benchmark scripts with <code>node --expose-gc</code>.</p>
+<h4 id="Simulated-implementations-memory-performance-test-js"><a href="#Simulated-implementations-memory-performance-test-js" class="headerlink" title="Simulated implementations (memory-performance-test.js)"></a>Simulated implementations (<code>memory-performance-test.js</code>)</h4><table>
 <thead>
 <tr>
-<th>Approach</th>
-<th>Memory Growth</th>
-<th>Savings</th>
+<th>Metric</th>
+<th>Redux-undo</th>
+<th>Zundo</th>
+<th>Travels</th>
 </tr>
 </thead>
 <tbody><tr>
-<td>Redux-undo (snapshot)</td>
-<td>11.8 MB</td>
-<td>–</td>
+<td>Memory (MB)</td>
+<td>11.8</td>
+<td>11.8</td>
+<td><strong>0.32</strong></td>
 </tr>
 <tr>
-<td>Zundo (snapshot)</td>
-<td>11.8 MB</td>
-<td>–</td>
+<td>setState (ms)</td>
+<td>42.74</td>
+<td><strong>41.27</strong></td>
+<td>88.16</td>
 </tr>
 <tr>
-<td>Zundo (diff)</td>
-<td>0.26 MB</td>
-<td><strong>97.8%</strong> ⭐</td>
+<td>Undo (ms)</td>
+<td>0.08</td>
+<td><strong>0.07</strong></td>
+<td>18.65</td>
 </tr>
 <tr>
-<td>Travels (JSON Patch)</td>
-<td>0.31 MB</td>
-<td><strong>97.4%</strong> ⭐</td>
+<td>Redo (ms)</td>
+<td>0.12</td>
+<td><strong>0.02</strong></td>
+<td>20.34</td>
+</tr>
+<tr>
+<td>Serialized size (KB)</td>
+<td>11,626.66</td>
+<td>11,626.46</td>
+<td><strong>20.6</strong></td>
+</tr>
+<tr>
+<td>Serialize (ms)</td>
+<td>12.86</td>
+<td>11.88</td>
+<td><strong>0.06</strong></td>
+</tr>
+<tr>
+<td>Deserialize (ms)</td>
+<td>23.6</td>
+<td>23.55</td>
+<td><strong>0.14</strong></td>
 </tr>
 </tbody></table>
-<p><strong>Key take:</strong> for 100 tiny edits on a 100KB object, snapshots take ~12MB; JSON Patch takes ~0.3MB—<strong>97%+ saved</strong>.</p>
-<h4 id="2-setState-Throughput"><a href="#2-setState-Throughput" class="headerlink" title="2) setState Throughput"></a>2) <code>setState</code> Throughput</h4><table>
-<thead>
-<tr>
-<th>Approach</th>
-<th>100 Ops Time</th>
-<th>Relative</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>Redux-undo</td>
-<td>42.4 ms</td>
-<td><strong>Baseline</strong> ⭐</td>
-</tr>
-<tr>
-<td>Zundo (snapshot)</td>
-<td>43.4 ms</td>
-<td>close</td>
-</tr>
-<tr>
-<td>Zundo (diff)</td>
-<td>51.4 ms</td>
-<td>21% slower</td>
-</tr>
-<tr>
-<td>Travels</td>
-<td>87.9 ms</td>
-<td>107% slower</td>
-</tr>
-</tbody></table>
-<p><strong>Trade-off:</strong> Travels’ <code>setState</code> is slower because it generates JSON Patches in real time. The cost is amortized per operation and still in the millisecond range. In return you get:</p>
 <ul>
-<li>97% memory savings</li>
-<li>Extremely fast serialization</li>
-<li>A standardized operation log</li>
+<li>Travels keeps simulated history sizes tiny (20.6 KB vs ~11 MB snapshots) and serializes &gt;200× faster, while snapshot stores remain unbeatable for undo&#x2F;redo latency.</li>
+<li>The Travels simulated <code>setState</code> cost (88 ms for 100 updates) is roughly 2× the snapshot stores, which matches expectations for generating JSON Patch.</li>
 </ul>
-<h4 id="3-Undo-x2F-Redo"><a href="#3-Undo-x2F-Redo" class="headerlink" title="3) Undo&#x2F;Redo"></a>3) Undo&#x2F;Redo</h4><table>
+<h4 id="Real-libraries-real-library-benchmark-js"><a href="#Real-libraries-real-library-benchmark-js" class="headerlink" title="Real libraries (real-library-benchmark.js)"></a>Real libraries (<code>real-library-benchmark.js</code>)</h4><table>
 <thead>
 <tr>
-<th>Approach</th>
-<th>Undo (×50)</th>
-<th>Redo (×50)</th>
+<th>Metric</th>
+<th>Redux-undo</th>
+<th>Zundo</th>
+<th>Travels</th>
 </tr>
 </thead>
 <tbody><tr>
-<td>Redux-undo</td>
-<td>0.09 ms</td>
-<td>0.12 ms ⭐</td>
+<td>Memory (MB)</td>
+<td>0.05</td>
+<td><strong>0.04</strong></td>
+<td>0.16</td>
 </tr>
 <tr>
-<td>Zundo (snapshot)</td>
-<td>0.06 ms</td>
-<td>0.02 ms ⭐</td>
+<td>setState (ms)</td>
+<td>0.35</td>
+<td><strong>0.3</strong></td>
+<td>1.81</td>
 </tr>
 <tr>
-<td>Zundo (diff)</td>
-<td>0.05 ms</td>
-<td>0.01 ms ⭐</td>
+<td>Undo (ms)</td>
+<td>0.25</td>
+<td><strong>0.12</strong></td>
+<td>0.69</td>
 </tr>
 <tr>
-<td>Travels</td>
-<td>18.88 ms</td>
-<td>19.00 ms</td>
+<td>Redo (ms)</td>
+<td><strong>0.07</strong></td>
+<td>0.15</td>
+<td>0.27</td>
+</tr>
+<tr>
+<td>Serialized size (KB)</td>
+<td>11,742.03</td>
+<td>11,510.59</td>
+<td><strong>116.26</strong></td>
+</tr>
+<tr>
+<td>Serialize (ms)</td>
+<td>12.63</td>
+<td>11.59</td>
+<td><strong>0.61</strong></td>
+</tr>
+<tr>
+<td>Deserialize (ms)</td>
+<td>28.87</td>
+<td>22.66</td>
+<td><strong>0.42</strong></td>
 </tr>
 </tbody></table>
-<p>Snapshot undo&#x2F;redo is O(1) (swap references). Travels applies patches (O(n)). In practice:</p>
 <ul>
-<li>~18ms latency is barely noticeable</li>
-<li>You gain huge wins in persistence and memory</li>
-</ul>
-<h4 id="4-Serialization-Persistence-Critical"><a href="#4-Serialization-Persistence-Critical" class="headerlink" title="4) Serialization (Persistence-Critical)"></a>4) Serialization (Persistence-Critical)</h4><table>
-<thead>
-<tr>
-<th>Approach</th>
-<th>JSON Size</th>
-<th><code>stringify</code></th>
-<th><code>parse</code></th>
-<th>Savings</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>Redux-undo</td>
-<td>11,627 KB</td>
-<td>12.58 ms</td>
-<td>23.91 ms</td>
-<td>–</td>
-</tr>
-<tr>
-<td>Zundo (snapshot)</td>
-<td>11,627 KB</td>
-<td>12.27 ms</td>
-<td>24.45 ms</td>
-<td>–</td>
-</tr>
-<tr>
-<td>Zundo (diff)</td>
-<td>118.81 KB</td>
-<td>0.58 ms</td>
-<td>0.42 ms</td>
-<td><strong>99.0%</strong></td>
-</tr>
-<tr>
-<td>Travels</td>
-<td>20.6 KB</td>
-<td>0.07 ms</td>
-<td>0.14 ms</td>
-<td><strong>99.8%</strong> ⭐</td>
-</tr>
-</tbody></table>
-<p><strong>Key take:</strong></p>
-<ul>
-<li>Travels serializes to <strong>~20.6KB</strong> vs 11MB+ for snapshots (<strong>99.8% smaller</strong>)</li>
-<li><code>stringify</code> is <strong>×180 faster</strong> (0.07ms vs 12ms)</li>
-<li><code>parse</code> is <strong>×170 faster</strong> (0.14ms vs 24ms)</li>
+<li>Even with real packages, Travels shrinks serialized history by roughly 100× and finishes (de)serialization well under a millisecond.</li>
+<li>Snapshot-based stacks still win hot-path operations (setState&#x2F;undo&#x2F;redo), so workloads that prioritize raw speed over persistence will continue to prefer Redux-undo&#x2F;Zundo.</li>
 </ul>
 <h3 id="Performance-Conclusion"><a href="#Performance-Conclusion" class="headerlink" title="Performance Conclusion"></a>Performance Conclusion</h3><p><strong>Snapshot approaches (Redux-undo &#x2F; default Zundo):</strong></p>
 <ul>
@@ -644,14 +604,6 @@ travels.canForward();
 <li>❌ Huge memory</li>
 <li>❌ Large serialized payloads</li>
 <li>❌ Poor fit for persistence</li>
-</ul>
-<p><strong>Diff approach (Zundo + microdiff):</strong></p>
-<ul>
-<li>⚠️ Slower <code>setState</code> (diff cost)</li>
-<li>✅ Fast undo&#x2F;redo</li>
-<li>✅ Low memory</li>
-<li>✅ Smaller persistence payloads</li>
-<li>⚠️ You own the diff complexity</li>
 </ul>
 <p><strong>Travels (built-in JSON Patch):</strong></p>
 <ul>
@@ -665,7 +617,6 @@ travels.canForward();
 <p><strong>Recommendation:</strong></p>
 <ul>
 <li>Simple apps, unconcerned with memory → Redux-undo&#x2F;Zundo default</li>
-<li>Need memory optimization and willing to write diffs → Zundo + custom diff</li>
 <li>Need persistence, cross-framework, plug-and-play → <strong>Travels</strong></li>
 </ul>
 <h2 id="When-to-Use-It"><a href="#When-to-Use-It" class="headerlink" title="When to Use It"></a>When to Use It</h2><p>Travels isn’t a silver bullet; it shines when:</p>
@@ -679,7 +630,7 @@ travels.canForward();
 <p><strong>❌ Less ideal:</strong></p>
 <ul>
 <li>Very simple state (a few fields—Redux-undo is simpler)</li>
-<li>Deeply invested in Zustand and happy to write diffs (Zundo is lighter)</li>
+<li>Deeply invested in Zustand (Zundo is lighter)</li>
 <li>You don’t care about memory</li>
 </ul>
 <h2 id="Comparison-Summary"><a href="#Comparison-Summary" class="headerlink" title="Comparison Summary"></a>Comparison Summary</h2><p><strong>Redux-undo</strong> is a dependable standard in the Redux ecosystem but is Redux-bound.</p>
@@ -760,33 +711,33 @@ const travels = createTravels(
 </thead>
 <tbody><tr>
 <td>localStorage usage</td>
-<td>~11.6 MB</td>
-<td>~11.6 MB</td>
-<td>~100KB state + 20.6KB patches</td>
+<td>~11.7 MB</td>
+<td>~11.5 MB</td>
+<td>~116 KB</td>
 </tr>
 <tr>
 <td><code>JSON.stringify</code> time</td>
 <td>~12.6 ms</td>
-<td>~12.3 ms</td>
-<td>~0.07 ms (<strong>×180 faster</strong>) ⭐</td>
+<td>~11.6 ms</td>
+<td>~0.61 ms (<strong>×20 faster</strong>) ⭐</td>
 </tr>
 <tr>
 <td><code>JSON.parse</code> time</td>
-<td>~23.9 ms</td>
-<td>~24.5 ms</td>
-<td>~0.14 ms (<strong>×170 faster</strong>) ⭐</td>
+<td>~28.9 ms</td>
+<td>~22.7 ms</td>
+<td>~0.42 ms (<strong>×55 faster</strong>) ⭐</td>
 </tr>
 <tr>
 <td>Storage savings</td>
 <td>–</td>
 <td>–</td>
-<td><strong>99.8%</strong> ⭐</td>
+<td><strong>99%</strong> ⭐</td>
 </tr>
 <tr>
 <td>IndexedDB write speed</td>
 <td>Slow</td>
 <td>Slow</td>
-<td>Fast (500×+ less data)</td>
+<td>Fast (100×+ less data)</td>
 </tr>
 </tbody></table>
 <p>Why such a gap?</p>
@@ -862,7 +813,7 @@ const stats = analyzePatches(travels.getPatches());
 <p>Travels isn’t a silver bullet; it targets a specific problem: <strong>when you need long histories, how do you minimize memory usage, reduce performance overhead, and stay as general and feature-complete as possible?</strong> Its philosophy is to trade compute for memory, which pays off the most when state is large, changes are small, and histories are long. No need to pick a diff library, write conversion logic, or wrangle edge cases—those are built in.</p>
 <p>If you’re implementing or optimizing undo&#x2F;redo—especially for collaborative editors, visual design tools, game editors, or any app that needs long operation histories and hits memory&#x2F;perf ceilings—Travels is worth a try. It may not be the only answer, but it’s certainly one to consider.</p>
 <blockquote>
-<p>This article is based on source reviews of redux-undo v1.1.0, zundo v2.3.0, and travels v0.5.0. If anything is inaccurate, corrections are welcome.</p>
+<p>This article is based on source reviews of redux-undo v1.1.0, zundo v2.3.0, and travels v0.9.0. If anything is inaccurate, corrections are welcome.</p>
 </blockquote>
 
   </div>
