@@ -1,0 +1,473 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+  <title>Fict – A compiler that makes JavaScript variables automatically reactiveunadlib&#39;s Notes</title>
+  <script>
+    (function() {
+      try {
+        var themeKey = 'attraction-theme';
+        var savedTheme = localStorage.getItem(themeKey);
+        var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        var theme = savedTheme || (prefersDark ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', theme);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+  <style type="text/css">
+    body, html {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+      font-size: 18px;
+      line-height: 1.8;
+      user-select: none;
+      box-sizing: border-box;
+      touch-action: manipulation;
+    }
+
+    a.title {
+      text-decoration: none;
+    }
+
+    #content-outer {
+      margin: 4% 14%;
+      padding: 4% 8%;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+
+    #content-inner {
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .recent-post-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+    }
+
+    .recent-post-item .title {
+      overflow: hidden;
+      text-overflow:ellipsis;
+      white-space: nowrap;
+    }
+
+    .recent-post-item .time {
+      font-size: 14px;
+      line-height: 32px;
+      min-width: 81px;
+      text-align: right;
+    }
+
+    #post img {
+      max-width: 100%;
+    }
+
+    #post h1.title {
+      text-align: center;
+      font-size: 2em;
+      margin-block-start: 0.67em;
+      margin-block-end: 0.67em;
+      line-height: 1;
+    }
+
+    #post .time {
+      text-align: center;
+      font-size: 14px;
+    }
+
+    #post .content {
+      margin-top: 8%;
+    }
+
+    #post .content blockquote {
+      padding-left: 20px;
+      margin: 0;
+    }
+
+    #post .content .gutter {
+      display: none;
+    }
+
+    code, kbd, pre, samp {
+      font-size: 16px !important;
+    }
+
+    .CodeMirror {
+      height: auto !important;
+      padding: 36px 24px 0;
+      border-radius: 6px;
+    }
+
+    #post .content figure {
+      padding: 0 1em;
+      margin: 0;
+      overflow: auto;
+    }
+
+    #post .content figure table {
+      width: 100%;
+    }
+
+    @media screen and (max-width: 1024px)  {
+      #content-outer {
+        margin: 2% 7%;
+        padding: 2% 4%;
+      }
+
+      .recent-post-item:first-child {
+        margin-top: 16px;
+      }
+    }
+
+    @media screen and (max-width: 480px) {
+      body{
+        -webkit-text-size-adjust: none;
+      }
+
+      #content-outer {
+        margin: 0;
+        padding: 2% 4%;
+        border-radius: 0;
+      }
+
+      .recent-post-item:first-child {
+        margin-top: 32px;
+      }
+
+      .recent-post-item:last-child {
+        border-bottom: none;
+      }
+    }
+  </style>
+  
+    <!-- styles list from theme config.yml -->
+    
+      <link rel="stylesheet" href="/css/theme.css">
+    
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/codemirror.min.css">
+    
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/theme/seti.min.css">
+    
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+<body class="cm-s-seti">
+
+<div id="content-outer">
+  <div id="content-inner">
+    
+<article id="post">
+  <h1 class="title">Fict – A compiler that makes JavaScript variables automatically reactive</h1>
+  <p class="time">2025-12-31</span>
+  <div class="content">
+      <p>Fict - <a target="_blank" rel="noopener" href="https://github.com/fictjs/fict">https://github.com/fictjs/fict</a></p>
+<h2 id="Opening-A-Starting-Point-for-Technical-Exploration"><a href="#Opening-A-Starting-Point-for-Technical-Exploration" class="headerlink" title="Opening: A Starting Point for Technical Exploration"></a>Opening: A Starting Point for Technical Exploration</h2><p>When developing with React, we often write code like this:</p>
+<pre><code class="jsx">const [count, setCount] = useState(0)
+const doubled = useMemo(() =&gt; count * 2, [count])
+const handleClick = useCallback(() =&gt; setCount(c =&gt; c + 1), [])
+</code></pre>
+<p>The meaning expressed by these three lines is actually quite simple: <code>count</code> is a number, and <code>doubled</code> is twice its value.</p>
+<p>This raises a question: <strong>Is it possible for a compiler to automatically infer these dependencies?</strong></p>
+<p>Modern compilers are already capable of analyzing control flow, performing type inference, and eliminating dead code—theoretically, automatically tracking variable dependencies seems feasible as well.</p>
+<p>Fict is a technical exploration based precisely on this idea.</p>
+<hr>
+<h2 id="Part-1-Core-Design-Philosophy"><a href="#Part-1-Core-Design-Philosophy" class="headerlink" title="Part 1: Core Design Philosophy"></a>Part 1: Core Design Philosophy</h2><h3 id="What-if-variables-just…-worked"><a href="#What-if-variables-just…-worked" class="headerlink" title="What if variables just… worked?"></a>What if variables just… worked?</h3><p>The core hypothesis of Fict is:</p>
+<p><strong>If the compiler can see your code, it can know which variables depend on which other variables.</strong></p>
+<p>Let’s look at an example:</p>
+<pre><code class="jsx">function Counter() &#123;
+  let count = $state(0) // Marker: This is mutable state (reactive source)
+  const doubled = count * 2 // Compiler inference: Depends on count
+  const message = `Value: $&#123;doubled&#125;` // Compiler inference: Depends on doubled → Depends on count
+
+  return &lt;button onClick=&#123;() =&gt; count++&#125;&gt;&#123;message&#125;&lt;/button&gt;
+&#125;
+</code></pre>
+<p>Notice what is <strong>missing</strong> here:</p>
+<ul>
+<li>No <code>setCount</code> (direct assignment)</li>
+<li>No <code>useMemo</code> (automatic inference)</li>
+<li>No dependency arrays (compiler analysis)</li>
+<li>No <code>.value</code> or explicit getter calls (just plain variables)</li>
+</ul>
+<p><code>$state(0)</code> is the only marker. Everything else is inferred by the compiler itself.</p>
+<h3 id="Technical-Feasibility-Analysis"><a href="#Technical-Feasibility-Analysis" class="headerlink" title="Technical Feasibility Analysis"></a>Technical Feasibility Analysis</h3><p>This isn’t magic; it’s based on mature static analysis technology.</p>
+<p>The compiler constructs a High-Level Intermediate Representation (HIR, a high-level IR) and performs data flow analysis; with the right representation, dependency tracking turns into a “traversing the dependency graph” problem.</p>
+<p>In a simplified SSA (Static Single Assignment) perspective, you would see a dependency chain like this:</p>
+<pre><code>count_1    = $state(0)                 // Reactive source
+doubled_1  = count_1 * 2               // Uses count_1 → Depends on count
+message_1  = `Value: $&#123;doubled_1&#125;`     // Uses doubled_1 → Transitive dependency on count
+</code></pre>
+<p>The compiler knows <code>message</code> depends on <code>count</code> without you telling it.</p>
+<blockquote>
+<p>The above is an overview of Fict’s core design philosophy and technical route. Subsequent chapters will detail the specific implementation methods.</p>
+</blockquote>
+<hr>
+<h2 id="Part-2-Comparison-with-Other-Frameworks"><a href="#Part-2-Comparison-with-Other-Frameworks" class="headerlink" title="Part 2: Comparison with Other Frameworks"></a>Part 2: Comparison with Other Frameworks</h2><h3 id="2-1-Syntax-Comparison"><a href="#2-1-Syntax-Comparison" class="headerlink" title="2.1 Syntax Comparison"></a>2.1 Syntax Comparison</h3><p>Let’s look at how different frameworks handle the same problem:</p>
+<pre><code>┌─────────────────────────────────────────────────────────────┐
+│ React                                                       │
+├─────────────────────────────────────────────────────────────┤
+│ const [count, setCount] = useState(0)                       │
+│ const doubled = useMemo(() =&gt; count * 2, [count])           │
+│ // Problem: Manual dependency arrays are error-prone;       │
+│ // React Compiler automates memoization.                    │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│ Solid                                                       │
+├─────────────────────────────────────────────────────────────┤
+│ const [count, setCount] = createSignal(0)                   │
+│ const doubled = createMemo(() =&gt; count() * 2)               │
+│ // Mental model: count vs count();                          │
+│ // Destructuring props might lose reactivity (use splitProps)│
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│ Svelte 5                                                    │
+├─────────────────────────────────────────────────────────────┤
+│ let count = $state(0)                                       │
+│ let doubled = $derived(count * 2)                           │
+│ // Better, but derived intent still needs explicit $derived │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│ Fict                                                        │
+├─────────────────────────────────────────────────────────────┤
+│ let count = $state(0)                                       │
+│ const doubled = count * 2                                   │
+│ // No $derived: Compiler automatically infers within static │
+│ // analysis scope.                                          │
+└─────────────────────────────────────────────────────────────┘
+</code></pre>
+<hr>
+<h3 id="2-2-Compiler-Comparison"><a href="#2-2-Compiler-Comparison" class="headerlink" title="2.2 Compiler Comparison"></a>2.2 Compiler Comparison</h3><p>Syntax is just the surface difference. A more essential distinction lies in: <strong>What responsibilities do the compilers (or runtimes) of each framework assume?</strong></p>
+<hr>
+<h4 id="React-Compiler-Automatic-Memoization-Does-not-change-React-Model"><a href="#React-Compiler-Automatic-Memoization-Does-not-change-React-Model" class="headerlink" title="React Compiler: Automatic Memoization (Does not change React Model)"></a>React Compiler: Automatic Memoization (Does not change React Model)</h4><p>The goal of React Compiler is clear: <strong>Automatic memoization</strong>.</p>
+<p>Its output often “looks like” it automatically added <code>React.memo / useMemo / useCallback</code> for you, but implementation-wise, it doesn’t necessarily generate these Hook calls; in public discussions, React Compiler explicitly stated it directly inlines dependency checks and caches values, avoiding the overhead of closures and dependency arrays associated with handwritten <code>useMemo/useCallback</code>.</p>
+<pre><code class="jsx">// Input
+function Component(&#123; items &#125;) &#123;
+  const sorted = items.toSorted()
+  return &lt;List data=&#123;sorted&#125; /&gt;
+&#125;
+</code></pre>
+<p>You can understand the compiler’s “conceptual” output as:</p>
+<pre><code class="jsx">// Conceptual equivalent (for understanding, not necessarily actual output)
+function Component(&#123; items &#125;) &#123;
+  const sorted = useMemo(() =&gt; items.toSorted(), [items])
+  return &lt;List data=&#123;sorted&#125; /&gt;
+&#125;
+</code></pre>
+<p><strong>What it does:</strong></p>
+<ul>
+<li>✅ Automatic memoization: Caches calculation results, stabilizes references, reduces unnecessary re-computations and re-renders.</li>
+<li>✅ Skips as many updates as possible without changing React’s render + reconciliation model.</li>
+<li>✅ Still allows developers to use <code>useMemo/useCallback</code> as escape hatches (e.g., for stable effect dependencies).</li>
+<li>✅ Provides <code>&quot;use no memo&quot;</code> as a temporary escape hatch: lets a specific function completely skip compiler optimization for troubleshooting incompatible code.</li>
+</ul>
+<p><strong>What it doesn’t do:</strong></p>
+<ul>
+<li>❌ Does not turn React into a “compile to fine-grained DOM instructions” framework: React is still render + reconciliation (colloquially “VDOM + diff”).</li>
+<li>❌ Does not replace the hooks system: You still write <code>useState/useEffect/...</code>. The compiler just tries to automate “caching work” like memoization.</li>
+</ul>
+<p>React Compiler’s design positioning is: <strong>Improve performance through automatic memoization without changing the logical model of React</strong>.</p>
+<hr>
+<h4 id="Svelte-5-Template-Compilation-Explicit-Runes-Derivations-x2F-Side-Effects-capture-dependencies-at-evaluation"><a href="#Svelte-5-Template-Compilation-Explicit-Runes-Derivations-x2F-Side-Effects-capture-dependencies-at-evaluation" class="headerlink" title="Svelte 5: Template Compilation + Explicit Runes (Derivations&#x2F;Side Effects capture dependencies at evaluation)"></a>Svelte 5: Template Compilation + Explicit Runes (Derivations&#x2F;Side Effects capture dependencies at evaluation)</h4><p>Svelte’s typical path is: <strong>Compile templates to DOM update code</strong> (no VDOM), and use runes (<code>$state/$derived/$effect</code>) to explicitly write out the intent of “this is state&#x2F;derived&#x2F;side-effect”.</p>
+<p>The key point: Svelte 5’s <code>$derived</code> documentation clearly states dependency rules—<strong>any value read synchronously inside a <code>$derived</code> expression (or <code>$derived.by</code> function body) becomes a dependency</strong>; when dependencies change, it is marked dirty and re-calculated on next read.<br><code>$effect</code> similarly drives re-execution based on dependency changes.</p>
+<pre><code class="svelte">&lt;script&gt;
+  let count = $state(0)
+  let doubled = $derived(count * 2)
+&lt;/script&gt;
+
+&lt;button on:click=&#123;() =&gt; count++&#125;&gt;
+  &#123;doubled&#125;
+&lt;/button&gt;
+</code></pre>
+<p><strong>What it does:</strong></p>
+<ul>
+<li>✅ Template → DOM update code (no VDOM)</li>
+<li>✅ Runes provide explicit semantics: <code>$derived</code> for derivations, <code>$effect</code> for side effects, dependencies captured at evaluation and schedule updates.</li>
+</ul>
+<p><strong>What it doesn’t do:</strong></p>
+<ul>
+<li>❌ Does not do global SSA-level automatic derivation inference for “arbitrary JS blocks” to let you skip <code>$derived</code>: In Svelte, derivation intent still needs to be expressed via <code>$derived</code>.</li>
+<li>❌ UI components are still organized around <code>.svelte</code> files (this is its ecosystem &amp; DX choice).</li>
+</ul>
+<hr>
+<h4 id="Solid-Compile-time-JSX-lowering-x2F-JSX-compilation-Runtime-Fine-grained-Dependency-Tracking-No-VDOM"><a href="#Solid-Compile-time-JSX-lowering-x2F-JSX-compilation-Runtime-Fine-grained-Dependency-Tracking-No-VDOM" class="headerlink" title="Solid: Compile-time JSX lowering &#x2F; JSX compilation + Runtime Fine-grained Dependency Tracking (No VDOM)"></a>Solid: Compile-time JSX lowering &#x2F; JSX compilation + Runtime Fine-grained Dependency Tracking (No VDOM)</h4><p>Solid’s route is more like: <strong>Compiler is responsible for turning JSX into efficient DOM creation&#x2F;binding</strong>, while dependency tracking and update scheduling mainly happen at runtime (signals&#x2F;memos&#x2F;effects).</p>
+<p>Solid official documentation clearly warns: <strong>Direct destructuring of props is not recommended</strong>, as it may break reactivity; need to use <code>props.xxx</code>, wrapper functions, or <code>splitProps</code>.<br>Meanwhile, Solid’s homepage explicitly emphasizes: <strong>No Virtual DOM &#x2F; no extensive diffing</strong>, updates can be precise to the DOM binding layer.</p>
+<pre><code class="jsx">function Counter() &#123;
+  const [count, setCount] = createSignal(0)
+  const doubled = createMemo(() =&gt; count() * 2)
+  return &lt;button onClick=&#123;() =&gt; setCount(c =&gt; c + 1)&#125;&gt;&#123;doubled()&#125;&lt;/button&gt;
+&#125;
+</code></pre>
+<p><strong>What it does:</strong></p>
+<ul>
+<li><p>✅ JSX → DOM templates&#x2F;bindings (static optimization at compile time)</p>
+</li>
+<li><p>✅ Runtime fine-grained dependency tracking: Whoever uses the signal subscribes to it; only updates relevant DOM bindings when changed (no VDOM).</p>
+</li>
+<li><p>✅ Provides tools (like <code>splitProps</code>) to safely handle props (avoiding loss of reactivity on destructuring).<br><strong>What it doesn’t do:</strong></p>
+</li>
+<li><p>❌ No “automatic derivation inference”: Derived values usually need explicit <code>createMemo</code>.</p>
+</li>
+<li><p>❌ Runtime model is “signals driven”, not “compiler globally infers everything”.</p>
+</li>
+</ul>
+<hr>
+<h4 id="Vue-Vapor-A-“No-VDOM”-Exploration-Direction-Still-Evolving"><a href="#Vue-Vapor-A-“No-VDOM”-Exploration-Direction-Still-Evolving" class="headerlink" title="Vue Vapor: A “No VDOM” Exploration Direction (Still Evolving)"></a>Vue Vapor: A “No VDOM” Exploration Direction (Still Evolving)</h4><p>In Vue’s official documentation, Vapor Mode is described as <strong>a new compilation strategy being explored</strong>: inspired by Solid, <strong>not relying on Virtual DOM</strong>, and making stricter use of Vue’s built-in reactivity system.<br>Meanwhile, the <code>vue-vapor</code> repository itself is in an archived (read-only) state, so it should be treated as experimental &#x2F; in flux.</p>
+<hr>
+<h3 id="Compiler-Comparison-Table-Stricter-Version"><a href="#Compiler-Comparison-Table-Stricter-Version" class="headerlink" title="Compiler Comparison Table (Stricter Version)"></a>Compiler Comparison Table (Stricter Version)</h3><blockquote>
+<p>Note: ✅ &#x3D; Officially clearly described and presented as a stable capability; 🧪 &#x3D; Officially defined as exploration&#x2F;experimental direction; — &#x3D; Not the main narrative of the framework&#x2F;hard to draw a hard conclusion.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th align="left">Dimension</th>
+<th align="left">React + React Compiler</th>
+<th align="left">Svelte 5</th>
+<th align="left">Solid</th>
+<th align="left">Vue Vapor</th>
+<th align="left">Fict</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">Automatic memoization (reduce manual memo)</td>
+<td align="left">✅ Automatic memoization, <code>useMemo/useCallback</code> as escape hatch; supports <code>&quot;use no memo&quot;</code> to skip optimization.</td>
+<td align="left">❌ Derivations need explicit <code>$derived</code>.</td>
+<td align="left">❌ Derivations usually need <code>createMemo</code> (explicit).</td>
+<td align="left">—</td>
+<td align="left">✅</td>
+</tr>
+<tr>
+<td align="left">Still render + reconciliation?</td>
+<td align="left">✅ Yes.</td>
+<td align="left">❌ (Template compiled to DOM updates)</td>
+<td align="left">❌ (No VDOM&#x2F;No diffing)</td>
+<td align="left">🧪 Official exploration of “No VDOM” strategy.</td>
+<td align="left">❌</td>
+</tr>
+<tr>
+<td align="left">Are Derived&#x2F;Side-effect intents explicit?</td>
+<td align="left">✅ Hooks explicit; memoization can be automated by compiler.</td>
+<td align="left">✅ <code>$derived/$effect</code> explicit; dependencies are captured from synchronous reads during evaluation.</td>
+<td align="left">✅ Explicit memo&#x2F;effect; dependency tracking at runtime.</td>
+<td align="left">✅ (Vue default: computed&#x2F;watch etc.; Vapor’s commitment to not changing intent expression is not set in stone)</td>
+<td align="left">✅</td>
+</tr>
+<tr>
+<td align="left">DX Form</td>
+<td align="left">JS&#x2F;JSX + Compiler</td>
+<td align="left"><code>.svelte</code> + runes</td>
+<td align="left">JS&#x2F;JSX + signals</td>
+<td align="left">SFC&#x2F;Template-centric (Vapor is exploration)</td>
+<td align="left">Pure JSX&#x2F;JS</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="2-3-Execution-Model-Comparison"><a href="#2-3-Execution-Model-Comparison" class="headerlink" title="2.3 Execution Model Comparison"></a>2.3 Execution Model Comparison</h2><p>The compiler is only half the story; the other half is the execution model.</p>
+<table>
+<thead>
+<tr>
+<th align="left">Framework</th>
+<th align="left">Does Component Code Re-execute?</th>
+<th align="left">Update Granularity</th>
+<th align="left">Control Flow Expression</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">React (with Compiler)</td>
+<td align="left">React still re-renders; the compiler memoizes values&#x2F;functions to reduce work and stabilize props.</td>
+<td align="left">Component&#x2F;Subtree dominant (determined by reconciliation)</td>
+<td align="left">Native JS (if&#x2F;for)</td>
+</tr>
+<tr>
+<td align="left">Solid</td>
+<td align="left">Executes once on init; subsequent fine-grained updates driven by signal subscriptions (no VDOM&#x2F;diff).</td>
+<td align="left">DOM Binding Level</td>
+<td align="left">Commonly uses <code>&lt;Show&gt;/&lt;For&gt;</code> control flow components</td>
+</tr>
+<tr>
+<td align="left">Svelte 5</td>
+<td align="left">Executes once on init; <code>$derived/$effect</code> scheduled on dependency change.</td>
+<td align="left">DOM update code + runes scheduling</td>
+<td align="left">Template blocks (&#96;</td>
+</tr>
+</tbody></table>
+
+  </div>
+</article>
+
+  </div>
+</div>
+
+
+  <!-- scripts list from theme config.yml -->
+  
+    <script src="/js/attraction.js"></script>
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/codemirror.min.js"></script>
+  
+  <script>
+    var nodes = Array.from(document.querySelectorAll('pre code'));
+    var render = {};
+    var titleSvg = '<svg style="position: absolute;z-index: 1;margin: 12px 0 0 12px;" xmlns="http://www.w3.org/2000/svg" width="54" height="14" viewBox="0 0 54 14"><g fill="none" fill-rule="evenodd" transform="translate(1 1)"><circle cx="6" cy="6" r="6" fill="#FF5F56" stroke="#E0443E" stroke-width=".5"></circle><circle cx="26" cy="6" r="6" fill="#FFBD2E" stroke="#DEA123" stroke-width=".5"></circle><circle cx="46" cy="6" r="6" fill="#27C93F" stroke="#1AAB29" stroke-width=".5"></circle></g></svg>';
+    nodes.forEach((node, index) => {
+      var lang = node.getAttribute('class');
+      var code = node.innerText;
+      var mode = lang;
+      switch(lang) {
+        case 'jsx':
+          lang = 'javascript';
+          mode = 'text/jsx';
+          break;
+        case 'tsx':
+          lang = 'javascript';
+          mode = 'text/typescript-jsx';
+        case 'typescript':
+          lang = 'javascript';
+          mode = 'text/typescript';
+        default:
+          break;
+      }
+      var config = {
+        value: code,
+        mode,
+        theme: 'seti'
+      };
+      if (!lang) return;
+      var hasExisted = nodes.slice(0, index).find(function(node) { return node.getAttribute('class') === lang; });
+      if (hasExisted) {
+        render[lang].push(function() {
+          node.innerHTML = titleSvg;
+          CodeMirror(node, config);
+        });
+        return;
+      }
+      render[lang] = [];
+      var languagePackge = document.createElement('script');
+      languagePackge.src = `https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/mode/${lang}/${lang}.min.js`;
+      languagePackge.onload = () => {
+        setTimeout(() => {
+          node.innerHTML = titleSvg;
+          CodeMirror(node, config);
+          render[lang].forEach(function(callback) { callback(); })
+        }, 0);
+      }
+      document.body.appendChild(languagePackge);
+    });
+  </script>
+
+</body>
+</html>
