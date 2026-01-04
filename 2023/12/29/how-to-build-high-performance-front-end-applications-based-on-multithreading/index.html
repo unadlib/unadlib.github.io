@@ -162,7 +162,7 @@
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/theme/seti.min.css">
     
   
-<meta name="generator" content="Hexo 6.3.0"></head>
+<meta name="generator" content="Hexo 8.1.1"></head>
 <body class="cm-s-seti">
 
 <div id="content-outer">
@@ -194,7 +194,7 @@
 <li>Coworker thread: This thread handles compute-intensive business logic or request-intensive logic. This frees the server thread to focus on business logic. This allows the server thread to reduce blocking caused by JavaScript and makes it less susceptible to the impact of request-intensive logic.</li>
 </ul>
 <p>In ‘Base’ mode, Reactant Shared Apps has only two threads: the Tab thread and the Coworker thread. By default, the Coworker thread utilizes a Web Worker.</p>
-<h2 id="Implementation-of-Coworker"><a href="#Implementation-of-Coworker" class="headerlink" title="Implementation of Coworker"></a>Implementation of Coworker</h2><p>For details on the underlying principles of Reactant-Share, please refer to the following link: <a target="_blank" rel="noopener" href="https://reactant.js.org/blog/2021/10/03/how-to-make-web-application-support-multiple-browser-windows">https://reactant.js.org/blog/2021/10/03/how-to-make-web-application-support-multiple-browser-windows</a></p>
+<h2 id="Implementation-of-Coworker"><a href="#Implementation-of-Coworker" class="headerlink" title="Implementation of Coworker"></a>Implementation of Coworker</h2><p>For details on the underlying principles of Reactant-Share, please refer to the following link: <a href="https://reactant.js.org/blog/2021/10/03/how-to-make-web-application-support-multiple-browser-windows">https://reactant.js.org/blog/2021/10/03/how-to-make-web-application-support-multiple-browser-windows</a></p>
 <p>Coworker comprises two modules:</p>
 <ul>
 <li><strong>CoworkerAdapter:</strong> Provides a communication channel between the server thread and the coworker thread.</li>
@@ -203,7 +203,7 @@
 <h2 id="Core-Concepts-and-Advantages-of-Coworker"><a href="#Core-Concepts-and-Advantages-of-Coworker" class="headerlink" title="Core Concepts and Advantages of Coworker"></a>Core Concepts and Advantages of Coworker</h2><ul>
 <li><strong>Isomorphism:</strong> The ability for all threads to execute the same code enhances the maintainability of multithreading programming in JavaScript.</li>
 <li><strong>Thread Interaction based on the Actor Model:</strong> By leveraging the Actor model, this approach reduces the cognitive load associated with multithreading programming in JavaScript.</li>
-<li><strong>Generic Transport Model:</strong> Coworker supports any transport mechanism based on data-transport (<a target="_blank" rel="noopener" href="https://github.com/unadlib/data-transport">https://github.com/unadlib/data-transport</a>), enabling it to run in any container that supports transport, including SharedWorker. The following is a list of supported transports:<ul>
+<li><strong>Generic Transport Model:</strong> Coworker supports any transport mechanism based on data-transport (<a href="https://github.com/unadlib/data-transport">https://github.com/unadlib/data-transport</a>), enabling it to run in any container that supports transport, including SharedWorker. The following is a list of supported transports:<ul>
 <li>iframe</li>
 <li>Broadcast</li>
 <li>Web Worker</li>
@@ -216,7 +216,7 @@
 <li>Any other port based on data-transport</li>
 </ul>
 </li>
-<li><strong>High Performance Based on Mutative:</strong> <a target="_blank" rel="noopener" href="https://github.com/unadlib/mutative">Mutative</a> offers high performance, being faster than a naive handcrafted reducer and 10 times faster than Immer. Mutative also maintains good performance when updating immutable data. Patches generated from shared state updates are used for state synchronization.</li>
+<li><strong>High Performance Based on Mutative:</strong> <a href="https://github.com/unadlib/mutative">Mutative</a> offers high performance, being faster than a naive handcrafted reducer and 10 times faster than Immer. Mutative also maintains good performance when updating immutable data. Patches generated from shared state updates are used for state synchronization.</li>
 <li><strong>High Performance:</strong> Because Coworker handles a large number of requests and compute-intensive tasks, the main thread and rendering thread can maintain extremely high performance and a superior user experience.</li>
 <li><strong>Support for Large Applications:</strong> Reactant offers a complete module model design, including dependency injection and a class-first approach, along with various modular design patterns and dynamic module injection capabilities.</li>
 <li><strong>Separation of Service and Rendering View Modules:</strong> Service modules, primarily focused on business logic, can execute independently from view modules. This not only achieves separation of concerns but also allows each thread to have its own containerization.</li>
@@ -228,139 +228,20 @@
 <li>First, create <code>app.tsx</code>, which contains the <code>ProxyCounter</code> module that will be executed in the Coworker.</li>
 </ol>
 <p>Its calling method, <code>delegate(this.proxyCounter, &#39;increase&#39;, [])</code>, is identical to that used in general Shared Web Apps. Whether it is executed with a proxy in the Coworker depends on the configuration of <code>createApp</code>.</p>
-<pre><code class="tsx">import React from &quot;react&quot;;
-import &#123;
-  ViewModule,
-  injectable,
-  useConnector,
-  action,
-  state,
-  delegate,
-&#125; from &quot;reactant-share&quot;;
+<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> <span class="title class_">React</span> <span class="keyword">from</span> <span class="string">&quot;react&quot;</span>;</span><br><span class="line"><span class="keyword">import</span> &#123;</span><br><span class="line">  <span class="title class_">ViewModule</span>,</span><br><span class="line">  injectable,</span><br><span class="line">  useConnector,</span><br><span class="line">  action,</span><br><span class="line">  state,</span><br><span class="line">  delegate,</span><br><span class="line">&#125; <span class="keyword">from</span> <span class="string">&quot;reactant-share&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="meta">@injectable</span>(&#123;</span><br><span class="line">  <span class="attr">name</span>: <span class="string">&quot;ProxyCounter&quot;</span>,</span><br><span class="line">&#125;)</span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> <span class="title class_">ProxyCounter</span> &#123;</span><br><span class="line">  <span class="meta">@state</span></span><br><span class="line">  count = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@action</span></span><br><span class="line">  <span class="title function_">increase</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">count</span> += <span class="number">1</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@injectable</span>(&#123;</span><br><span class="line">  <span class="attr">name</span>: <span class="string">&quot;AppView&quot;</span>,</span><br><span class="line">&#125;)</span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> <span class="title class_">AppView</span> <span class="keyword">extends</span> <span class="title class_ inherited__">ViewModule</span> &#123;</span><br><span class="line">  <span class="title function_">constructor</span>(<span class="params"><span class="keyword">public</span> <span class="attr">proxyCounter</span>: <span class="title class_">ProxyCounter</span></span>) &#123;</span><br><span class="line">    <span class="variable language_">super</span>();</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@state</span></span><br><span class="line">  count = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@action</span></span><br><span class="line">  <span class="title function_">increase</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">count</span> += <span class="number">1</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="title function_">component</span>(<span class="params"><span class="attr">this</span>: <span class="title class_">AppView</span></span>) &#123;</span><br><span class="line">    <span class="keyword">const</span> [count, proxyCount] = <span class="title function_">useConnector</span>(<span class="function">() =&gt;</span> [</span><br><span class="line">      <span class="variable language_">this</span>.<span class="property">count</span>,</span><br><span class="line">      <span class="variable language_">this</span>.<span class="property">proxyCounter</span>.<span class="property">count</span>,</span><br><span class="line">    ]);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> (</span><br><span class="line">      <span class="language-xml"><span class="tag">&lt;&gt;</span></span></span><br><span class="line"><span class="language-xml">        <span class="tag">&lt;<span class="name">div</span>&gt;</span>&#123;count&#125;<span class="tag">&lt;/<span class="name">div</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">        <span class="tag">&lt;<span class="name">button</span> <span class="attr">type</span>=<span class="string">&quot;button&quot;</span> <span class="attr">onClick</span>=<span class="string">&#123;()</span> =&gt;</span> delegate(this, &quot;increase&quot;, [])&#125;&gt;</span></span><br><span class="line"><span class="language-xml">          +</span></span><br><span class="line"><span class="language-xml">        <span class="tag">&lt;/<span class="name">button</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">        <span class="tag">&lt;<span class="name">p</span>&gt;</span>proxy in coworker<span class="tag">&lt;/<span class="name">p</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">        <span class="tag">&lt;<span class="name">div</span>&gt;</span>&#123;proxyCount&#125;<span class="tag">&lt;/<span class="name">div</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">        <span class="tag">&lt;<span class="name">button</span></span></span></span><br><span class="line"><span class="tag"><span class="language-xml">          <span class="attr">type</span>=<span class="string">&quot;button&quot;</span></span></span></span><br><span class="line"><span class="tag"><span class="language-xml">          <span class="attr">onClick</span>=<span class="string">&#123;()</span> =&gt;</span> delegate(this.proxyCounter, &quot;increase&quot;, [])&#125;</span></span><br><span class="line"><span class="language-xml">        &gt;</span></span><br><span class="line"><span class="language-xml">          +</span></span><br><span class="line"><span class="language-xml">        <span class="tag">&lt;/<span class="name">button</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">      <span class="tag">&lt;/&gt;</span></span></span><br><span class="line">    );</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-@injectable(&#123;
-  name: &quot;ProxyCounter&quot;,
-&#125;)
-export class ProxyCounter &#123;
-  @state
-  count = 0;
-
-  @action
-  increase() &#123;
-    this.count += 1;
-  &#125;
-&#125;
-
-@injectable(&#123;
-  name: &quot;AppView&quot;,
-&#125;)
-export class AppView extends ViewModule &#123;
-  constructor(public proxyCounter: ProxyCounter) &#123;
-    super();
-  &#125;
-
-  @state
-  count = 0;
-
-  @action
-  increase() &#123;
-    this.count += 1;
-  &#125;
-
-  component(this: AppView) &#123;
-    const [count, proxyCount] = useConnector(() =&gt; [
-      this.count,
-      this.proxyCounter.count,
-    ]);
-
-    return (
-      &lt;&gt;
-        &lt;div&gt;&#123;count&#125;&lt;/div&gt;
-        &lt;button type=&quot;button&quot; onClick=&#123;() =&gt; delegate(this, &quot;increase&quot;, [])&#125;&gt;
-          +
-        &lt;/button&gt;
-        &lt;p&gt;proxy in coworker&lt;/p&gt;
-        &lt;div&gt;&#123;proxyCount&#125;&lt;/div&gt;
-        &lt;button
-          type=&quot;button&quot;
-          onClick=&#123;() =&gt; delegate(this.proxyCounter, &quot;increase&quot;, [])&#125;
-        &gt;
-          +
-        &lt;/button&gt;
-      &lt;/&gt;
-    );
-  &#125;
-&#125;
-</code></pre>
 <ol start="2">
 <li>Create the main file, <code>index.ts</code>. Here, we configure <code>ProxyCounter</code> as a module of Coworker and set <code>isCoworker</code> to <code>false</code>.</li>
 </ol>
-<pre><code class="tsx">import &#123; render &#125; from &#39;reactant-web&#39;;
-import &#123;
-  createSharedApp,
-  Coworker,
-  CoworkerOptions,
-  ICoworkerOptions,
-&#125; from &#39;reactant-share&#39;;
-import &#123; AppView, ProxyCounter &#125; from &#39;./app&#39;;
+<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; render &#125; <span class="keyword">from</span> <span class="string">&#x27;reactant-web&#x27;</span>;</span><br><span class="line"><span class="keyword">import</span> &#123;</span><br><span class="line">  createSharedApp,</span><br><span class="line">  <span class="title class_">Coworker</span>,</span><br><span class="line">  <span class="title class_">CoworkerOptions</span>,</span><br><span class="line">  <span class="title class_">ICoworkerOptions</span>,</span><br><span class="line">&#125; <span class="keyword">from</span> <span class="string">&#x27;reactant-share&#x27;</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; <span class="title class_">AppView</span>, <span class="title class_">ProxyCounter</span> &#125; <span class="keyword">from</span> <span class="string">&#x27;./app&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="title function_">createSharedApp</span>(&#123;</span><br><span class="line">  <span class="attr">modules</span>: [</span><br><span class="line">    <span class="title class_">Coworker</span>,</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="attr">provide</span>: <span class="title class_">CoworkerOptions</span>,</span><br><span class="line">      <span class="attr">useValue</span>: &#123;</span><br><span class="line">        <span class="attr">useModules</span>: [<span class="title class_">ProxyCounter</span>],</span><br><span class="line">        <span class="attr">worker</span>: <span class="keyword">new</span> <span class="title class_">Worker</span>(<span class="keyword">new</span> <span class="title function_">URL</span>(<span class="string">&#x27;./coworker.ts&#x27;</span>, <span class="keyword">import</span>.<span class="property">meta</span>.<span class="property">url</span>)),</span><br><span class="line">        <span class="attr">isCoworker</span>: <span class="literal">false</span>,</span><br><span class="line">      &#125; <span class="keyword">as</span> <span class="title class_">ICoworkerOptions</span>,</span><br><span class="line">    &#125;,</span><br><span class="line">  ],</span><br><span class="line">  <span class="attr">main</span>: <span class="title class_">AppView</span>,</span><br><span class="line">  render,</span><br><span class="line">  <span class="attr">share</span>: &#123;</span><br><span class="line">    <span class="attr">name</span>: <span class="string">&#x27;SharedWorkerApp&#x27;</span>,</span><br><span class="line">    <span class="attr">type</span>: <span class="string">&#x27;Base&#x27;</span>,</span><br><span class="line">  &#125;,</span><br><span class="line">&#125;).<span class="title function_">then</span>(<span class="function">(<span class="params">app</span>) =&gt;</span> &#123;</span><br><span class="line">  app.<span class="title function_">bootstrap</span>(<span class="variable language_">document</span>.<span class="title function_">getElementById</span>(<span class="string">&#x27;app&#x27;</span>));</span><br><span class="line">  <span class="variable language_">window</span>.<span class="property">app</span> = app;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
 
-createSharedApp(&#123;
-  modules: [
-    Coworker,
-    &#123;
-      provide: CoworkerOptions,
-      useValue: &#123;
-        useModules: [ProxyCounter],
-        worker: new Worker(new URL(&#39;./coworker.ts&#39;, import.meta.url)),
-        isCoworker: false,
-      &#125; as ICoworkerOptions,
-    &#125;,
-  ],
-  main: AppView,
-  render,
-  share: &#123;
-    name: &#39;SharedWorkerApp&#39;,
-    type: &#39;Base&#39;,
-  &#125;,
-&#125;).then((app) =&gt; &#123;
-  app.bootstrap(document.getElementById(&#39;app&#39;));
-  window.app = app;
-&#125;);
-</code></pre>
 <ol start="3">
 <li>Create the Coworker file, <code>coworker.ts</code>. Here, we also configure <code>ProxyCounter</code> as a module of Coworker, but this time set <code>isCoworker</code> to <code>true</code>.</li>
 </ol>
-<pre><code class="tsx">import &#123;
-  createSharedApp,
-  Coworker,
-  CoworkerOptions,
-  ICoworkerOptions,
-&#125; from &#39;reactant-share&#39;;
-import &#123; AppView, ProxyCounter &#125; from &#39;./app&#39;;
+<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123;</span><br><span class="line">  createSharedApp,</span><br><span class="line">  <span class="title class_">Coworker</span>,</span><br><span class="line">  <span class="title class_">CoworkerOptions</span>,</span><br><span class="line">  <span class="title class_">ICoworkerOptions</span>,</span><br><span class="line">&#125; <span class="keyword">from</span> <span class="string">&#x27;reactant-share&#x27;</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; <span class="title class_">AppView</span>, <span class="title class_">ProxyCounter</span> &#125; <span class="keyword">from</span> <span class="string">&#x27;./app&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="title function_">createSharedApp</span>(&#123;</span><br><span class="line">  <span class="attr">modules</span>: [</span><br><span class="line">    <span class="title class_">Coworker</span>,</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="attr">provide</span>: <span class="title class_">CoworkerOptions</span>,</span><br><span class="line">      <span class="attr">useValue</span>: &#123;</span><br><span class="line">        <span class="attr">useModules</span>: [<span class="title class_">ProxyCounter</span>],</span><br><span class="line">        <span class="attr">isCoworker</span>: <span class="literal">true</span>,</span><br><span class="line">      &#125; <span class="keyword">as</span> <span class="title class_">ICoworkerOptions</span>,</span><br><span class="line">    &#125;,</span><br><span class="line">  ],</span><br><span class="line">  <span class="attr">main</span>: <span class="title class_">AppView</span>,</span><br><span class="line">  <span class="attr">render</span>: <span class="function">() =&gt;</span> &#123;&#125;,</span><br><span class="line">  <span class="attr">share</span>: &#123;</span><br><span class="line">    <span class="attr">name</span>: <span class="string">&#x27;SharedWorkerApp&#x27;</span>,</span><br><span class="line">    <span class="attr">type</span>: <span class="string">&#x27;Base&#x27;</span>,</span><br><span class="line">  &#125;,</span><br><span class="line">&#125;).<span class="title function_">then</span>(<span class="function">(<span class="params">app</span>) =&gt;</span> &#123;</span><br><span class="line">  self.<span class="property">app</span> = app;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
 
-createSharedApp(&#123;
-  modules: [
-    Coworker,
-    &#123;
-      provide: CoworkerOptions,
-      useValue: &#123;
-        useModules: [ProxyCounter],
-        isCoworker: true,
-      &#125; as ICoworkerOptions,
-    &#125;,
-  ],
-  main: AppView,
-  render: () =&gt; &#123;&#125;,
-  share: &#123;
-    name: &#39;SharedWorkerApp&#39;,
-    type: &#39;Base&#39;,
-  &#125;,
-&#125;).then((app) =&gt; &#123;
-  self.app = app;
-&#125;);
-</code></pre>
 <p>Thus far, we have created a basic application using a Coworker. Users trigger the <code>delegate(this.proxyCounter, &#39;increase&#39;, [])</code> function in the main thread via the UI. This action is forwarded to the coworker to execute the <code>increase</code> function of <code>proxyCounter</code>, and the shared state automatically synchronizes back to the main thread. The rendering update is handled by the <code>useConnector()</code> Hook.</p>
-<h2 id="Q-amp-A"><a href="#Q-amp-A" class="headerlink" title="Q&amp;A"></a>Q&amp;A</h2><p><strong>1. What are the challenges of multithreaded programming with Coworker based on reactant-share?</strong></p>
+<h2 id="Q-A"><a href="#Q-A" class="headerlink" title="Q&amp;A"></a>Q&amp;A</h2><p><strong>1. What are the challenges of multithreaded programming with Coworker based on reactant-share?</strong></p>
 <p>State sharing and synchronization among threads in multithreaded programming are inherently complex. Fortunately, Reactant-share ensures robustness through a consistent shared state design. The dependencies between isomorphic modules within Coworker should also be considered. During development, adopting concepts like Domain-Driven Design is recommended to prevent improper module design.</p>
 <p><strong>2. What are the potential use cases for Coworker?</strong></p>
 <ul>
@@ -375,8 +256,8 @@ createSharedApp(&#123;
 <h2 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h2><p>Front-end development is at a turning point, driven by advancements in front-end technology and browser capabilities. Multi-core CPUs and multithreading tools like Shared Workers and other Workers are now being utilized effectively in front-end development. The emergence of Shared Web Apps with Coworker introduces a novel multithreading model for front-end applications, significantly improving application performance, user experience, and code maintainability. For developers, this signifies more technical choices and challenges, but also greater opportunities and potential.</p>
 <p>Multithreaded programming for front-end applications is likely to become a key solution for enhancing front-end performance. This will result in a smoother, more efficient, and more responsive user experience.</p>
 <ul>
-<li>reactant-share Document：<a target="_blank" rel="noopener" href="https://reactant.js.org/docs/shared-app">https://reactant.js.org/docs/shared-app</a></li>
-<li>reactant-share Repo: <a target="_blank" rel="noopener" href="https://github.com/unadlib/reactant/tree/master/packages/reactant-share">https://github.com/unadlib/reactant/tree/master/packages/reactant-share</a></li>
+<li>reactant-share Document：<a href="https://reactant.js.org/docs/shared-app">https://reactant.js.org/docs/shared-app</a></li>
+<li>reactant-share Repo: <a href="https://github.com/unadlib/reactant/tree/master/packages/reactant-share">https://github.com/unadlib/reactant/tree/master/packages/reactant-share</a></li>
 </ul>
 
   </div>

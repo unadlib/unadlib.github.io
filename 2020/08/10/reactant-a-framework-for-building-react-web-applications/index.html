@@ -162,7 +162,7 @@
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/theme/seti.min.css">
     
   
-<meta name="generator" content="Hexo 6.3.0"></head>
+<meta name="generator" content="Hexo 8.1.1"></head>
 <body class="cm-s-seti">
 
 <div id="content-outer">
@@ -182,38 +182,13 @@
 <p>It is a complete architecture of React.</p>
 <h2 id="What-problem-was-solved"><a href="#What-problem-was-solved" class="headerlink" title="What problem was solved?"></a>What problem was solved?</h2><p>Reactant is a progressive framework. In the process of developing applications from simple to complex, it can provide the appropriate features at each stage, based on its system architecture design can also be a variety of gradual and smooth upgrade and evolution.</p>
 <h3 id="Better-Immutable-State-Management"><a href="#Better-Immutable-State-Management" class="headerlink" title="Better Immutable State Management"></a>Better Immutable State Management</h3><p>React advocates immutable state type management, and Redux clearly fits this. But the fact is that simple mutation update operations like MobX are increasingly in line with current trends. Therefore Reactant provides a new immutable state management model based on Redux and Immer, which incorporates similar API elements of MobX. And more importantly, it still maintains the immutability of state.</p>
-<pre><code class="typescript">@injectable()
-class TodoList &#123;
-  @state
-  list: Todo[] = [];
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@injectable</span>()</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">TodoList</span> &#123;</span><br><span class="line">  <span class="meta">@state</span></span><br><span class="line">  <span class="attr">list</span>: <span class="title class_">Todo</span>[] = [];</span><br><span class="line"></span><br><span class="line">  <span class="meta">@action</span></span><br><span class="line">  <span class="title function_">addTodo</span>(<span class="params"><span class="attr">text</span>: <span class="built_in">string</span></span>) &#123;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">list</span>.<span class="title function_">push</span>(&#123; text, <span class="attr">completed</span>: <span class="literal">false</span> &#125;);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-  @action
-  addTodo(text: string) &#123;
-    this.list.push(&#123; text, completed: false &#125;);
-  &#125;
-&#125;
-</code></pre>
 <h3 id="Modularization"><a href="#Modularization" class="headerlink" title="Modularization"></a>Modularization</h3><p>While it seems that the entire React community is increasingly pushing functional programming after React introduced Hooks, functional programming may not be the best solution in complex enterprise businesses. Of course, Hooks does bring good solutions for decoupling rendering logic, if only in building UI. But in the realm of business logic, we have better options, especially in an enterprise application where multiple developers collaborate on development, and indeed class-based module design often brings parallel development and ease of maintenance and testing. class aren’t evil, it’s the wrong module design that’s evil.</p>
 <p>Therefore, Reactant advocates the use of classes for module implementation. And more importantly, Reactant defines Service Module, View Module, Plugin Module, so that their responsibilities and boundaries are more clearly defined. Any module can be a Service Module, it is flexible, and the architecture of many different applications can be based on it; View Module must define the view component bound to the current module, it is the rendering entry point for the view module, and the state of the modules it depends on will be injected intuitively into Props via <code>useConnector</code>; Plugin Module is a complete Redux middleware and Context re-encapsulation, it provides a model for designing plug-ins, which makes the plug-in API simplicity is possible.</p>
 <p>In addition, Reactant provides a complete dependency injection API. It implements DI based on TypeScript decorator metadata, making it particularly easy to use.</p>
-<pre><code class="tsx">@injectable()
-class AppView extends ViewModule &#123;
-  constructor(public counter: Counter) &#123;
-    super();
-  &#125;
+<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@injectable</span>()</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">AppView</span> <span class="keyword">extends</span> <span class="title class_ inherited__">ViewModule</span> &#123;</span><br><span class="line">  <span class="title function_">constructor</span>(<span class="params"><span class="keyword">public</span> <span class="attr">counter</span>: <span class="title class_">Counter</span></span>) &#123;</span><br><span class="line">    <span class="variable language_">super</span>();</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="title function_">component</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">const</span> count = <span class="title function_">useConnector</span>(<span class="function">() =&gt;</span> <span class="variable language_">this</span>.<span class="property">counter</span>.<span class="property">count</span>);</span><br><span class="line">    <span class="keyword">return</span> (</span><br><span class="line">      <span class="language-xml"><span class="tag">&lt;<span class="name">button</span></span></span></span><br><span class="line"><span class="tag"><span class="language-xml">      	<span class="attr">type</span>=<span class="string">&quot;button&quot;</span></span></span></span><br><span class="line"><span class="tag"><span class="language-xml">      	<span class="attr">onClick</span>=<span class="string">&#123;()</span> =&gt;</span> this.counter.increase()&#125;&gt;</span></span><br><span class="line"><span class="language-xml">        &#123;count&#125;</span></span><br><span class="line"><span class="language-xml">      <span class="tag">&lt;/<span class="name">button</span>&gt;</span></span></span><br><span class="line">    );</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-  component() &#123;
-    const count = useConnector(() =&gt; this.counter.count);
-    return (
-      &lt;button
-          type=&quot;button&quot;
-          onClick=&#123;() =&gt; this.counter.increase()&#125;&gt;
-        &#123;count&#125;
-      &lt;/button&gt;
-    );
-  &#125;
-&#125;
-</code></pre>
 <h3 id="Easy-and-Lightweight"><a href="#Easy-and-Lightweight" class="headerlink" title="Easy and Lightweight"></a>Easy and Lightweight</h3><p>Reactant has no more than 30 APIs and even fewer than 15 core APIs. Without much familiarity and adaptation, you can quickly get started with Reactant and use it to develop any complex React application.</p>
 <p>The gzipped Reactant core code file is less than 50KB at runtime. Reactant not only supports code splitting, but it also supports the dynamic injection of modules, which is very useful for many large applications to run minimally.</p>
 <h3 id="Embracing-React-Ecosystem"><a href="#Embracing-React-Ecosystem" class="headerlink" title="Embracing React Ecosystem"></a>Embracing React Ecosystem</h3><p>Reactant is open, it abstracts some models based on React and Redux. These APIs bring convenience to developers, it also supports the ecosystem of React and Redux. Many superb third-party libraries can be used directly on Reactant or re-encapsulated, which brings infinite possibilities to the use of Reactant.</p>
@@ -226,7 +201,7 @@ class AppView extends ViewModule &#123;
 <p>As a brand new framework, Reactant has only been in development for a few months and there is still a lot of work to be done, including the build tools, development tools, server-side rendering, and the React Native CLI, and so on. </p>
 <p>If you are already familiar with React, then you just need to quickly read the Reactant part of the documentation and use the Reactant CLI to quickly build the Reactant application, you will start your new React application development experience.</p>
 <p>Repo：</p>
-<p><a target="_blank" rel="noopener" href="https://github.com/unadlib/reactant">https://github.com/unadlib/reactant</a></p>
+<p><a href="https://github.com/unadlib/reactant">https://github.com/unadlib/reactant</a></p>
 
   </div>
 </article>

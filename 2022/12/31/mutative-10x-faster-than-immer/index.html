@@ -162,7 +162,7 @@
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/theme/seti.min.css">
     
   
-<meta name="generator" content="Hexo 6.3.0"></head>
+<meta name="generator" content="Hexo 8.1.1"></head>
 <body class="cm-s-seti">
 
 <div id="content-outer">
@@ -177,40 +177,27 @@
 <p>But its performance issue causes a runtime performance overhead. Immer must have auto-freeze enabled by default(Performance will be worse if auto-freeze is disabled), such immutable state with Immer is not common. In scenarios such as cross-processing, remote data transfer, etc., we have to constantly freeze these immutable data.</p>
 <p>There are more parts that could be improved, such as better type inference, non-intrusive markup, support for more types of immutability, Safer immutability, <a href="test/immer-non-support.test.ts">more edge cases</a>, and so on.</p>
 <p>This is why Mutative was created.</p>
-<p>Repo: <a target="_blank" rel="noopener" href="https://github.com/unadlib/mutative">https://github.com/unadlib/mutative</a></p>
+<p>Repo: <a href="https://github.com/unadlib/mutative">https://github.com/unadlib/mutative</a></p>
 <h2 id="Mutative-vs-Immer-Performance"><a href="#Mutative-vs-Immer-Performance" class="headerlink" title="Mutative vs Immer Performance"></a>Mutative vs Immer Performance</h2><blockquote>
 <p>Mutative passed all of Immer’s test cases.</p>
 </blockquote>
-<p>Measure(ops&#x2F;sec) to update 50K arrays and 1K objects, bigger is better(<a target="_blank" rel="noopener" href="https://github.com/unadlib/mutative/blob/main/test/performance/benchmark.ts">view source</a>). [Mutative v0.5.0 vs Immer v10.0.1]</p>
+<p>Measure(ops&#x2F;sec) to update 50K arrays and 1K objects, bigger is better(<a href="https://github.com/unadlib/mutative/blob/main/test/performance/benchmark.ts">view source</a>). [Mutative v0.5.0 vs Immer v10.0.1]</p>
 <p><img src="/assets/2022-12-31-mutative-10x-faster-than-immer/benchmark.jpg" alt="Benchmark"></p>
-<pre><code>Naive handcrafted reducer - No Freeze x 3,692 ops/sec ±1.28% (95 runs sampled)
-Mutative - No Freeze x 5,425 ops/sec ±1.70% (93 runs sampled)
-Immer - No Freeze x 5.08 ops/sec ±0.58% (17 runs sampled)
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">Naive handcrafted reducer - No Freeze x 3,692 ops/sec ±1.28% (95 runs sampled)</span><br><span class="line">Mutative - No Freeze x 5,425 ops/sec ±1.70% (93 runs sampled)</span><br><span class="line">Immer - No Freeze x 5.08 ops/sec ±0.58% (17 runs sampled)</span><br><span class="line"></span><br><span class="line">Mutative - Freeze x 818 ops/sec ±1.49% (96 runs sampled)</span><br><span class="line">Immer - Freeze x 357 ops/sec ±0.79% (92 runs sampled)</span><br><span class="line"></span><br><span class="line">Mutative - Patches and No Freeze x 746 ops/sec ±0.83% (96 runs sampled)</span><br><span class="line">Immer - Patches and No Freeze x 5.08 ops/sec ±0.25% (17 runs sampled)</span><br><span class="line"></span><br><span class="line">Mutative - Patches and Freeze x 408 ops/sec ±0.28% (96 runs sampled)</span><br><span class="line">Immer - Patches and Freeze x 264 ops/sec ±0.59% (91 runs sampled)</span><br><span class="line"></span><br><span class="line">The fastest method is Mutative - No Freeze</span><br></pre></td></tr></table></figure>
 
-Mutative - Freeze x 818 ops/sec ±1.49% (96 runs sampled)
-Immer - Freeze x 357 ops/sec ±0.79% (92 runs sampled)
-
-Mutative - Patches and No Freeze x 746 ops/sec ±0.83% (96 runs sampled)
-Immer - Patches and No Freeze x 5.08 ops/sec ±0.25% (17 runs sampled)
-
-Mutative - Patches and Freeze x 408 ops/sec ±0.28% (96 runs sampled)
-Immer - Patches and Freeze x 264 ops/sec ±0.59% (91 runs sampled)
-
-The fastest method is Mutative - No Freeze
-</code></pre>
 <p>Run <code>yarn benchmark</code> to measure performance.</p>
 <blockquote>
 <p>OS: macOS 12.6, CPU: Apple M1 Max, Node.js: 16.14.2</p>
 </blockquote>
 <p>Immer relies on auto-freeze to be enabled, if auto-freeze is disabled, Immer will have a huge performance drop and Mutative will have a huge performance lead, especially with large data structures it will have a performance lead of more than 50x.</p>
 <p>So if you are using Immer, you will have to enable auto-freeze for performance. Mutative is disabled auto-freeze by default. With the default configuration of both, we can see the 17x performance gap between Mutative (<code>6,421 ops/sec</code>) and Immer (<code>365 ops/sec</code>).</p>
-<p>Overall, Mutative has a huge performance lead over Immer in <a target="_blank" rel="noopener" href="https://github.com/unadlib/mutative/tree/main/test/performance">more performance testing scenarios</a>. Run <code>yarn performance</code> to get all the performance results locally.</p>
+<p>Overall, Mutative has a huge performance lead over Immer in <a href="https://github.com/unadlib/mutative/tree/main/test/performance">more performance testing scenarios</a>. Run <code>yarn performance</code> to get all the performance results locally.</p>
 <blockquote>
 <p>OS: macOS 12.6, CPU: Apple M1 Max, Node.js: 16.14.2</p>
 </blockquote>
 <p>Immer relies on auto-freeze to be enabled, if auto-freeze is disabled, Immer will have a huge performance drop and Mutative will have a huge performance lead, especially with large data structures it will have a performance lead of more than 50x.</p>
 <p>So if you are using Immer, you will have to enable auto-freeze for performance. Mutative is disabled auto-freeze by default. With the default configuration of both, we can see the performance gap between Mutative (<code>5,323 ops/sec</code>) and Immer (<code>320 ops/sec</code>).</p>
-<p>Overall, Mutative has a huge performance lead over Immer in <a target="_blank" rel="noopener" href="https://github.com/unadlib/mutative/tree/main/test/performance">more performance testing scenarios</a>. Run <code>yarn performance</code> to get all the performance results locally.</p>
+<p>Overall, Mutative has a huge performance lead over Immer in <a href="https://github.com/unadlib/mutative/tree/main/test/performance">more performance testing scenarios</a>. Run <code>yarn performance</code> to get all the performance results locally.</p>
 <h2 id="Features-and-Benefits"><a href="#Features-and-Benefits" class="headerlink" title="Features and Benefits"></a>Features and Benefits</h2><ul>
 <li><strong>Mutation makes immutable updates</strong> - Immutable data structures supporting objects, arrays, Sets and Maps.</li>
 <li><strong>High performance</strong> - 10x faster than immer by default, even faster than naive handcrafted reducer.</li>
@@ -270,22 +257,12 @@ The fastest method is Mutative - No Freeze
 <td align="center">❌</td>
 </tr>
 </tbody></table>
-<p>Mutative has fewer bugs such as accidental draft escapes than Immer, <a target="_blank" rel="noopener" href="https://github.com/unadlib/mutative/blob/main/test/immer-non-support.test.ts">view details</a>.</p>
-<h2 id="Installation"><a href="#Installation" class="headerlink" title="Installation"></a>Installation</h2><pre><code class="sh">yarn install mutative # npm install mutative
-</code></pre>
+<p>Mutative has fewer bugs such as accidental draft escapes than Immer, <a href="https://github.com/unadlib/mutative/blob/main/test/immer-non-support.test.ts">view details</a>.</p>
+<h2 id="Installation"><a href="#Installation" class="headerlink" title="Installation"></a>Installation</h2><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yarn install mutative <span class="comment"># npm install mutative</span></span><br></pre></td></tr></table></figure>
+
 <h2 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h2><p>Use <code>create()</code> for draft mutation to get a new state, which also supports currying.</p>
-<pre><code class="ts">import &#123; create &#125; from &#39;mutative&#39;;
+<figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; create &#125; <span class="keyword">from</span> <span class="string">&#x27;mutative&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> baseState = &#123;</span><br><span class="line">  <span class="attr">foo</span>: <span class="string">&#x27;bar&#x27;</span>,</span><br><span class="line">  <span class="attr">list</span>: [&#123; <span class="attr">text</span>: <span class="string">&#x27;todo&#x27;</span> &#125;],</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> state = <span class="title function_">create</span>(baseState, <span class="function">(<span class="params">draft</span>) =&gt;</span> &#123;</span><br><span class="line">  draft.<span class="property">foo</span> = <span class="string">&#x27;foobar&#x27;</span>;</span><br><span class="line">  draft.<span class="property">list</span>.<span class="title function_">push</span>(&#123; <span class="attr">text</span>: <span class="string">&#x27;learning&#x27;</span> &#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
 
-const baseState = &#123;
-  foo: &#39;bar&#39;,
-  list: [&#123; text: &#39;todo&#39; &#125;],
-&#125;;
-
-const state = create(baseState, (draft) =&gt; &#123;
-  draft.foo = &#39;foobar&#39;;
-  draft.list.push(&#123; text: &#39;learning&#39; &#125;);
-&#125;);
-</code></pre>
 <p>In this basic example, the changes to the draft are ‘mutative’ within the draft callback, and <code>create()</code> is finally executed with a new immutable state.</p>
 <h4 id="create-state-fn-options-Then-options-is-optional"><a href="#create-state-fn-options-Then-options-is-optional" class="headerlink" title="create(state, fn, options) - Then options is optional."></a><code>create(state, fn, options)</code> - Then options is optional.</h4><ul>
 <li><p>strict - <code>boolean</code>, the default is false.</p>
@@ -296,12 +273,12 @@ const state = create(baseState, (draft) =&gt; &#123;
 <p><strong>It is recommended to enable <code>strict</code> in development mode and disable <code>strict</code> in production mode.</strong> This will ensure safe explicit returns and also keep good performance in the production build. If the value that does not mix any current draft or is <code>undefined</code> is returned, then use <a href="#rawreturn">rawReturn()</a>.</p>
 </blockquote>
 </li>
-<li><p>enablePatches - <code>boolean | &#123; pathAsArray?: boolean; arrayLengthAssignment?: boolean; &#125;</code>, the default is false.</p>
+<li><p>enablePatches - <code>boolean | { pathAsArray?: boolean; arrayLengthAssignment?: boolean; }</code>, the default is false.</p>
 <blockquote>
 <p>Enable patch, and return the patches&#x2F;inversePatches.</p>
 </blockquote>
 <blockquote>
-<p>If you need to set the shape of the generated patch in more detail, then you can set <code>pathAsArray</code> and <code>arrayLengthAssignment</code>。<code>pathAsArray</code> default value is <code>true</code>, if it’s <code>true</code>, the path will be an array, otherwise it is a string; <code>arrayLengthAssignment</code> default value is <code>true</code>, if it’s <code>true</code>, the array length will be included in the patches, otherwise no include array length(<strong>NOTE</strong>: If <code>arrayLengthAssignment</code> is <code>false</code>, it is fully compatible with JSON Patch spec, but it may have additional performance loss), <a target="_blank" rel="noopener" href="https://github.com/unadlib/mutative/issues/6">view related discussions</a>.</p>
+<p>If you need to set the shape of the generated patch in more detail, then you can set <code>pathAsArray</code> and <code>arrayLengthAssignment</code>。<code>pathAsArray</code> default value is <code>true</code>, if it’s <code>true</code>, the path will be an array, otherwise it is a string; <code>arrayLengthAssignment</code> default value is <code>true</code>, if it’s <code>true</code>, the array length will be included in the patches, otherwise no include array length(<strong>NOTE</strong>: If <code>arrayLengthAssignment</code> is <code>false</code>, it is fully compatible with JSON Patch spec, but it may have additional performance loss), <a href="https://github.com/unadlib/mutative/issues/6">view related discussions</a>.</p>
 </blockquote>
 </li>
 <li><p>enableAutoFreeze - <code>boolean</code>, the default is false.</p>
@@ -328,7 +305,7 @@ const state = create(baseState, (draft) =&gt; &#123;
 </blockquote>
 <h2 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h2><p>Mutative is inspired by Immer.</p>
 <p>Mutative aims at efficient immutable updates, focusing on performance improvements and better APIs to bring better development experience. If you think Mutative is good, feel free to give it a star!</p>
-<p>Repo: <a target="_blank" rel="noopener" href="https://github.com/unadlib/mutative">https://github.com/unadlib/mutative</a></p>
+<p>Repo: <a href="https://github.com/unadlib/mutative">https://github.com/unadlib/mutative</a></p>
 
   </div>
 </article>

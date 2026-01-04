@@ -162,7 +162,7 @@
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/theme/seti.min.css">
     
   
-<meta name="generator" content="Hexo 6.3.0"></head>
+<meta name="generator" content="Hexo 8.1.1"></head>
 <body class="cm-s-seti">
 
 <div id="content-outer">
@@ -177,7 +177,7 @@
 <p>This is a proposal of an universal state management module design rooted in the OOP paradigm.</p>
 </blockquote>
 <h2 id="Motivation"><a href="#Motivation" class="headerlink" title="Motivation"></a>Motivation</h2><p>As front-end single-page application development becomes increasingly complex, we have to use some state management or state containers (collectively referred to as state library) in order to develop complex apps, and we need a model design that is easier to modularize.</p>
-<p>State management libraries are quite abundant in the front-end space, there are <a target="_blank" rel="noopener" href="https://github.com/reduxjs/redux">Redux</a>, <a target="_blank" rel="noopener" href="https://github.com/mobxjs/mobx">MobX</a>, <a target="_blank" rel="noopener" href="https://github.com/vuejs/vuex">Vuex</a>, and the self-contained state management that comes with <a target="_blank" rel="noopener" href="https://github.com/angular/angular">Angular</a> to name a few. Redux is a predictable state container with immutable data structure. MobX is a observable state management. Vuex is centralized state management with observable pattern for Vue.js. As for modularization, Angular has its own implementations already, but the rest of the state management libraries only started to deal with this new requirement in complex systems in recent years.</p>
+<p>State management libraries are quite abundant in the front-end space, there are <a href="https://github.com/reduxjs/redux">Redux</a>, <a href="https://github.com/mobxjs/mobx">MobX</a>, <a href="https://github.com/vuejs/vuex">Vuex</a>, and the self-contained state management that comes with <a href="https://github.com/angular/angular">Angular</a> to name a few. Redux is a predictable state container with immutable data structure. MobX is a observable state management. Vuex is centralized state management with observable pattern for Vue.js. As for modularization, Angular has its own implementations already, but the rest of the state management libraries only started to deal with this new requirement in complex systems in recent years.</p>
 <p>In this article, let’s explore an OOP modular design that has universal support for popular state management libraries.</p>
 <h2 id="Universal-state-module"><a href="#Universal-state-module" class="headerlink" title="Universal state module"></a>Universal state module</h2><p>Object-oriented programming(OOP) is commonly used in the architecture design of large projects in the front-end. The following questions are often asked when deciding on a state management library:</p>
 <ul>
@@ -193,116 +193,33 @@
 <li>Simple &amp; Flexible</li>
 <li>Dependency injection</li>
 </ul>
-<h2 id="Proposal"><a href="#Proposal" class="headerlink" title="Proposal"></a>Proposal</h2><p><strong>Based on the concept of universalization, we propose a new <code>Universal State Module</code> library —— <a target="_blank" rel="noopener" href="https://github.com/unadlib/usm">usm</a>.</strong></p>
+<h2 id="Proposal"><a href="#Proposal" class="headerlink" title="Proposal"></a>Proposal</h2><p><strong>Based on the concept of universalization, we propose a new <code>Universal State Module</code> library —— <a href="https://github.com/unadlib/usm">usm</a>.</strong></p>
 <p>Let’s start with a typical Redux example of a counter:</p>
-<pre><code class="javascript">import &#123; createStore &#125; from &#39;redux&#39;;
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; createStore &#125; <span class="keyword">from</span> <span class="string">&#x27;redux&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">counter</span>(<span class="params">state = <span class="number">0</span>, action</span>) &#123;</span><br><span class="line">  <span class="keyword">switch</span> (action.<span class="property">type</span>) &#123;</span><br><span class="line">    <span class="keyword">case</span> <span class="string">&#x27;INCREMENT&#x27;</span>:</span><br><span class="line">      <span class="keyword">return</span> state + <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">case</span> <span class="string">&#x27;DECREMENT&#x27;</span>:</span><br><span class="line">      <span class="keyword">return</span> state - <span class="number">1</span>;</span><br><span class="line">    <span class="attr">default</span>:</span><br><span class="line">      <span class="keyword">return</span> state;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> store = <span class="title function_">createStore</span>(counter)</span><br><span class="line"></span><br><span class="line">store.<span class="title function_">dispatch</span>(&#123; <span class="attr">type</span>: <span class="string">&#x27;INCREMENT&#x27;</span> &#125;)</span><br><span class="line">store.<span class="title function_">dispatch</span>(&#123; <span class="attr">type</span>: <span class="string">&#x27;DECREMENT&#x27;</span> &#125;)</span><br></pre></td></tr></table></figure>
 
-function counter(state = 0, action) &#123;
-  switch (action.type) &#123;
-    case &#39;INCREMENT&#39;:
-      return state + 1;
-    case &#39;DECREMENT&#39;:
-      return state - 1;
-    default:
-      return state;
-  &#125;
-&#125;
-
-const store = createStore(counter)
-
-store.dispatch(&#123; type: &#39;INCREMENT&#39; &#125;)
-store.dispatch(&#123; type: &#39;DECREMENT&#39; &#125;)
-</code></pre>
 <p>USM supports Redux, MobX, Vuex and Angular. It provides <code>usm</code>, <code>usm-redux</code>, <code>usm-mobx</code> and <code>usm-vuex</code> packages. Here is the same counter using <code>usm-redux</code>:</p>
-<pre><code class="javascript">import &#123; state, action, createStore &#125; from &#39;usm&#39;;
-// You can also use `usm-redux`, `usm-mobx`, or`usm-vuex`.
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; state, action, createStore &#125; <span class="keyword">from</span> <span class="string">&#x27;usm&#x27;</span>;</span><br><span class="line"><span class="comment">// You can also use `usm-redux`, `usm-mobx`, or`usm-vuex`.</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Counter</span> &#123;</span><br><span class="line">  @state</span><br><span class="line">  count = &#123; <span class="attr">sum</span>: <span class="number">0</span> &#125;;</span><br><span class="line"></span><br><span class="line">  @action</span><br><span class="line">  <span class="title function_">increase</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">count</span>.<span class="property">sum</span> += <span class="number">1</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> counter = <span class="keyword">new</span> <span class="title class_">Counter</span>();</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> store = <span class="title function_">createStore</span>(&#123;</span><br><span class="line">  <span class="attr">modules</span>: [counter],</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">counter.<span class="title function_">increase</span>();</span><br><span class="line">counter.<span class="title function_">decrease</span>();</span><br></pre></td></tr></table></figure>
 
-class Counter &#123;
-  @state
-  count = &#123; sum: 0 &#125;;
-
-  @action
-  increase() &#123;
-    this.count.sum += 1;
-  &#125;
-&#125;
-
-const counter = new Counter();
-
-const store = createStore(&#123;
-  modules: [counter],
-&#125;);
-
-counter.increase();
-counter.decrease();
-</code></pre>
 <p>The implementation of the same <code>counter</code> above is based on object-oriented paradigm. The use of ES6 class syntax is intuitive and concise. If this design can be universal to any state management library used, it will undoubtedly lead to more flexible and friendly development experience for developers, as well as better readability and maintainability.</p>
-<p>USM has four sub-packages, namly <code>usm</code>, <code>usm-redux</code>, <code>usm-mobx</code> and <code>usm-vuex</code>. <code>usm-redux</code> is used in this example, which is based on the use of <a target="_blank" rel="noopener" href="https://github.com/mweststrate/immer">Immer</a> that enables modifying the immutable redux state in a mutable manner.</p>
+<p>USM has four sub-packages, namly <code>usm</code>, <code>usm-redux</code>, <code>usm-mobx</code> and <code>usm-vuex</code>. <code>usm-redux</code> is used in this example, which is based on the use of <a href="https://github.com/mweststrate/immer">Immer</a> that enables modifying the immutable redux state in a mutable manner.</p>
 <p>The following code demonstrate how the <code>usm-redux</code> module can be used with the connector from <code>react-redux</code>:</p>
-<pre><code class="javascript">// index.js
-ReactDOM.render(
-  &lt;Provider store=&#123;store&#125;&gt;
-    &lt;App /&gt;
-  &lt;/Provider&gt;,
-  document.getElementById(&#39;root&#39;)
-);
-</code></pre>
-<pre><code class="javascript">// app.js
-import &#123; connect &#125; from &#39;react-redux&#39;;
-import &#123; counter &#125; from &#39;./&#39;;
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// index.js</span></span><br><span class="line"><span class="title class_">ReactDOM</span>.<span class="title function_">render</span>(</span><br><span class="line">  <span class="language-xml"><span class="tag">&lt;<span class="name">Provider</span> <span class="attr">store</span>=<span class="string">&#123;store&#125;</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">    <span class="tag">&lt;<span class="name">App</span> /&gt;</span></span></span><br><span class="line"><span class="language-xml">  <span class="tag">&lt;/<span class="name">Provider</span>&gt;</span></span>,</span><br><span class="line">  <span class="variable language_">document</span>.<span class="title function_">getElementById</span>(<span class="string">&#x27;root&#x27;</span>)</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
 
-export default connect(
-  state =&gt; (&#123; count: state.count &#125;)
-)( props =&gt; 
-  &lt;div&gt;
-    &lt;button onClick=&#123;() =&gt; counter.increase()&#125;&gt;+&lt;/button&gt;
-    &#123;props.count&#125;
-    &lt;button onClick=&#123;() =&gt; counter.decrease()&#125;&gt;-&lt;/button&gt;
-  &lt;/div&gt;
-);
-</code></pre>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// app.js</span></span><br><span class="line"><span class="keyword">import</span> &#123; connect &#125; <span class="keyword">from</span> <span class="string">&#x27;react-redux&#x27;</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; counter &#125; <span class="keyword">from</span> <span class="string">&#x27;./&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> <span class="title function_">connect</span>(</span><br><span class="line">  <span class="function"><span class="params">state</span> =&gt;</span> (&#123; <span class="attr">count</span>: state.<span class="property">count</span> &#125;)</span><br><span class="line">)( <span class="function"><span class="params">props</span> =&gt;</span> </span><br><span class="line">  <span class="language-xml"><span class="tag">&lt;<span class="name">div</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">    <span class="tag">&lt;<span class="name">button</span> <span class="attr">onClick</span>=<span class="string">&#123;()</span> =&gt;</span> counter.increase()&#125;&gt;+<span class="tag">&lt;/<span class="name">button</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">    &#123;props.count&#125;</span></span><br><span class="line"><span class="language-xml">    <span class="tag">&lt;<span class="name">button</span> <span class="attr">onClick</span>=<span class="string">&#123;()</span> =&gt;</span> counter.decrease()&#125;&gt;-<span class="tag">&lt;/<span class="name">button</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">  <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span></span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+
 <p>And here is the same counter working with <code>mobx-react</code> using <code>usm-mobx</code>:</p>
-<pre><code class="javascript">// index.js
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// index.js</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">const</span> counter = <span class="title class_">Counter</span>.<span class="title function_">create</span>();</span><br><span class="line"></span><br><span class="line"><span class="title class_">ReactDOM</span>.<span class="title function_">render</span>(</span><br><span class="line">  <span class="language-xml"><span class="tag">&lt;<span class="name">App</span> /&gt;</span></span>,</span><br><span class="line">  <span class="variable language_">document</span>.<span class="title function_">getElementById</span>(<span class="string">&#x27;root&#x27;</span>)</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
 
-export const counter = Counter.create();
 
-ReactDOM.render(
-  &lt;App /&gt;,
-  document.getElementById(&#39;root&#39;)
-);
-</code></pre>
-<pre><code class="javascript">// app.js
-import &#123; observer &#125; from &#39;mobx-react&#39;;
-import &#123; counter &#125; from &#39;./&#39;;
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// app.js</span></span><br><span class="line"><span class="keyword">import</span> &#123; observer &#125; <span class="keyword">from</span> <span class="string">&#x27;mobx-react&#x27;</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; counter &#125; <span class="keyword">from</span> <span class="string">&#x27;./&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> <span class="title function_">observer</span>(<span class="function">() =&gt;</span></span><br><span class="line">  <span class="language-xml"><span class="tag">&lt;<span class="name">div</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">    <span class="tag">&lt;<span class="name">button</span> <span class="attr">onClick</span>=<span class="string">&#123;()</span> =&gt;</span> counter.increase()&#125;&gt;+<span class="tag">&lt;/<span class="name">button</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">    &#123;counter.count&#125;</span></span><br><span class="line"><span class="language-xml">    <span class="tag">&lt;<span class="name">button</span> <span class="attr">onClick</span>=<span class="string">&#123;()</span> =&gt;</span> counter.decrease()&#125;&gt;-<span class="tag">&lt;/<span class="name">button</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">  <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span></span><br><span class="line">);</span><br></pre></td></tr></table></figure>
 
-export default observer(() =&gt;
-  &lt;div&gt;
-    &lt;button onClick=&#123;() =&gt; counter.increase()&#125;&gt;+&lt;/button&gt;
-    &#123;counter.count&#125;
-    &lt;button onClick=&#123;() =&gt; counter.decrease()&#125;&gt;-&lt;/button&gt;
-  &lt;/div&gt;
-);
-</code></pre>
 <p>The use of <code>usm-redux</code> and <code>usm-mobx</code> to connect with <code>react-redux</code> and <code>mobx-react</code> respectfully demonstrated that the core implementations of the state module is the same even when the connectors used are different. This is the core principle of the Universal State Module that we propose.</p>
 <h3 id="Decorators"><a href="#Decorators" class="headerlink" title="Decorators"></a>Decorators</h3><p><code>usm</code> provides decorator <code>@state</code> to wrap a variable with a state, and decorator <code>@action</code> is used to wrap a function that changes state.</p>
-<pre><code class="javascript">class Shop &#123;
-  @state
-  goods = [];
-  
-  @state
-  status = &#39;close&#39;;
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Shop</span> &#123;</span><br><span class="line">  @state</span><br><span class="line">  goods = [];</span><br><span class="line">  </span><br><span class="line">  @state</span><br><span class="line">  status = <span class="string">&#x27;close&#x27;</span>;</span><br><span class="line"></span><br><span class="line">  @action</span><br><span class="line">  <span class="title function_">operate</span>(<span class="params">item, status, state</span>) &#123;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">goods</span>.<span class="title function_">push</span>(item);</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">status</span> = status;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// call function -&gt; this.operate(&#123; name: &#x27;fruits&#x27;, amount: 10 &#125;, &#x27;open&#x27;);</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-  @action
-  operate(item, status, state) &#123;
-    this.goods.push(item);
-    this.status = status;
-  &#125;
-  // call function -&gt; this.operate(&#123; name: &#39;fruits&#39;, amount: 10 &#125;, &#39;open&#39;);
-&#125;
-</code></pre>
 <h2 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h2><p><code>usm</code> is a module design that wants to bridge together the differences of using Redux, Mobx, and Vuex in conjunction with different view layers such as React, Vue and Angular. It is designed to help you build libraries that will work with any front-end architecture.</p>
 <p>Modules built with <code>usm</code> should be free of boilerplates, especially the type that is introduced by state libraries like Redux. More importantly, the object-oriented nature of <code>usm</code> makes modules simple and intuitive. <code>usm</code> also makes your modules compatible with various state libraries and view layers, allowing you to share your business logic libraries across projects regardless of the frameworks they are using.</p>
-<p>USM’s repo: <a target="_blank" rel="noopener" href="https://github.com/unadlib/usm">https://github.com/unadlib/usm</a></p>
+<p>USM’s repo: <a href="https://github.com/unadlib/usm">https://github.com/unadlib/usm</a></p>
 
   </div>
 </article>

@@ -162,7 +162,7 @@
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/theme/seti.min.css">
     
   
-<meta name="generator" content="Hexo 6.3.0"></head>
+<meta name="generator" content="Hexo 8.1.1"></head>
 <body class="cm-s-seti">
 
 <div id="content-outer">
@@ -180,19 +180,11 @@
 <p>Travels was created to resolve a fundamental tension: how to retain a complete history while minimizing memory and performance overhead.</p>
 <h2 id="How-Mainstream-Approaches-Work"><a href="#How-Mainstream-Approaches-Work" class="headerlink" title="How Mainstream Approaches Work"></a>How Mainstream Approaches Work</h2><p>Let’s first look at how two popular community solutions work in practice.</p>
 <h3 id="Redux-undo-Reference-Based-Snapshot-Storage"><a href="#Redux-undo-Reference-Based-Snapshot-Storage" class="headerlink" title="Redux-undo: Reference-Based Snapshot Storage"></a>Redux-undo: Reference-Based Snapshot Storage</h3><p>Redux-undo is the classic solution in the Redux ecosystem. Its core logic looks like:</p>
-<pre><code class="javascript">// redux-undo/src/reducer.js
-function insert(history, state, limit, group) &#123;
-  const newPast = [...pastSliced, _latestUnfiltered];
-  return newHistory(newPast, state, [], group);
-&#125;
-</code></pre>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// redux-undo/src/reducer.js</span></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">insert</span>(<span class="params">history, state, limit, group</span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> newPast = [...pastSliced, _latestUnfiltered];</span><br><span class="line">  <span class="keyword">return</span> <span class="title function_">newHistory</span>(newPast, state, [], group);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
 <p>Its strategy: <strong>store references to each state object</strong>.</p>
-<pre><code class="javascript">&#123;
-  past: [state1, state2, state3],    // array of object references
-  present: state4,
-  future: [state5, state6]
-&#125;
-</code></pre>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">past</span>: [state1, state2, state3],    <span class="comment">// array of object references</span></span><br><span class="line">  <span class="attr">present</span>: state4,</span><br><span class="line">  <span class="attr">future</span>: [state5, state6]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
 <p>There’s no deep copy here; it relies on Redux’s immutable update pattern:</p>
 <ul>
 <li>Reducers return new objects each time</li>
@@ -214,14 +206,8 @@ function insert(history, state, limit, group) &#123;
 <p>For a simple counter, this is perfectly fine. But for a complex document object, 100 history entries imply 100 state references <strong>plus</strong> each one’s memory footprint.</p>
 <h3 id="Zundo-Optional-Diff-Optimization"><a href="#Zundo-Optional-Diff-Optimization" class="headerlink" title="Zundo: Optional Diff Optimization"></a>Zundo: Optional Diff Optimization</h3><p>Zundo is a tiny (&lt;700B) and flexible undo&#x2F;redo middleware for Zustand.</p>
 <p>Core code:</p>
-<pre><code class="typescript">// zundo/src/temporal.ts
-_handleSet: (pastState, replace, currentState, deltaState) =&gt; &#123;
-  set(&#123;
-    pastStates: get().pastStates.concat(deltaState || pastState),
-    futureStates: [],
-  &#125;);
-&#125;;
-</code></pre>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// zundo/src/temporal.ts</span></span><br><span class="line"><span class="attr">_handleSet</span>: <span class="function">(<span class="params">pastState, replace, currentState, deltaState</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="title function_">set</span>(&#123;</span><br><span class="line">    <span class="attr">pastStates</span>: <span class="title function_">get</span>().<span class="property">pastStates</span>.<span class="title function_">concat</span>(deltaState || pastState),</span><br><span class="line">    <span class="attr">futureStates</span>: [],</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
 <p>Note <code>deltaState || pastState</code>:</p>
 <ul>
 <li><strong>Default stores the full state</strong> (<code>pastState</code>)</li>
@@ -255,42 +241,12 @@ _handleSet: (pastState, replace, currentState, deltaState) =&gt; &#123;
 </ol>
 <p>And for very large trees, the diff stage itself can be expensive.</p>
 <h2 id="Travels-JSON-Patch-as-a-First-Class-Citizen"><a href="#Travels-JSON-Patch-as-a-First-Class-Citizen" class="headerlink" title="Travels: JSON Patch as a First-Class Citizen"></a>Travels: JSON Patch as a First-Class Citizen</h2><p>This is where Travels comes in. Its core idea: <strong>use JSON Patch as the built-in, default storage format</strong>.</p>
-<pre><code class="typescript">import &#123; createTravels &#125; from &#39;travels&#39;;
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; createTravels &#125; <span class="keyword">from</span> <span class="string">&#x27;travels&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> travels = <span class="title function_">createTravels</span>(&#123;</span><br><span class="line">  <span class="attr">title</span>: <span class="string">&#x27;My Doc&#x27;</span>,</span><br><span class="line">  <span class="attr">content</span>: <span class="string">&#x27;...&#x27;</span>,</span><br><span class="line">  <span class="comment">// ... potentially a very large object</span></span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">travels.<span class="title function_">setState</span>(<span class="function">(<span class="params">draft</span>) =&gt;</span> &#123;</span><br><span class="line">  draft.<span class="property">title</span> = <span class="string">&#x27;New Title&#x27;</span>;</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">// Internally, Travels stores:</span></span><br><span class="line"><span class="comment">// &#123;</span></span><br><span class="line"><span class="comment">//   patches: [&#123; op: &quot;replace&quot;, path: [&quot;title&quot;], value: &quot;New Title&quot; &#125;],</span></span><br><span class="line"><span class="comment">//   inversePatches: [&#123; op: &quot;replace&quot;, path: [&quot;title&quot;], value: &quot;My Doc&quot; &#125;]</span></span><br><span class="line"><span class="comment">// &#125;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// You can set &#123; patchesOptions: &#123; pathAsArray: true &#125; &#125; to make `path` a JSON path string.</span></span><br></pre></td></tr></table></figure>
 
-const travels = createTravels(&#123;
-  title: &#39;My Doc&#39;,
-  content: &#39;...&#39;,
-  // ... potentially a very large object
-&#125;);
-
-travels.setState((draft) =&gt; &#123;
-  draft.title = &#39;New Title&#39;;
-&#125;);
-
-// Internally, Travels stores:
-// &#123;
-//   patches: [&#123; op: &quot;replace&quot;, path: [&quot;title&quot;], value: &quot;New Title&quot; &#125;],
-//   inversePatches: [&#123; op: &quot;replace&quot;, path: [&quot;title&quot;], value: &quot;My Doc&quot; &#125;]
-// &#125;
-
-// You can set &#123; patchesOptions: &#123; pathAsArray: true &#125; &#125; to make `path` a JSON path string.
-</code></pre>
 <p>No configuration required—JSON Patch is default.</p>
-<h3 id="Why-Mutative"><a href="#Why-Mutative" class="headerlink" title="Why Mutative?"></a>Why Mutative?</h3><p>Travels is built on <a target="_blank" rel="noopener" href="https://github.com/unadlib/mutative">Mutative</a>. That choice matters:</p>
-<pre><code class="typescript">// Mutative core capability
-import &#123; create &#125; from &#39;mutative&#39;;
+<h3 id="Why-Mutative"><a href="#Why-Mutative" class="headerlink" title="Why Mutative?"></a>Why Mutative?</h3><p>Travels is built on <a href="https://github.com/unadlib/mutative">Mutative</a>. That choice matters:</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Mutative core capability</span></span><br><span class="line"><span class="keyword">import</span> &#123; create &#125; <span class="keyword">from</span> <span class="string">&#x27;mutative&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> [nextState, patches, inversePatches] = <span class="title function_">create</span>(</span><br><span class="line">  &#123; <span class="attr">count</span>: <span class="number">0</span> &#125;,</span><br><span class="line">  <span class="function">(<span class="params">draft</span>) =&gt;</span> &#123;</span><br><span class="line">    draft.<span class="property">count</span>++;</span><br><span class="line">  &#125;,</span><br><span class="line">  &#123; <span class="attr">enablePatches</span>: <span class="literal">true</span> &#125;</span><br><span class="line">);</span><br><span class="line"></span><br><span class="line"><span class="comment">// patches: [&#123; op: &quot;replace&quot;, path: [&quot;count&quot;], value: 1 &#125;]</span></span><br><span class="line"><span class="comment">// inversePatches: [&#123; op: &quot;replace&quot;, path: [&quot;count&quot;], value: 0 &#125;]</span></span><br></pre></td></tr></table></figure>
 
-const [nextState, patches, inversePatches] = create(
-  &#123; count: 0 &#125;,
-  (draft) =&gt; &#123;
-    draft.count++;
-  &#125;,
-  &#123; enablePatches: true &#125;
-);
-
-// patches: [&#123; op: &quot;replace&quot;, path: [&quot;count&quot;], value: 1 &#125;]
-// inversePatches: [&#123; op: &quot;replace&quot;, path: [&quot;count&quot;], value: 0 &#125;]
-</code></pre>
 <p>Mutative provides:</p>
 <ol>
 <li><strong>Draft API</strong> – identical ergonomics to Immer</li>
@@ -301,63 +257,18 @@ const [nextState, patches, inversePatches] = create(
 <p>This lets Travels leverage Mutative’s strengths directly, without forcing users to implement diffs like Zundo.</p>
 <h3 id="Real-Memory-Differences"><a href="#Real-Memory-Differences" class="headerlink" title="Real Memory Differences"></a>Real Memory Differences</h3><p>A test with a 100KB complex object and 100 tiny edits (2 fields per edit):</p>
 <p><strong>Redux-undo:</strong></p>
-<pre><code class="javascript">// Stores full-state references
-pastStates: [
-  &#123; /* 100KB object */ &#125;,
-  &#123; /* 100KB object */ &#125;,
-  // ...
-];
-// 100 history entries: ~11.8 MB growth
-</code></pre>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Stores full-state references</span></span><br><span class="line"><span class="attr">pastStates</span>: [</span><br><span class="line">  &#123; <span class="comment">/* 100KB object */</span> &#125;,</span><br><span class="line">  &#123; <span class="comment">/* 100KB object */</span> &#125;,</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">];</span><br><span class="line"><span class="comment">// 100 history entries: ~11.8 MB growth</span></span><br></pre></td></tr></table></figure>
+
 <p><strong>Zundo (no diff):</strong></p>
-<pre><code class="typescript">// Default stores full state
-pastStates: [
-  &#123; /* 100KB object */ &#125;,
-  &#123; /* 100KB object */ &#125;,
-  // ...
-];
-// 100 history entries: ~11.8 MB growth
-</code></pre>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Default stores full state</span></span><br><span class="line"><span class="attr">pastStates</span>: [</span><br><span class="line">  &#123; <span class="comment">/* 100KB object */</span> &#125;,</span><br><span class="line">  &#123; <span class="comment">/* 100KB object */</span> &#125;,</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">];</span><br><span class="line"><span class="comment">// 100 history entries: ~11.8 MB growth</span></span><br></pre></td></tr></table></figure>
+
 <p><strong>Travels:</strong></p>
-<pre><code class="typescript">// Automatically stores JSON Patches
-patches: [
-  [&#123; op: &#39;replace&#39;, path: [&#39;field1&#39;], value: &#39;new&#39; &#125;],   // ~50 bytes
-  [&#123; op: &#39;replace&#39;, path: [&#39;field2&#39;], value: &#39;newer&#39; &#125;], // ~50 bytes
-  // ...
-];
-// 100 histories: ~0.32 MB growth (≈97.3% saved)
-// After serialization only ~20.6 KB (≈99.8% smaller than snapshots)
-</code></pre>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Automatically stores JSON Patches</span></span><br><span class="line"><span class="attr">patches</span>: [</span><br><span class="line">  [&#123; <span class="attr">op</span>: <span class="string">&#x27;replace&#x27;</span>, <span class="attr">path</span>: [<span class="string">&#x27;field1&#x27;</span>], <span class="attr">value</span>: <span class="string">&#x27;new&#x27;</span> &#125;],   <span class="comment">// ~50 bytes</span></span><br><span class="line">  [&#123; <span class="attr">op</span>: <span class="string">&#x27;replace&#x27;</span>, <span class="attr">path</span>: [<span class="string">&#x27;field2&#x27;</span>], <span class="attr">value</span>: <span class="string">&#x27;newer&#x27;</span> &#125;], <span class="comment">// ~50 bytes</span></span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">];</span><br><span class="line"><span class="comment">// 100 histories: ~0.32 MB growth (≈97.3% saved)</span></span><br><span class="line"><span class="comment">// After serialization only ~20.6 KB (≈99.8% smaller than snapshots)</span></span><br></pre></td></tr></table></figure>
+
 <p>The gap is stark. For large objects with small edits, Travels can deliver ~40× memory savings, and <strong>500×+</strong> on serialized size.</p>
 <h3 id="Framework-Agnostic-by-Design"><a href="#Framework-Agnostic-by-Design" class="headerlink" title="Framework-Agnostic by Design"></a>Framework-Agnostic by Design</h3><p>Another advantage: Travels is framework-agnostic. The core is a plain state manager:</p>
-<pre><code class="typescript">// React
-import &#123; useSyncExternalStore &#125; from &#39;react&#39;;
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// React</span></span><br><span class="line"><span class="keyword">import</span> &#123; useSyncExternalStore &#125; <span class="keyword">from</span> <span class="string">&#x27;react&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">useTravel</span>(<span class="params">travels</span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> state = <span class="title function_">useSyncExternalStore</span>(</span><br><span class="line">    travels.<span class="property">subscribe</span>.<span class="title function_">bind</span>(travels),</span><br><span class="line">    travels.<span class="property">getState</span>.<span class="title function_">bind</span>(travels),</span><br><span class="line">    travels.<span class="property">getState</span>.<span class="title function_">bind</span>(travels) <span class="comment">// for SSR</span></span><br><span class="line">  );</span><br><span class="line">  <span class="keyword">return</span> [state, travels.<span class="property">setState</span>.<span class="title function_">bind</span>(travels), travels.<span class="title function_">getControls</span>()];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Vue</span></span><br><span class="line"><span class="keyword">import</span> &#123; ref &#125; <span class="keyword">from</span> <span class="string">&#x27;vue&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">useTravel</span>(<span class="params">travels</span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> state = <span class="title function_">ref</span>(travels.<span class="title function_">getState</span>());</span><br><span class="line">  travels.<span class="title function_">subscribe</span>(<span class="function">(<span class="params">newState</span>) =&gt;</span> &#123;</span><br><span class="line">    state.<span class="property">value</span> = newState;</span><br><span class="line">  &#125;);</span><br><span class="line">  <span class="keyword">return</span> &#123; state, travels &#125;;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Plain JS</span></span><br><span class="line">travels.<span class="title function_">subscribe</span>(<span class="function">(<span class="params">state</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="variable language_">document</span>.<span class="title function_">querySelector</span>(<span class="string">&#x27;#app&#x27;</span>).<span class="property">innerHTML</span> = <span class="title function_">render</span>(state);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
 
-function useTravel(travels) &#123;
-  const state = useSyncExternalStore(
-    travels.subscribe.bind(travels),
-    travels.getState.bind(travels),
-    travels.getState.bind(travels) // for SSR
-  );
-  return [state, travels.setState.bind(travels), travels.getControls()];
-&#125;
-
-// Vue
-import &#123; ref &#125; from &#39;vue&#39;;
-
-function useTravel(travels) &#123;
-  const state = ref(travels.getState());
-  travels.subscribe((newState) =&gt; &#123;
-    state.value = newState;
-  &#125;);
-  return &#123; state, travels &#125;;
-&#125;
-
-// Plain JS
-travels.subscribe((state) =&gt; &#123;
-  document.querySelector(&#39;#app&#39;).innerHTML = render(state);
-&#125;);
-</code></pre>
 <p>Use it anywhere: React, Vue, Svelte, Angular, or vanilla JS.</p>
 <h2 id="Side-by-Side-Comparison"><a href="#Side-by-Side-Comparison" class="headerlink" title="Side-by-Side Comparison"></a>Side-by-Side Comparison</h2><table>
 <thead>
@@ -411,53 +322,18 @@ travels.subscribe((state) =&gt; &#123;
 <td>~640</td>
 </tr>
 </tbody></table>
-<h2 id="A-Few-Neat-Designs-in-Travels"><a href="#A-Few-Neat-Designs-in-Travels" class="headerlink" title="A Few Neat Designs in Travels"></a>A Few Neat Designs in Travels</h2><h3 id="1-Auto-x2F-Manual-Archive-Modes"><a href="#1-Auto-x2F-Manual-Archive-Modes" class="headerlink" title="1) Auto&#x2F;Manual Archive Modes"></a>1) Auto&#x2F;Manual Archive Modes</h3><pre><code class="typescript">// Auto: each setState becomes a history entry
-const travels = createTravels(&#123; count: 0 &#125;);
-travels.setState(&#123; count: 1 &#125;); // +1 history
-travels.setState(&#123; count: 2 &#125;); // +1 history
+<h2 id="A-Few-Neat-Designs-in-Travels"><a href="#A-Few-Neat-Designs-in-Travels" class="headerlink" title="A Few Neat Designs in Travels"></a>A Few Neat Designs in Travels</h2><h3 id="1-Auto-Manual-Archive-Modes"><a href="#1-Auto-Manual-Archive-Modes" class="headerlink" title="1) Auto&#x2F;Manual Archive Modes"></a>1) Auto&#x2F;Manual Archive Modes</h3><figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Auto: each setState becomes a history entry</span></span><br><span class="line"><span class="keyword">const</span> travels = <span class="title function_">createTravels</span>(&#123; <span class="attr">count</span>: <span class="number">0</span> &#125;);</span><br><span class="line">travels.<span class="title function_">setState</span>(&#123; <span class="attr">count</span>: <span class="number">1</span> &#125;); <span class="comment">// +1 history</span></span><br><span class="line">travels.<span class="title function_">setState</span>(&#123; <span class="attr">count</span>: <span class="number">2</span> &#125;); <span class="comment">// +1 history</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Manual: batch multiple changes into one entry</span></span><br><span class="line"><span class="keyword">const</span> travels = <span class="title function_">createTravels</span>(&#123; <span class="attr">count</span>: <span class="number">0</span> &#125;, &#123; <span class="attr">autoArchive</span>: <span class="literal">false</span> &#125;);</span><br><span class="line">travels.<span class="title function_">setState</span>(&#123; <span class="attr">count</span>: <span class="number">1</span> &#125;);</span><br><span class="line">travels.<span class="title function_">setState</span>(&#123; <span class="attr">count</span>: <span class="number">2</span> &#125;);</span><br><span class="line">travels.<span class="title function_">setState</span>(&#123; <span class="attr">count</span>: <span class="number">3</span> &#125;);</span><br><span class="line">travels.<span class="title function_">archive</span>(); <span class="comment">// record only 0→3 as one history entry</span></span><br></pre></td></tr></table></figure>
 
-// Manual: batch multiple changes into one entry
-const travels = createTravels(&#123; count: 0 &#125;, &#123; autoArchive: false &#125;);
-travels.setState(&#123; count: 1 &#125;);
-travels.setState(&#123; count: 2 &#125;);
-travels.setState(&#123; count: 3 &#125;);
-travels.archive(); // record only 0→3 as one history entry
-</code></pre>
 <p>Manual mode is ideal for complex interactions. E.g., a drag operation might trigger dozens of updates, but you want it to undo as one unit.</p>
 <h3 id="2-Mutable-Mode-for-Reactive-Frameworks"><a href="#2-Mutable-Mode-for-Reactive-Frameworks" class="headerlink" title="2) Mutable Mode for Reactive Frameworks"></a>2) Mutable Mode for Reactive Frameworks</h3><p>In Vue&#x2F;MobX (Proxy-based reactivity), replacing object references breaks reactivity. Travels offers <code>mutable</code> mode:</p>
-<pre><code class="typescript">// Vue example
-import &#123; reactive &#125; from &#39;vue&#39;;
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Vue example</span></span><br><span class="line"><span class="keyword">import</span> &#123; reactive &#125; <span class="keyword">from</span> <span class="string">&#x27;vue&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> travels = <span class="title function_">createTravels</span>(<span class="title function_">reactive</span>(&#123; <span class="attr">count</span>: <span class="number">0</span> &#125;), &#123; <span class="attr">mutable</span>: <span class="literal">true</span> &#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">// Travels mutates in place, keeping the Proxy reference</span></span><br><span class="line">travels.<span class="title function_">setState</span>(<span class="function">(<span class="params">draft</span>) =&gt;</span> &#123;</span><br><span class="line">  draft.<span class="property">count</span>++;</span><br><span class="line">&#125;);</span><br><span class="line"><span class="comment">// Vue reactivity stays intact</span></span><br></pre></td></tr></table></figure>
 
-const travels = createTravels(reactive(&#123; count: 0 &#125;), &#123; mutable: true &#125;);
-
-// Travels mutates in place, keeping the Proxy reference
-travels.setState((draft) =&gt; &#123;
-  draft.count++;
-&#125;);
-// Vue reactivity stays intact
-</code></pre>
 <p>Implementation sketch:</p>
-<pre><code class="typescript">if (this.mutable) &#123;
-  apply(this.state as object, patches, &#123; mutable: true &#125;);
-  this.pendingState = this.state; // keep the reference stable
-&#125; else &#123;
-  this.state = apply(this.state as object, patches) as S;
-&#125;
-</code></pre>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (<span class="variable language_">this</span>.<span class="property">mutable</span>) &#123;</span><br><span class="line">  <span class="title function_">apply</span>(<span class="variable language_">this</span>.<span class="property">state</span> <span class="keyword">as</span> <span class="built_in">object</span>, patches, &#123; <span class="attr">mutable</span>: <span class="literal">true</span> &#125;);</span><br><span class="line">  <span class="variable language_">this</span>.<span class="property">pendingState</span> = <span class="variable language_">this</span>.<span class="property">state</span>; <span class="comment">// keep the reference stable</span></span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">  <span class="variable language_">this</span>.<span class="property">state</span> = <span class="title function_">apply</span>(<span class="variable language_">this</span>.<span class="property">state</span> <span class="keyword">as</span> <span class="built_in">object</span>, patches) <span class="keyword">as</span> S;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
 <p>This allows seamless use in reactive frameworks.</p>
-<h3 id="3-Sliding-Window-via-maxHistory"><a href="#3-Sliding-Window-via-maxHistory" class="headerlink" title="3) Sliding Window via maxHistory"></a>3) Sliding Window via <code>maxHistory</code></h3><pre><code class="typescript">const travels = createTravels(&#123; count: 0 &#125;, &#123; maxHistory: 3 &#125;);
+<h3 id="3-Sliding-Window-via-maxHistory"><a href="#3-Sliding-Window-via-maxHistory" class="headerlink" title="3) Sliding Window via maxHistory"></a>3) Sliding Window via <code>maxHistory</code></h3><figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> travels = <span class="title function_">createTravels</span>(&#123; <span class="attr">count</span>: <span class="number">0</span> &#125;, &#123; <span class="attr">maxHistory</span>: <span class="number">3</span> &#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 5 consecutive ops</span></span><br><span class="line"><span class="title function_">increment</span>(); <span class="comment">// 1</span></span><br><span class="line"><span class="title function_">increment</span>(); <span class="comment">// 2</span></span><br><span class="line"><span class="title function_">increment</span>(); <span class="comment">// 3</span></span><br><span class="line"><span class="title function_">increment</span>(); <span class="comment">// 4</span></span><br><span class="line"><span class="title function_">increment</span>(); <span class="comment">// 5</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// History window: [2, 3, 4, 5]</span></span><br><span class="line"><span class="comment">// You can undo back to 2, but not to 0 or 1 due to the window size</span></span><br><span class="line"><span class="comment">// however, reset() can return to the initial state 0.</span></span><br></pre></td></tr></table></figure>
 
-// 5 consecutive ops
-increment(); // 1
-increment(); // 2
-increment(); // 3
-increment(); // 4
-increment(); // 5
-
-// History window: [2, 3, 4, 5]
-// You can undo back to 2, but not to 0 or 1 due to the window size
-// however, reset() can return to the initial state 0.
-</code></pre>
 <p>Great for memory-constrained environments.</p>
 <h2 id="Hands-On-Experience"><a href="#Hands-On-Experience" class="headerlink" title="Hands-On Experience"></a>Hands-On Experience</h2><p>I refactored a collaborative editor with Travels. Based on benchmark projections for a 100KB doc over 100 edits:</p>
 <ul>
@@ -468,26 +344,8 @@ increment(); // 5
 <li><strong>Undo&#x2F;redo</strong>: still sub-millisecond (≈0.69ms undo &#x2F; 0.27ms redo in the real-library test)</li>
 </ul>
 <p>And the API is intuitive:</p>
-<pre><code class="typescript">const travels = createTravels(initialState);
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> travels = <span class="title function_">createTravels</span>(initialState);</span><br><span class="line"></span><br><span class="line"><span class="comment">// Update</span></span><br><span class="line">travels.<span class="title function_">setState</span>(<span class="function">(<span class="params">draft</span>) =&gt;</span> &#123;</span><br><span class="line">  draft.<span class="property">title</span> = <span class="string">&#x27;New&#x27;</span>;</span><br><span class="line">  draft.<span class="property">sections</span>[<span class="number">0</span>].<span class="property">content</span> = <span class="string">&#x27;Updated&#x27;</span>;</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">// Time travel</span></span><br><span class="line">travels.<span class="title function_">back</span>();     <span class="comment">// undo</span></span><br><span class="line">travels.<span class="title function_">forward</span>();  <span class="comment">// redo</span></span><br><span class="line">travels.<span class="title function_">go</span>(<span class="number">5</span>);      <span class="comment">// jump to position 5</span></span><br><span class="line">travels.<span class="title function_">reset</span>();    <span class="comment">// back to initial</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// History info</span></span><br><span class="line">travels.<span class="title function_">getHistory</span>();</span><br><span class="line">travels.<span class="title function_">getPosition</span>();</span><br><span class="line">travels.<span class="title function_">canBack</span>();</span><br><span class="line">travels.<span class="title function_">canForward</span>();</span><br></pre></td></tr></table></figure>
 
-// Update
-travels.setState((draft) =&gt; &#123;
-  draft.title = &#39;New&#39;;
-  draft.sections[0].content = &#39;Updated&#39;;
-&#125;);
-
-// Time travel
-travels.back();     // undo
-travels.forward();  // redo
-travels.go(5);      // jump to position 5
-travels.reset();    // back to initial
-
-// History info
-travels.getHistory();
-travels.getPosition();
-travels.canBack();
-travels.canForward();
-</code></pre>
 <p>If you’ve used Immer or Mutative, there’s essentially no learning curve.</p>
 <h2 id="Benchmarks"><a href="#Benchmarks" class="headerlink" title="Benchmarks"></a>Benchmarks</h2><p>To validate the analysis, I wrote comprehensive benchmarks. Setup:</p>
 <ul>
@@ -496,7 +354,7 @@ travels.canForward();
 <li><strong>Env</strong>: Node.js v22.21.1</li>
 <li><strong>Memory</strong>: measured precisely with <code>--expose-gc</code></li>
 </ul>
-<p>Full code: <a target="_blank" rel="noopener" href="https://github.com/mutativejs/travels/tree/main/benchmarks"><code>./benchmarks/</code></a></p>
+<p>Full code: <a href="https://github.com/mutativejs/travels/tree/main/benchmarks"><code>./benchmarks/</code></a></p>
 <h3 id="Results"><a href="#Results" class="headerlink" title="Results"></a>Results</h3><p>The latest runs (Node v22.21.1) come from executing <code>yarn test:all</code>, which runs both benchmark scripts with <code>node --expose-gc</code>.</p>
 <h4 id="Simulated-implementations-memory-performance-test-js"><a href="#Simulated-implementations-memory-performance-test-js" class="headerlink" title="Simulated implementations (memory-performance-test.js)"></a>Simulated implementations (<code>memory-performance-test.js</code>)</h4><table>
 <thead>
@@ -658,13 +516,8 @@ travels.canForward();
 </ul>
 <p>—i.e., anything with frequent undo&#x2F;redo—Travels is worth a try.</p>
 <h2 id="Technical-Details"><a href="#Technical-Details" class="headerlink" title="Technical Details"></a>Technical Details</h2><h3 id="JSON-Patch-Reversibility"><a href="#JSON-Patch-Reversibility" class="headerlink" title="JSON Patch Reversibility"></a>JSON Patch Reversibility</h3><p>Travels stores both <code>patches</code> and <code>inversePatches</code>:</p>
-<pre><code class="typescript">// Change: count: 0 -&gt; 1
-patches: [&#123; op: &#39;replace&#39;, path: [&#39;count&#39;], value: 1 &#125;];
-inversePatches: [&#123; op: &#39;replace&#39;, path: [&#39;count&#39;], value: 0 &#125;];
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Change: count: 0 -&gt; 1</span></span><br><span class="line"><span class="attr">patches</span>: [&#123; <span class="attr">op</span>: <span class="string">&#x27;replace&#x27;</span>, <span class="attr">path</span>: [<span class="string">&#x27;count&#x27;</span>], <span class="attr">value</span>: <span class="number">1</span> &#125;];</span><br><span class="line"><span class="attr">inversePatches</span>: [&#123; <span class="attr">op</span>: <span class="string">&#x27;replace&#x27;</span>, <span class="attr">path</span>: [<span class="string">&#x27;count&#x27;</span>], <span class="attr">value</span>: <span class="number">0</span> &#125;];</span><br><span class="line"></span><br><span class="line"><span class="comment">// Redo: apply patches</span></span><br><span class="line"><span class="comment">// Undo: apply inversePatches</span></span><br></pre></td></tr></table></figure>
 
-// Redo: apply patches
-// Undo: apply inversePatches
-</code></pre>
 <p>This guarantees reliable time travel.</p>
 <h3 id="Why-Mutative-Is-Fast"><a href="#Why-Mutative-Is-Fast" class="headerlink" title="Why Mutative Is Fast"></a>Why Mutative Is Fast</h3><p>Mutative’s performance comes from:</p>
 <ol>
@@ -676,42 +529,11 @@ inversePatches: [&#123; op: &#39;replace&#39;, path: [&#39;count&#39;], value: 0
 <h3 id="Why-JSON-Patch-Excels-at-Persistence"><a href="#Why-JSON-Patch-Excels-at-Persistence" class="headerlink" title="Why JSON Patch Excels at Persistence"></a>Why JSON Patch Excels at Persistence</h3><p>Another key advantage: <strong>JSON Patch is extremely well suited to persistence</strong>.</p>
 <p>Suppose you want “save the entire edit history locally and resume it on next launch”:</p>
 <p><strong>Redux-undo &#x2F; Zundo (full snapshots):</strong></p>
-<pre><code class="typescript">// Data to persist
-const dataToSave = &#123;
-  past: [
-    &#123; title: &quot;Doc&quot;, content: &quot;...&quot;, metadata: &#123;...&#125; &#125;,        // 100KB
-    &#123; title: &quot;Doc v2&quot;, content: &quot;...&quot;, metadata: &#123;...&#125; &#125;,     // 100KB
-    // ... 100 histories
-  ],
-  present: &#123; /* current state */ &#125;,
-  future: []
-&#125;;
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Data to persist</span></span><br><span class="line"><span class="keyword">const</span> dataToSave = &#123;</span><br><span class="line">  <span class="attr">past</span>: [</span><br><span class="line">    &#123; <span class="attr">title</span>: <span class="string">&quot;Doc&quot;</span>, <span class="attr">content</span>: <span class="string">&quot;...&quot;</span>, <span class="attr">metadata</span>: &#123;...&#125; &#125;,        <span class="comment">// 100KB</span></span><br><span class="line">    &#123; <span class="attr">title</span>: <span class="string">&quot;Doc v2&quot;</span>, <span class="attr">content</span>: <span class="string">&quot;...&quot;</span>, <span class="attr">metadata</span>: &#123;...&#125; &#125;,     <span class="comment">// 100KB</span></span><br><span class="line">    <span class="comment">// ... 100 histories</span></span><br><span class="line">  ],</span><br><span class="line">  <span class="attr">present</span>: &#123; <span class="comment">/* current state */</span> &#125;,</span><br><span class="line">  <span class="attr">future</span>: []</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Write to localStorage/IndexedDB</span></span><br><span class="line"><span class="variable language_">localStorage</span>.<span class="title function_">setItem</span>(<span class="string">&#x27;history&#x27;</span>, <span class="title class_">JSON</span>.<span class="title function_">stringify</span>(dataToSave));</span><br><span class="line"><span class="comment">// Problem: 10MB+ of serialized JSON</span></span><br></pre></td></tr></table></figure>
 
-// Write to localStorage/IndexedDB
-localStorage.setItem(&#39;history&#39;, JSON.stringify(dataToSave));
-// Problem: 10MB+ of serialized JSON
-</code></pre>
 <p><strong>Travels (JSON Patch):</strong></p>
-<pre><code class="typescript">// Data to persist
-const dataToSave = &#123;
-  state: travels.getState(),        // current state
-  patches: travels.getPatches(),    // only patches, just a few KB
-  position: travels.getPosition(),  // index
-&#125;;
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Data to persist</span></span><br><span class="line"><span class="keyword">const</span> dataToSave = &#123;</span><br><span class="line">  <span class="attr">state</span>: travels.<span class="title function_">getState</span>(),        <span class="comment">// current state</span></span><br><span class="line">  <span class="attr">patches</span>: travels.<span class="title function_">getPatches</span>(),    <span class="comment">// only patches, just a few KB</span></span><br><span class="line">  <span class="attr">position</span>: travels.<span class="title function_">getPosition</span>(),  <span class="comment">// index</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="variable language_">localStorage</span>.<span class="title function_">setItem</span>(<span class="string">&#x27;travels-state&#x27;</span>, <span class="title class_">JSON</span>.<span class="title function_">stringify</span>(dataToSave.<span class="property">state</span>));</span><br><span class="line"><span class="variable language_">localStorage</span>.<span class="title function_">setItem</span>(<span class="string">&#x27;travels-patches&#x27;</span>, <span class="title class_">JSON</span>.<span class="title function_">stringify</span>(dataToSave.<span class="property">patches</span>));</span><br><span class="line"><span class="variable language_">localStorage</span>.<span class="title function_">setItem</span>(<span class="string">&#x27;travels-position&#x27;</span>, <span class="title class_">String</span>(dataToSave.<span class="property">position</span>));</span><br><span class="line"></span><br><span class="line"><span class="comment">// Restore</span></span><br><span class="line"><span class="keyword">const</span> travels = <span class="title function_">createTravels</span>(</span><br><span class="line">  <span class="title class_">JSON</span>.<span class="title function_">parse</span>(<span class="variable language_">localStorage</span>.<span class="title function_">getItem</span>(<span class="string">&#x27;travels-state&#x27;</span>)),</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="attr">initialPatches</span>: <span class="title class_">JSON</span>.<span class="title function_">parse</span>(<span class="variable language_">localStorage</span>.<span class="title function_">getItem</span>(<span class="string">&#x27;travels-patches&#x27;</span>)),</span><br><span class="line">    <span class="attr">initialPosition</span>: <span class="title class_">Number</span>(<span class="variable language_">localStorage</span>.<span class="title function_">getItem</span>(<span class="string">&#x27;travels-position&#x27;</span>)),</span><br><span class="line">  &#125;</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
 
-localStorage.setItem(&#39;travels-state&#39;, JSON.stringify(dataToSave.state));
-localStorage.setItem(&#39;travels-patches&#39;, JSON.stringify(dataToSave.patches));
-localStorage.setItem(&#39;travels-position&#39;, String(dataToSave.position));
-
-// Restore
-const travels = createTravels(
-  JSON.parse(localStorage.getItem(&#39;travels-state&#39;)),
-  &#123;
-    initialPatches: JSON.parse(localStorage.getItem(&#39;travels-patches&#39;)),
-    initialPosition: Number(localStorage.getItem(&#39;travels-position&#39;)),
-  &#125;
-);
-</code></pre>
 <p><strong>Practical comparison (100 histories, from the benchmark):</strong></p>
 <table>
 <thead>
@@ -761,66 +583,23 @@ const travels = createTravels(
 </ol>
 <h3 id="Real-World-Patterns"><a href="#Real-World-Patterns" class="headerlink" title="Real-World Patterns"></a>Real-World Patterns</h3><p>This matters in many cases:</p>
 <p><strong>1) Offline-first apps</strong></p>
-<pre><code class="typescript">// Save to local storage on every change
-travels.subscribe(() =&gt; &#123;
-  // Always-on autosave is feasible because data is tiny
-  saveToLocalStorage(&#123;
-    state: travels.getState(),
-    patches: travels.getPatches(),
-    position: travels.getPosition(),
-  &#125;);
-&#125;);
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Save to local storage on every change</span></span><br><span class="line">travels.<span class="title function_">subscribe</span>(<span class="function">() =&gt;</span> &#123;</span><br><span class="line">  <span class="comment">// Always-on autosave is feasible because data is tiny</span></span><br><span class="line">  <span class="title function_">saveToLocalStorage</span>(&#123;</span><br><span class="line">    <span class="attr">state</span>: travels.<span class="title function_">getState</span>(),</span><br><span class="line">    <span class="attr">patches</span>: travels.<span class="title function_">getPatches</span>(),</span><br><span class="line">    <span class="attr">position</span>: travels.<span class="title function_">getPosition</span>(),</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">// Next launch resumes with full undo/redo history</span></span><br></pre></td></tr></table></figure>
 
-// Next launch resumes with full undo/redo history
-</code></pre>
 <p><strong>2) Collaborative editing operation logs</strong></p>
-<pre><code class="typescript">// Sync patches to server
-travels.subscribe((state, patches, position) =&gt; &#123;
-  // patches are standard JSON Patch (RFC 6902)
-  // Send for:
-  // - Operational history
-  // - Conflict resolution
-  // - Playback/replay
-  api.syncPatches(patches);
-&#125;);
-</code></pre>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Sync patches to server</span></span><br><span class="line">travels.<span class="title function_">subscribe</span>(<span class="function">(<span class="params">state, patches, position</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="comment">// patches are standard JSON Patch (RFC 6902)</span></span><br><span class="line">  <span class="comment">// Send for:</span></span><br><span class="line">  <span class="comment">// - Operational history</span></span><br><span class="line">  <span class="comment">// - Conflict resolution</span></span><br><span class="line">  <span class="comment">// - Playback/replay</span></span><br><span class="line">  api.<span class="title function_">syncPatches</span>(patches);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
 <p><strong>3) Versioning &amp; audit</strong></p>
-<pre><code class="typescript">// JSON Patch doubles as an operation log
-const auditLog = travels.getPatches().patches.map((patch, index) =&gt; (&#123;
-  timestamp: Date.now(),
-  user: currentUser,
-  changes: patch, // standard, easy to review
-  position: index,
-&#125;));
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// JSON Patch doubles as an operation log</span></span><br><span class="line"><span class="keyword">const</span> auditLog = travels.<span class="title function_">getPatches</span>().<span class="property">patches</span>.<span class="title function_">map</span>(<span class="function">(<span class="params">patch, index</span>) =&gt;</span> (&#123;</span><br><span class="line">  <span class="attr">timestamp</span>: <span class="title class_">Date</span>.<span class="title function_">now</span>(),</span><br><span class="line">  <span class="attr">user</span>: currentUser,</span><br><span class="line">  <span class="attr">changes</span>: patch, <span class="comment">// standard, easy to review</span></span><br><span class="line">  <span class="attr">position</span>: index,</span><br><span class="line">&#125;));</span><br><span class="line"></span><br><span class="line"><span class="comment">// Can export to human-friendly formats:</span></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">2024-01-01 10:00:00 - User A:</span></span><br><span class="line"><span class="comment">  - Changed /title from &quot;Draft&quot; to &quot;Final&quot;</span></span><br><span class="line"><span class="comment">  - Added /tags/0 = &quot;published&quot;</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">2024-01-01 10:05:00 - User B:</span></span><br><span class="line"><span class="comment">  - Replaced /content/paragraphs/3</span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure>
 
-// Can export to human-friendly formats:
-/*
-2024-01-01 10:00:00 - User A:
-  - Changed /title from &quot;Draft&quot; to &quot;Final&quot;
-  - Added /tags/0 = &quot;published&quot;
-
-2024-01-01 10:05:00 - User B:
-  - Replaced /content/paragraphs/3
-*/
-</code></pre>
 <p><strong>4) Product analytics</strong></p>
-<pre><code class="typescript">// Analyze editing patterns
-const stats = analyzePatches(travels.getPatches());
-/*
-&#123;
-  totalOperations: 150,
-  avgPatchSize: 45,  // bytes
-  mostEditedFields: [&quot;/title&quot;, &quot;/content/section[0]&quot;],
-  undoRate: 0.15
-&#125;
-*/
-</code></pre>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Analyze editing patterns</span></span><br><span class="line"><span class="keyword">const</span> stats = <span class="title function_">analyzePatches</span>(travels.<span class="title function_">getPatches</span>());</span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">&#123;</span></span><br><span class="line"><span class="comment">  totalOperations: 150,</span></span><br><span class="line"><span class="comment">  avgPatchSize: 45,  // bytes</span></span><br><span class="line"><span class="comment">  mostEditedFields: [&quot;/title&quot;, &quot;/content/section[0]&quot;],</span></span><br><span class="line"><span class="comment">  undoRate: 0.15</span></span><br><span class="line"><span class="comment">&#125;</span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure>
+
 <p>Here, JSON Patch’s standardized, compact format is a huge win. Snapshot-based Redux-undo&#x2F;Zundo are simple, but become unwieldy once persistence enters the picture.</p>
 <h2 id="Resources"><a href="#Resources" class="headerlink" title="Resources"></a>Resources</h2><ul>
-<li><strong>Travels</strong>: <a target="_blank" rel="noopener" href="https://github.com/mutativejs/travels">https://github.com/mutativejs/travels</a></li>
-<li><strong>use-travel</strong>: <a target="_blank" rel="noopener" href="https://github.com/mutativejs/use-travel">https://github.com/mutativejs/use-travel</a> (React hook)</li>
-<li><strong>zustand-travel</strong>: <a target="_blank" rel="noopener" href="https://github.com/mutativejs/zustand-travel">https://github.com/mutativejs/zustand-travel</a> (Zustand middleware)</li>
-<li><strong>Mutative</strong>: <a target="_blank" rel="noopener" href="https://github.com/unadlib/mutative">https://github.com/unadlib/mutative</a></li>
+<li><strong>Travels</strong>: <a href="https://github.com/mutativejs/travels">https://github.com/mutativejs/travels</a></li>
+<li><strong>use-travel</strong>: <a href="https://github.com/mutativejs/use-travel">https://github.com/mutativejs/use-travel</a> (React hook)</li>
+<li><strong>zustand-travel</strong>: <a href="https://github.com/mutativejs/zustand-travel">https://github.com/mutativejs/zustand-travel</a> (Zustand middleware)</li>
+<li><strong>Mutative</strong>: <a href="https://github.com/unadlib/mutative">https://github.com/unadlib/mutative</a></li>
 </ul>
 <h2 id="Final-Thoughts"><a href="#Final-Thoughts" class="headerlink" title="Final Thoughts"></a>Final Thoughts</h2><p>Before writing this post, I read the source code of all three libraries carefully. Redux-undo and Zundo are both excellent and have their places.</p>
 <p>Travels isn’t a silver bullet; it targets a specific problem: <strong>when you need long histories, how do you minimize memory usage, reduce performance overhead, and stay as general and feature-complete as possible?</strong> Its philosophy is to trade compute for memory, which pays off the most when state is large, changes are small, and histories are long. No need to pick a diff library, write conversion logic, or wrangle edge cases—those are built in.</p>

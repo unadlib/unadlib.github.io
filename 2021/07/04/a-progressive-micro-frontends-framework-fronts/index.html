@@ -162,7 +162,7 @@
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/theme/seti.min.css">
     
   
-<meta name="generator" content="Hexo 6.3.0"></head>
+<meta name="generator" content="Hexo 8.1.1"></head>
 <body class="cm-s-seti">
 
 <div id="content-outer">
@@ -225,7 +225,7 @@
 <p>With rapid iteration and business growth, various module management becomes very important, so when a large front-end project practices micro frontends architecture at a later stage, version control and dependency management will become especially important, which will determine the delivery efficiency and maintainability.</p>
 <p>To solve these problems, Fronts was created.</p>
 <h2 id="What’s-Fronts"><a href="#What’s-Fronts" class="headerlink" title="What’s Fronts"></a>What’s Fronts</h2><p>Fronts is a progressive micro frontends framework for building Web applications, and it’s based on the module federation of Webpack.</p>
-<p>Repo: <a target="_blank" rel="noopener" href="https://github.com/unadlib/fronts">https://github.com/unadlib/fronts</a></p>
+<p>Repo: <a href="https://github.com/unadlib/fronts">https://github.com/unadlib/fronts</a></p>
 <ul>
 <li><strong>Non-module-federation</strong> - Although Fronts is based on the concept of module federation, it also supports <code>non-module-federation</code> mode.</li>
 <li><strong>Decentralized configuration</strong> - Configure <code>site.json</code> for dependency management in each Fronts app, support for nested micro frontends.</li>
@@ -242,97 +242,48 @@
 </ul>
 <h2 id="Benefits-of-Fronts"><a href="#Benefits-of-Fronts" class="headerlink" title="Benefits of Fronts"></a>Benefits of Fronts</h2><p><strong>Fronts is a concise and easy to understand micro frontends framework.</strong></p>
 <p>Set <code>site.json</code> to define a micro frontend, similar to a <code>package.json</code> in Node.js.</p>
-<pre><code class="tsx">&#123;
-  &quot;name&quot;: &quot;app1&quot;,
-  &quot;exports&quot;: [&quot;./src/bootstrap&quot;],
-  &quot;dependencies&quot;: &#123;
-    // If version control is enabled,
-    // here it looks like: `&quot;app2&quot;: &quot;1.0.0&quot;`
-    &quot;app2&quot;: &quot;http://localhost:3002/remoteEntry.js&quot;
-  &#125;,
-  &quot;shared&quot;: &#123;
-    &quot;react&quot;: &#123; &quot;singleton&quot;: true &#125;,
-    &quot;react-dom&quot;: &#123; &quot;singleton&quot;: true &#125;
-  &#125;
-&#125;
-</code></pre>
+<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="string">&quot;name&quot;</span>: <span class="string">&quot;app1&quot;</span>,</span><br><span class="line">  <span class="string">&quot;exports&quot;</span>: [<span class="string">&quot;./src/bootstrap&quot;</span>],</span><br><span class="line">  <span class="string">&quot;dependencies&quot;</span>: &#123;</span><br><span class="line">    <span class="comment">// If version control is enabled,</span></span><br><span class="line">    <span class="comment">// here it looks like: `&quot;app2&quot;: &quot;1.0.0&quot;`</span></span><br><span class="line">    <span class="string">&quot;app2&quot;</span>: <span class="string">&quot;http://localhost:3002/remoteEntry.js&quot;</span></span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="string">&quot;shared&quot;</span>: &#123;</span><br><span class="line">    <span class="string">&quot;react&quot;</span>: &#123; <span class="string">&quot;singleton&quot;</span>: <span class="literal">true</span> &#125;,</span><br><span class="line">    <span class="string">&quot;react-dom&quot;</span>: &#123; <span class="string">&quot;singleton&quot;</span>: <span class="literal">true</span> &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
 <p><strong>Fronts is progressive.</strong></p>
 <p>If every front-end application does not support Module Federation, it will still work well as a micro frontend, with on-demand runtime modes, and as projects are upgraded, they can gradually be made to support Module Federation and eventually version control can be enabled. With support for multiple granularity levels, build types, module types, shared types, runtime types, and communication types, Fronts can almost meet all kinds of micro frontends architectures.</p>
 <p><strong>Fronts APIs are clean and simple.</strong></p>
 <p>Fronts provides three sets of loaders <code>useApp()</code>, <code>useWebComponents()</code> and <code>useIframe()</code>. It also provides an micro frontend launcher <code>boot()</code> and a Webpack configuration generator <code>createWebpackConfig()</code>. With these APIs, you will be able to do micro frontends development quickly and efficiently.</p>
 <h2 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h2><p>We will build a micro frontends project based on Fronts, where <code>app1</code> is the main entry point and it will depend on <code>app2</code>.</p>
 <blockquote>
-<p>You can follow this article(<a target="_blank" rel="noopener" href="https://dev.to/rogeliosamuel621/react-without-create-react-app-webpack-5-1b1o">React without create-react-app Webpack 5</a>) to quickly create <code>app1</code> and <code>app2</code> React projects.</p>
+<p>You can follow this article(<a href="https://dev.to/rogeliosamuel621/react-without-create-react-app-webpack-5-1b1o">React without create-react-app Webpack 5</a>) to quickly create <code>app1</code> and <code>app2</code> React projects.</p>
 </blockquote>
 <p>Assuming you’ve completed these steps, let’s get started with a quick taste of the wonderful micro frontends development of Fronts.</p>
 <ul>
 <li>Install <code>fronts-react</code> and <code>fronts-bundler</code> in the projects.</li>
 </ul>
-<pre><code class="shell"># with NPM
-npm install fronts-react fronts-bundler
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">with NPM</span></span><br><span class="line">npm install fronts-react fronts-bundler</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">or with Yarn</span></span><br><span class="line">yarn add fronts-react fronts-bundler</span><br></pre></td></tr></table></figure>
 
-# or with Yarn
-yarn add fronts-react fronts-bundler
-</code></pre>
 <ul>
 <li>Set up <code>site.json</code> and <code>webpack.config.js</code> in the projects</li>
 </ul>
 <p>We define <code>app1</code> as a parent micro frontend and it depends on <code>app2</code>.</p>
 <p><code>app1/site.json</code>:</p>
-<pre><code class="tsx">&#123;
-  &quot;name&quot;: &quot;app1&quot;,
-  &quot;exports&quot;: [],
-  &quot;dependencies&quot;: &#123;
-    &quot;app2&quot;: &quot;http://localhost:3002/remoteEntry.js&quot;
-  &#125;
-&#125;
-</code></pre>
+<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="string">&quot;name&quot;</span>: <span class="string">&quot;app1&quot;</span>,</span><br><span class="line">  <span class="string">&quot;exports&quot;</span>: [],</span><br><span class="line">  <span class="string">&quot;dependencies&quot;</span>: &#123;</span><br><span class="line">    <span class="string">&quot;app2&quot;</span>: <span class="string">&quot;http://localhost:3002/remoteEntry.js&quot;</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
 <p><code>app2</code> doesn’t have any dependencies, it acts as a micro frontend and we define it to export <code>./src/bootstrap</code> as a micro frontends entry, this entry of <code>app2</code> end will be used by <code>app1</code>.</p>
 <p><code>app2/site.json</code>:</p>
-<pre><code class="tsx">&#123;
-  &quot;name&quot;: &quot;app2&quot;,
-  &quot;exports&quot;: [&quot;./src/bootstrap&quot;],
-  &quot;dependencies&quot;: &#123;&#125;
-&#125;
-</code></pre>
-<p>Wrap the Webpack config with <code>createWebpackConfig()</code> in <code>config/webpack.config.js</code> in the projects.</p>
-<pre><code class="tsx">const &#123; createWebpackConfig &#125; = require(&#39;fronts-bundler&#39;);
+<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="string">&quot;name&quot;</span>: <span class="string">&quot;app2&quot;</span>,</span><br><span class="line">  <span class="string">&quot;exports&quot;</span>: [<span class="string">&quot;./src/bootstrap&quot;</span>],</span><br><span class="line">  <span class="string">&quot;dependencies&quot;</span>: &#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-module.exports = createWebpackConfig(originalWebpackConfig);
-</code></pre>
+<p>Wrap the Webpack config with <code>createWebpackConfig()</code> in <code>config/webpack.config.js</code> in the projects.</p>
+<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> &#123; createWebpackConfig &#125; = <span class="built_in">require</span>(<span class="string">&#x27;fronts-bundler&#x27;</span>);</span><br><span class="line"></span><br><span class="line"><span class="variable language_">module</span>.<span class="property">exports</span> = <span class="title function_">createWebpackConfig</span>(originalWebpackConfig);</span><br></pre></td></tr></table></figure>
+
 <ul>
 <li>Define the default exported bootstrap function in <code>app2/src/bootstrap.jsx</code> and use <code>boot()</code> to get it booted.</li>
 </ul>
-<pre><code class="tsx">import React from &#39;react&#39;;
-import ReactDOM from &#39;react-dom&#39;;
-import &#123; boot &#125; from &#39;fronts-react&#39;;
-import App from &#39;./App&#39;;
+<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> <span class="title class_">React</span> <span class="keyword">from</span> <span class="string">&#x27;react&#x27;</span>;</span><br><span class="line"><span class="keyword">import</span> <span class="title class_">ReactDOM</span> <span class="keyword">from</span> <span class="string">&#x27;react-dom&#x27;</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; boot &#125; <span class="keyword">from</span> <span class="string">&#x27;fronts-react&#x27;</span>;</span><br><span class="line"><span class="keyword">import</span> <span class="title class_">App</span> <span class="keyword">from</span> <span class="string">&#x27;./App&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> <span class="keyword">function</span> <span class="title function_">render</span>(<span class="params">element</span>) &#123;</span><br><span class="line">  <span class="title class_">ReactDOM</span>.<span class="title function_">render</span>(<span class="language-xml"><span class="tag">&lt;<span class="name">App</span> /&gt;</span></span>, element);</span><br><span class="line">  <span class="keyword">return</span> <span class="function">() =&gt;</span> &#123;</span><br><span class="line">    <span class="title class_">ReactDOM</span>.<span class="title function_">unmountComponentAtNode</span>(element);</span><br><span class="line">  &#125;;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="title function_">boot</span>(render, <span class="variable language_">document</span>.<span class="title function_">getElementById</span>(<span class="string">&#x27;root&#x27;</span>));</span><br></pre></td></tr></table></figure>
 
-export default function render(element) &#123;
-  ReactDOM.render(&lt;App /&gt;, element);
-  return () =&gt; &#123;
-    ReactDOM.unmountComponentAtNode(element);
-  &#125;;
-&#125;
-
-boot(render, document.getElementById(&#39;root&#39;));
-</code></pre>
 <ul>
 <li>Load <code>app1/src/App.jsx</code> with <code>useApp()</code> to import <code>app2</code>.</li>
 </ul>
-<pre><code class="tsx">import React from &#39;react&#39;;
-import &#123; useApp &#125; from &#39;fronts-react&#39;;
+<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> <span class="title class_">React</span> <span class="keyword">from</span> <span class="string">&#x27;react&#x27;</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; useApp &#125; <span class="keyword">from</span> <span class="string">&#x27;fronts-react&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">const</span> <span class="title function_">App</span> = (<span class="params"></span>) =&gt; &#123;</span><br><span class="line">  <span class="keyword">const</span> <span class="title class_">App2</span> = <span class="title function_">useApp</span>(&#123;</span><br><span class="line">    <span class="attr">name</span>: <span class="string">&#x27;app2&#x27;</span>,</span><br><span class="line">    <span class="attr">loader</span>: <span class="function">() =&gt;</span> <span class="keyword">import</span>(<span class="string">&#x27;app2/src/bootstrap&#x27;</span>),</span><br><span class="line">  &#125;);</span><br><span class="line">  <span class="keyword">return</span> <span class="language-xml"><span class="tag">&lt;<span class="name">App2</span> /&gt;</span></span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
 
-export const App = () =&gt; &#123;
-  const App2 = useApp(&#123;
-    name: &#39;app2&#39;,
-    loader: () =&gt; import(&#39;app2/src/bootstrap&#39;),
-  &#125;);
-  return &lt;App2 /&gt;;
-&#125;;
-</code></pre>
 <p>Run <code>yarn start</code>, and <code>app2</code> is rendered as a micro frontend on <code>app1</code>.</p>
-<p>Example repo：<a target="_blank" rel="noopener" href="https://github.com/unadlib/fronts-example">https://github.com/unadlib/fronts-example</a></p>
+<p>Example repo：<a href="https://github.com/unadlib/fronts-example">https://github.com/unadlib/fronts-example</a></p>
 <h2 id="Notes"><a href="#Notes" class="headerlink" title="Notes"></a>Notes</h2><ul>
 <li>Built-in packages</li>
 </ul>
@@ -353,7 +304,7 @@ export const App = () =&gt; &#123;
 <p>Every large front-end project that tries to implement micro frontends architecture has different or similar requirements, so by analyzing the demands and needs of their own large front-end projects and using them to build or choose their own micro front-end architecture, they can really solve their own main engineering problems.</p>
 <p>With a general module concept based on Module Federation, Fronts tries to solve the main problems of micro frontends in a more targeted and systematic way, such as cross-framework, dependency sharing, dependency management, version control, compatibility with multiple runtime containers and patterns, etc.</p>
 <p>Fronts wants to evolve from more micro frontends architecture requirements to an efficient micro frontends framework.</p>
-<p>Repo: <a target="_blank" rel="noopener" href="https://github.com/unadlib/fronts">https://github.com/unadlib/fronts</a></p>
+<p>Repo: <a href="https://github.com/unadlib/fronts">https://github.com/unadlib/fronts</a></p>
 
   </div>
 </article>

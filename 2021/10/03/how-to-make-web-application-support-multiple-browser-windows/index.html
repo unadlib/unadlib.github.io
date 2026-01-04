@@ -162,7 +162,7 @@
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/theme/seti.min.css">
     
   
-<meta name="generator" content="Hexo 6.3.0"></head>
+<meta name="generator" content="Hexo 8.1.1"></head>
 <body class="cm-s-seti">
 
 <div id="content-outer">
@@ -182,9 +182,9 @@
 <li>Smoother web applications</li>
 </ul>
 <p>But it’s not easy to keep large Web applications running smoothly.</p>
-<p>Web applications are still primarily built in JavaScript, which is a single-threaded programming language, and slow JavaScript code can prevent the browser’s rendering. The good news is that mainstream browsers are gradually supporting more different types of workers, especially Service Workers, which are used to implement PWAs (Progressive Web Apps) that greatly enhance the user experience. And the latest modern browsers also provide Web Worker, Shared Worker. With IE becoming deprecated this year, there is <a target="_blank" rel="noopener" href="https://caniuse.com/?search=worker">good support for these workers</a>. Currently, only <a target="_blank" rel="noopener" href="https://bugs.webkit.org/show_bug.cgi?id=149850">Safari lacks support for Shared Worker</a> among modern browsers.</p>
+<p>Web applications are still primarily built in JavaScript, which is a single-threaded programming language, and slow JavaScript code can prevent the browser’s rendering. The good news is that mainstream browsers are gradually supporting more different types of workers, especially Service Workers, which are used to implement PWAs (Progressive Web Apps) that greatly enhance the user experience. And the latest modern browsers also provide Web Worker, Shared Worker. With IE becoming deprecated this year, there is <a href="https://caniuse.com/?search=worker">good support for these workers</a>. Currently, only <a href="https://bugs.webkit.org/show_bug.cgi?id=149850">Safari lacks support for Shared Worker</a> among modern browsers.</p>
 <p>So what does it mean for Web applications to be “multi-threaded” with Worker?</p>
-<p>“<a target="_blank" rel="noopener" href="https://www.smashingmagazine.com/2021/06/web-workers-2021/">The State Of Web Workers In 2021</a>“ post covers a number of unpredictable performance issues. With these browser workers we will likely be better able to deal with computationally complex and slow-running JS code to keep web applications smooth.</p>
+<p>“<a href="https://www.smashingmagazine.com/2021/06/web-workers-2021/">The State Of Web Workers In 2021</a>“ post covers a number of unpredictable performance issues. With these browser workers we will likely be better able to deal with computationally complex and slow-running JS code to keep web applications smooth.</p>
 <p>It’s time to rethink why we can’t make web applications support multiple browser windows and improve the performance of web applications. New architectural requirements bring new framework requirements, and such applications we call it <strong><code>Shared Web Apps</code></strong>.</p>
 <h2 id="Shared-Web-Apps"><a href="#Shared-Web-Apps" class="headerlink" title="Shared Web Apps"></a>Shared Web Apps</h2><p>Even though we want users to open as few application windows as possible, the fact remains that many users will open the same application in multiple browser windows.</p>
 <p>Shared Web Apps supports running web applications in multiple browser windows.</p>
@@ -226,143 +226,51 @@
 <ul>
 <li>First, we define a counter app module and view module in <code>app.view.tsx</code></li>
 </ul>
-<pre><code class="tsx">import React from &quot;react&quot;;
-import &#123;
-  ViewModule,
-  createApp,
-  injectable,
-  useConnector,
-  action,
-  state,
-  spawn,
-&#125; from &quot;reactant-share&quot;;
+<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> <span class="title class_">React</span> <span class="keyword">from</span> <span class="string">&quot;react&quot;</span>;</span><br><span class="line"><span class="keyword">import</span> &#123;</span><br><span class="line">  <span class="title class_">ViewModule</span>,</span><br><span class="line">  createApp,</span><br><span class="line">  injectable,</span><br><span class="line">  useConnector,</span><br><span class="line">  action,</span><br><span class="line">  state,</span><br><span class="line">  spawn,</span><br><span class="line">&#125; <span class="keyword">from</span> <span class="string">&quot;reactant-share&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="meta">@injectable</span>(&#123; <span class="attr">name</span>: <span class="string">&quot;counter&quot;</span> &#125;)</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Counter</span> &#123;</span><br><span class="line">  <span class="meta">@state</span></span><br><span class="line">  count = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@action</span></span><br><span class="line">  <span class="title function_">increase</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">count</span> += <span class="number">1</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@injectable</span>()</span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> <span class="title class_">AppView</span> <span class="keyword">extends</span> <span class="title class_ inherited__">ViewModule</span> &#123;</span><br><span class="line">  <span class="title function_">constructor</span>(<span class="params"><span class="keyword">public</span> <span class="attr">counter</span>: <span class="title class_">Counter</span></span>) &#123;</span><br><span class="line">    <span class="variable language_">super</span>();</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="title function_">component</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">const</span> count = <span class="title function_">useConnector</span>(<span class="function">() =&gt;</span> <span class="variable language_">this</span>.<span class="property">counter</span>.<span class="property">count</span>);</span><br><span class="line">    <span class="keyword">return</span> (</span><br><span class="line">      <span class="language-xml"><span class="tag">&lt;<span class="name">button</span> <span class="attr">type</span>=<span class="string">&quot;button&quot;</span> <span class="attr">onClick</span>=<span class="string">&#123;()</span> =&gt;</span> spawn(this.counter, &quot;increase&quot;, [])&#125;&gt;</span></span><br><span class="line"><span class="language-xml">        &#123;count&#125;</span></span><br><span class="line"><span class="language-xml">      <span class="tag">&lt;/<span class="name">button</span>&gt;</span></span></span><br><span class="line">    );</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-@injectable(&#123; name: &quot;counter&quot; &#125;)
-class Counter &#123;
-  @state
-  count = 0;
-
-  @action
-  increase() &#123;
-    this.count += 1;
-  &#125;
-&#125;
-
-@injectable()
-export class AppView extends ViewModule &#123;
-  constructor(public counter: Counter) &#123;
-    super();
-  &#125;
-
-  component() &#123;
-    const count = useConnector(() =&gt; this.counter.count);
-    return (
-      &lt;button type=&quot;button&quot; onClick=&#123;() =&gt; spawn(this.counter, &quot;increase&quot;, [])&#125;&gt;
-        &#123;count&#125;
-      &lt;/button&gt;
-    );
-  &#125;
-&#125;
-</code></pre>
 <ul>
 <li>Next, we use <code>createSharedApp()</code> to create the client app, whose options must contain <code>workerURL</code>, the worker url that will create a shared worker (if it hasn’t been created yet).</li>
 </ul>
-<pre><code class="tsx">import &#123; render &#125; from &quot;reactant-web&quot;;
-import &#123; createSharedApp &#125; from &quot;reactant-share&quot;;
-import &#123; AppView &#125; from &quot;./app.view&quot;;
+<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; render &#125; <span class="keyword">from</span> <span class="string">&quot;reactant-web&quot;</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; createSharedApp &#125; <span class="keyword">from</span> <span class="string">&quot;reactant-share&quot;</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; <span class="title class_">AppView</span> &#125; <span class="keyword">from</span> <span class="string">&quot;./app.view&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="title function_">createSharedApp</span>(&#123;</span><br><span class="line">  <span class="attr">modules</span>: [],</span><br><span class="line">  <span class="attr">main</span>: <span class="title class_">AppView</span>,</span><br><span class="line">  render,</span><br><span class="line">  <span class="attr">share</span>: &#123;</span><br><span class="line">    <span class="attr">name</span>: <span class="string">&quot;SharedWorkerApp&quot;</span>,</span><br><span class="line">    <span class="attr">port</span>: <span class="string">&quot;client&quot;</span>,</span><br><span class="line">    <span class="attr">type</span>: <span class="string">&quot;SharedWorker&quot;</span>,</span><br><span class="line">    <span class="attr">workerURL</span>: <span class="string">&quot;worker.bundle.js&quot;</span>,</span><br><span class="line">  &#125;,</span><br><span class="line">&#125;).<span class="title function_">then</span>(<span class="function">(<span class="params">app</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="comment">// render only</span></span><br><span class="line">  app.<span class="title function_">bootstrap</span>(<span class="variable language_">document</span>.<span class="title function_">getElementById</span>(<span class="string">&quot;app&quot;</span>));</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
 
-createSharedApp(&#123;
-  modules: [],
-  main: AppView,
-  render,
-  share: &#123;
-    name: &quot;SharedWorkerApp&quot;,
-    port: &quot;client&quot;,
-    type: &quot;SharedWorker&quot;,
-    workerURL: &quot;worker.bundle.js&quot;,
-  &#125;,
-&#125;).then((app) =&gt; &#123;
-  // render only
-  app.bootstrap(document.getElementById(&quot;app&quot;));
-&#125;);
-</code></pre>
 <ul>
 <li>Finally, we just create the worker file <code>worker.tsx</code> and build it as <code>worker.bundle.js</code> for the <code>workerURL</code> option.</li>
 </ul>
-<pre><code class="tsx">import &#123; createSharedApp &#125; from &quot;reactant-share&quot;;
-import &#123; AppView &#125; from &quot;./app.view&quot;;
+<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; createSharedApp &#125; <span class="keyword">from</span> <span class="string">&quot;reactant-share&quot;</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; <span class="title class_">AppView</span> &#125; <span class="keyword">from</span> <span class="string">&quot;./app.view&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="title function_">createSharedApp</span>(&#123;</span><br><span class="line">  <span class="attr">modules</span>: [],</span><br><span class="line">  <span class="attr">main</span>: <span class="title class_">AppView</span>,</span><br><span class="line">  <span class="attr">render</span>: <span class="function">() =&gt;</span> &#123;</span><br><span class="line">    <span class="comment">//</span></span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="attr">share</span>: &#123;</span><br><span class="line">    <span class="attr">name</span>: <span class="string">&quot;SharedWorkerApp&quot;</span>,</span><br><span class="line">    <span class="attr">port</span>: <span class="string">&quot;server&quot;</span>,</span><br><span class="line">    <span class="attr">type</span>: <span class="string">&quot;SharedWorker&quot;</span>,</span><br><span class="line">  &#125;,</span><br><span class="line">&#125;).<span class="title function_">then</span>(<span class="function">(<span class="params">app</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="comment">// render less</span></span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
 
-createSharedApp(&#123;
-  modules: [],
-  main: AppView,
-  render: () =&gt; &#123;
-    //
-  &#125;,
-  share: &#123;
-    name: &quot;SharedWorkerApp&quot;,
-    port: &quot;server&quot;,
-    type: &quot;SharedWorker&quot;,
-  &#125;,
-&#125;).then((app) =&gt; &#123;
-  // render less
-&#125;);
-</code></pre>
 <p>The specific workflow of <code>increase</code> looks like this.</p>
 <ol>
 <li>The user clicks the button in client app.</li>
 <li><code>spawn(this.counter, &quot;increase&quot;, [])</code> will be executed, which passes the parameters about the proxy execution to the server app.</li>
 <li>The server app will execute <code>this.counter.increase()</code>, and sync the updated state back to each client apps.</li>
 </ol>
-<p><code>spawn()</code> in reactant-share is inspired by the <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Actor_model">actor model</a>.</p>
+<p><code>spawn()</code> in reactant-share is inspired by the <a href="https://en.wikipedia.org/wiki/Actor_model">actor model</a>.</p>
 <h2 id="reactant-share-Framework"><a href="#reactant-share-Framework" class="headerlink" title="reactant-share Framework"></a>reactant-share Framework</h2><h3 id="Multiple-modes"><a href="#Multiple-modes" class="headerlink" title="Multiple modes"></a>Multiple modes</h3><ul>
 <li>Shared tab - It is suitable for running in browsers that do not support SharedWorker&#x2F;ServiceWorker. The server app is an instance with rendering that also runs in a browser window. In multiple browser windows, there is also only one server app, and after it is closed or refreshed, one instance of the other client apps will be converted to a server app.</li>
-<li>SharedWorker - If there is no <a target="_blank" rel="noopener" href="https://caniuse.com/?search=sharedworker">browser compatibility</a> requirement, reactant-share is highly recommended to use this mode, and reactant-share also does a graceful degradation, so if the browser does not support SharedWorker then the app will run in Shared-Tab mode.</li>
+<li>SharedWorker - If there is no <a href="https://caniuse.com/?search=sharedworker">browser compatibility</a> requirement, reactant-share is highly recommended to use this mode, and reactant-share also does a graceful degradation, so if the browser does not support SharedWorker then the app will run in Shared-Tab mode.</li>
 <li>ServiceWorker - If Shared Web Apps are intended to be PWA (Progressive Web Apps), then using this mode would be ideal, and it also supports the automatic graceful degradation to Shared-Tab mode.</li>
 <li>Browser extension - The browser extension allows a background thread, the server app of reactant-share can run in this background thread, and the UI can run in the client app.</li>
 <li>Detached window - reactant-share allows sub-applications to run as Detached windows or to be quickly merged into a more complete application.</li>
 <li>iframe - reactant-share allows each child application to run on an iframe.</li>
 </ul>
-<p>Example repo: <a target="_blank" rel="noopener" href="https://github.com/unadlib/reactant/tree/master/examples/reactant-share-sharedworker">SharedWorker&#x2F;Detached window&#x2F;iframe</a></p>
+<p>Example repo: <a href="https://github.com/unadlib/reactant/tree/master/examples/reactant-share-sharedworker">SharedWorker&#x2F;Detached window&#x2F;iframe</a></p>
 <h3 id="User-Experience"><a href="#User-Experience" class="headerlink" title="User Experience"></a>User Experience</h3><p>Since reactant-share’s multiple instances are logic-sharing and state-sharing, when a user opens the same reactant-share application in multiple browser windows, the only instance that is actually running in full is the server app.</p>
 <p>The rendering-only client app will be so smooth that it will almost never freeze due to JS code, and the consistent application state will allow users to switch between multiple browser windows without any worries.</p>
 <h3 id="Development-Experience"><a href="#Development-Experience" class="headerlink" title="Development Experience"></a>Development Experience</h3><p>reactant-share provides CLI and full support for Typescript, as well as support for Shared-Tab, SharedWorker, ServiceWorker and Browser extension, and other different types of runtime modes out of the box. Built-in testbed for module testing, Routing and Persistence modules, and module dynamics support for lazy loading of reactant-share applications.</p>
-<h3 id="Service-Discovery-x2F-Communications"><a href="#Service-Discovery-x2F-Communications" class="headerlink" title="Service Discovery &#x2F; Communications"></a>Service Discovery &#x2F; Communications</h3><p>Since reactant-share uses <a target="_blank" rel="noopener" href="http://github.com/unadlib/data-transport">data-transport</a>, reactant-share supports almost all the transports supported by data-transport.The client app and the server app, whichever is loaded first, the client app will wait for the server app to finish starting and get all the initial application state from it.</p>
+<h3 id="Service-Discovery-Communications"><a href="#Service-Discovery-Communications" class="headerlink" title="Service Discovery &#x2F; Communications"></a>Service Discovery &#x2F; Communications</h3><p>Since reactant-share uses <a href="http://github.com/unadlib/data-transport">data-transport</a>, reactant-share supports almost all the transports supported by data-transport.The client app and the server app, whichever is loaded first, the client app will wait for the server app to finish starting and get all the initial application state from it.</p>
 <p>Using the actor model in the client app to design spawn(), we can do <code>spawn(counterModule, &#39;increase&#39;, [])</code> to let the server app proxy the execution of the module method and respond and sync both the state and the result back to the client app.</p>
 <p>But if we need direct communication between the client app and the server app, then we need to use the <code>PortDetector</code> module.</p>
-<pre><code class="tsx">class Counter &#123;
-  constructor(public portDetector: PortDetector) &#123;
-    this.portDetector.onServer(async (transport) =&gt; &#123;
-      const result = await transport.emit(&quot;test&quot;, 42);
-      // result should be `hello, 42`
-    &#125;);
-    this.portDetector.onClient((transport) =&gt; &#123;
-      transport.listen(&quot;test&quot;, (num) =&gt; `hello, $&#123;num&#125;`);
-    &#125;);
-  &#125;
-&#125;
-</code></pre>
-<h3 id="Tracking-x2F-Debugging"><a href="#Tracking-x2F-Debugging" class="headerlink" title="Tracking&#x2F;Debugging"></a>Tracking&#x2F;Debugging</h3><p>Since reactant-share is based on Redux, it fully supports Redux DevTools, and the immutable time travel that Redux brings will make debugging easy.</p>
-<h3 id="Fault-Tolerance-x2F-Data-Consistency"><a href="#Fault-Tolerance-x2F-Data-Consistency" class="headerlink" title="Fault Tolerance &#x2F; Data Consistency"></a>Fault Tolerance &#x2F; Data Consistency</h3><p>Since state synchronization after the client app uses <code>spawn()</code> to get the server app proxy to execute each time may cause it to be out of order in edge cases for various reasons, reactant-share integrates <code>reactant-last-action</code>, which provides sequence markers to keep If the client app receives a synchronized action that checks for an exception in the sequence, the client app will launch a full state synchronization to correct the action sequence.</p>
+<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Counter</span> &#123;</span><br><span class="line">  <span class="title function_">constructor</span>(<span class="params"><span class="keyword">public</span> <span class="attr">portDetector</span>: <span class="title class_">PortDetector</span></span>) &#123;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">portDetector</span>.<span class="title function_">onServer</span>(<span class="title function_">async</span> (transport) =&gt; &#123;</span><br><span class="line">      <span class="keyword">const</span> result = <span class="keyword">await</span> transport.<span class="title function_">emit</span>(<span class="string">&quot;test&quot;</span>, <span class="number">42</span>);</span><br><span class="line">      <span class="comment">// result should be `hello, 42`</span></span><br><span class="line">    &#125;);</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">portDetector</span>.<span class="title function_">onClient</span>(<span class="function">(<span class="params">transport</span>) =&gt;</span> &#123;</span><br><span class="line">      transport.<span class="title function_">listen</span>(<span class="string">&quot;test&quot;</span>, <span class="function">(<span class="params">num</span>) =&gt;</span> <span class="string">`hello, <span class="subst">$&#123;num&#125;</span>`</span>);</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Tracking-Debugging"><a href="#Tracking-Debugging" class="headerlink" title="Tracking&#x2F;Debugging"></a>Tracking&#x2F;Debugging</h3><p>Since reactant-share is based on Redux, it fully supports Redux DevTools, and the immutable time travel that Redux brings will make debugging easy.</p>
+<h3 id="Fault-Tolerance-Data-Consistency"><a href="#Fault-Tolerance-Data-Consistency" class="headerlink" title="Fault Tolerance &#x2F; Data Consistency"></a>Fault Tolerance &#x2F; Data Consistency</h3><p>Since state synchronization after the client app uses <code>spawn()</code> to get the server app proxy to execute each time may cause it to be out of order in edge cases for various reasons, reactant-share integrates <code>reactant-last-action</code>, which provides sequence markers to keep If the client app receives a synchronized action that checks for an exception in the sequence, the client app will launch a full state synchronization to correct the action sequence.</p>
 <p>In addition, when the browser does not support the Worker API, reactant-share will perform a graceful degradation (e.g. SharedWorker mode -&gt; Shared-Tab mode -&gt; SPA mode).</p>
 <h3 id="Isolation"><a href="#Isolation" class="headerlink" title="Isolation"></a>Isolation</h3><p>Regardless of modes such as Shared-Tab, SharedWorker or ServiceWorker, each application instance runs in isolation and their basic interactions can only be triggered by <code>spawn()</code> to synchronize state.</p>
 <h3 id="Configuration"><a href="#Configuration" class="headerlink" title="Configuration"></a>Configuration</h3><p>reactant-share provides CLI, you just need to run <code>npx reactant-cli init shared-worker-example -t shared-worker</code> to get a project of reactant-share with SharedWorker mode. If you want to change its mode, you just need to change the configuration of <code>createSharedApp()</code>.</p>
-<pre><code class="diff">createSharedApp(&#123;
-  modules: [],
-  main: AppView,
-  render,
-  share: &#123;
-    name: &#39;ReactantExampleApp&#39;,
-    port: &#39;client&#39;,
--   type: &#39;SharedWorker&#39;,
-+   type: &#39;ServiceWorker&#39;,
-    workerURL: &#39;worker.bundle.js&#39;,
-  &#125;,
-&#125;).then((app) =&gt; &#123;
-  app.bootstrap(document.getElementById(&#39;app&#39;));
-&#125;);
-</code></pre>
+<figure class="highlight diff"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">createSharedApp(&#123;</span><br><span class="line">  modules: [],</span><br><span class="line">  main: AppView,</span><br><span class="line">  render,</span><br><span class="line">  share: &#123;</span><br><span class="line">    name: &#x27;ReactantExampleApp&#x27;,</span><br><span class="line">    port: &#x27;client&#x27;,</span><br><span class="line"><span class="deletion">-   type: &#x27;SharedWorker&#x27;,</span></span><br><span class="line"><span class="addition">+   type: &#x27;ServiceWorker&#x27;,</span></span><br><span class="line">    workerURL: &#x27;worker.bundle.js&#x27;,</span><br><span class="line">  &#125;,</span><br><span class="line">&#125;).then((app) =&gt; &#123;</span><br><span class="line">  app.bootstrap(document.getElementById(&#x27;app&#x27;));</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
 <p>With that, we can quickly turn SharedWorker mode into ServiceWorker mode.</p>
-<h3 id="Transport-x2F-Performance"><a href="#Transport-x2F-Performance" class="headerlink" title="Transport&#x2F;Performance"></a>Transport&#x2F;Performance</h3><p>Since the client app only renders and receives synchronized state. So the client app keeps running smoothly when the size of each dispatch update state does not exceed 50M. reactant uses <a target="_blank" rel="noopener" href="https://immerjs.github.io/immer/patches/">Immer patch</a> to update, usually this patch will be very small and reactant also does DEV checking for patch minimization updates. In fact, in most scenarios, the patch will not be that large.</p>
+<h3 id="Transport-Performance"><a href="#Transport-Performance" class="headerlink" title="Transport&#x2F;Performance"></a>Transport&#x2F;Performance</h3><p>Since the client app only renders and receives synchronized state. So the client app keeps running smoothly when the size of each dispatch update state does not exceed 50M. reactant uses <a href="https://immerjs.github.io/immer/patches/">Immer patch</a> to update, usually this patch will be very small and reactant also does DEV checking for patch minimization updates. In fact, in most scenarios, the patch will not be that large.</p>
 <table>
 <thead>
 <tr>
@@ -419,54 +327,14 @@ createSharedApp(&#123;
 <p>Notebook: 1 GHz Intel Core M &#x2F; 8 GB 1600 MHz DDR3</p>
 </blockquote>
 <p>Therefore, reactant-share still performs well in large projects.</p>
-<h3 id="Complexity"><a href="#Complexity" class="headerlink" title="Complexity"></a>Complexity</h3><p>Whether it’s practicing <a target="_blank" rel="noopener" href="https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html">clean architecture</a>, <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Domain-driven_design">DDD</a>, OOP or even FP, reactant-share has more openness to architect highly complex projects at will. reactant-share provides a few optional features, but the only one that shouldn’t be missed is DI. reactant-share’s DI is inspired by Angular, and it is very similar to Angular’s DI. The complexity of coding that comes with architectural design is often determined by the final specification of the practice, but reactant-share hopes to help with such complex architectural design at the framework level.</p>
-<h3 id="Security"><a href="#Security" class="headerlink" title="Security"></a>Security</h3><p>For reactant-share applications, the communication between server&#x2F;client only serializes and deserializes state and parameters, so it is almost impossible to cause framework-level security issues. Of course, enabling https and using<a target="_blank" rel="noopener" href="https://developer.mozilla.org/zh-CN/docs/Web/Security/Subresource_Integrity">Subresource Integrity</a> are both necessary for any project that values front-end security, and we should also be concerned about <a target="_blank" rel="noopener" href="https://reactjs.org/docs/dom-elements.html#style">XSS security</a> in React documentation.</p>
+<h3 id="Complexity"><a href="#Complexity" class="headerlink" title="Complexity"></a>Complexity</h3><p>Whether it’s practicing <a href="https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html">clean architecture</a>, <a href="https://en.wikipedia.org/wiki/Domain-driven_design">DDD</a>, OOP or even FP, reactant-share has more openness to architect highly complex projects at will. reactant-share provides a few optional features, but the only one that shouldn’t be missed is DI. reactant-share’s DI is inspired by Angular, and it is very similar to Angular’s DI. The complexity of coding that comes with architectural design is often determined by the final specification of the practice, but reactant-share hopes to help with such complex architectural design at the framework level.</p>
+<h3 id="Security"><a href="#Security" class="headerlink" title="Security"></a>Security</h3><p>For reactant-share applications, the communication between server&#x2F;client only serializes and deserializes state and parameters, so it is almost impossible to cause framework-level security issues. Of course, enabling https and using<a href="https://developer.mozilla.org/zh-CN/docs/Web/Security/Subresource_Integrity">Subresource Integrity</a> are both necessary for any project that values front-end security, and we should also be concerned about <a href="https://reactjs.org/docs/dom-elements.html#style">XSS security</a> in React documentation.</p>
 <h3 id="Testing"><a href="#Testing" class="headerlink" title="Testing"></a>Testing</h3><p>reactant-share provides <code>testBed()</code> to facilitate module testing. For example,</p>
-<pre><code class="tsx">const &#123; instance &#125; = testBed(&#123;
-  main: Counter,
-  modules: [],
-&#125;);
-</code></pre>
+<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> &#123; instance &#125; = <span class="title function_">testBed</span>(&#123;</span><br><span class="line">  <span class="attr">main</span>: <span class="title class_">Counter</span>,</span><br><span class="line">  <span class="attr">modules</span>: [],</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
 <p>For integration testing of server app&#x2F;client app interactions, reactant-share also provides <code>mockPairTransports()</code> for mock transport.</p>
-<pre><code class="tsx">const transports = mockPairTransports();
+<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> transports = <span class="title function_">mockPairTransports</span>();</span><br><span class="line"></span><br><span class="line"><span class="title function_">createSharedApp</span>(&#123;</span><br><span class="line">  <span class="attr">modules</span>: [],</span><br><span class="line">  <span class="attr">main</span>: <span class="title class_">AppView</span>,</span><br><span class="line">  render,</span><br><span class="line">  <span class="attr">share</span>: &#123;</span><br><span class="line">    <span class="attr">name</span>: <span class="string">&quot;SharedWorkerApp&quot;</span>,</span><br><span class="line">    <span class="attr">port</span>: <span class="string">&quot;client&quot;</span>,</span><br><span class="line">    <span class="attr">type</span>: <span class="string">&quot;SharedWorker&quot;</span>,</span><br><span class="line">    <span class="attr">transports</span>: &#123;</span><br><span class="line">      <span class="attr">client</span>: transports[<span class="number">0</span>],</span><br><span class="line">    &#125;,</span><br><span class="line">  &#125;,</span><br><span class="line">&#125;).<span class="title function_">then</span>(<span class="function">(<span class="params">app</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">const</span> clientApp = app;</span><br><span class="line">  <span class="comment">// render only</span></span><br><span class="line">  app.<span class="title function_">bootstrap</span>(<span class="variable language_">document</span>.<span class="title function_">getElementById</span>(<span class="string">&quot;app&quot;</span>));</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="title function_">createSharedApp</span>(&#123;</span><br><span class="line">  <span class="attr">modules</span>: [],</span><br><span class="line">  <span class="attr">main</span>: <span class="title class_">AppView</span>,</span><br><span class="line">  <span class="attr">render</span>: <span class="function">() =&gt;</span> &#123;</span><br><span class="line">    <span class="comment">//</span></span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="attr">share</span>: &#123;</span><br><span class="line">    <span class="attr">name</span>: <span class="string">&quot;SharedWorkerApp&quot;</span>,</span><br><span class="line">    <span class="attr">port</span>: <span class="string">&quot;server&quot;</span>,</span><br><span class="line">    <span class="attr">type</span>: <span class="string">&quot;SharedWorker&quot;</span>,</span><br><span class="line">    <span class="attr">transports</span>: &#123;</span><br><span class="line">      <span class="attr">client</span>: transports[<span class="number">1</span>],</span><br><span class="line">    &#125;,</span><br><span class="line">  &#125;,</span><br><span class="line">&#125;).<span class="title function_">then</span>(<span class="function">(<span class="params">app</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">const</span> serverApp = app;</span><br><span class="line">  <span class="comment">// render less</span></span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
 
-createSharedApp(&#123;
-  modules: [],
-  main: AppView,
-  render,
-  share: &#123;
-    name: &quot;SharedWorkerApp&quot;,
-    port: &quot;client&quot;,
-    type: &quot;SharedWorker&quot;,
-    transports: &#123;
-      client: transports[0],
-    &#125;,
-  &#125;,
-&#125;).then((app) =&gt; &#123;
-  const clientApp = app;
-  // render only
-  app.bootstrap(document.getElementById(&quot;app&quot;));
-&#125;);
-
-createSharedApp(&#123;
-  modules: [],
-  main: AppView,
-  render: () =&gt; &#123;
-    //
-  &#125;,
-  share: &#123;
-    name: &quot;SharedWorkerApp&quot;,
-    port: &quot;server&quot;,
-    type: &quot;SharedWorker&quot;,
-    transports: &#123;
-      client: transports[1],
-    &#125;,
-  &#125;,
-&#125;).then((app) =&gt; &#123;
-  const serverApp = app;
-  // render less
-&#125;);
-</code></pre>
 <p>After mocking transport like this, <code>clientApp</code> and <code>serverApp</code> can be easily tested for integration.</p>
 <h2 id="APIs"><a href="#APIs" class="headerlink" title="APIs"></a>APIs</h2><ul>
 <li><code>@injectable()</code></li>
@@ -480,16 +348,8 @@ createSharedApp(&#123;
 <li><code>@action</code></li>
 </ul>
 <p>It updates the redux state with mutations via the class method.</p>
-<pre><code class="tsx">class Todo &#123;
-  @state
-  list: &#123; text: string &#125;[] = [];
+<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Todo</span> &#123;</span><br><span class="line">  <span class="meta">@state</span></span><br><span class="line">  <span class="attr">list</span>: &#123; <span class="attr">text</span>: <span class="built_in">string</span> &#125;[] = [];</span><br><span class="line"></span><br><span class="line">  <span class="meta">@action</span></span><br><span class="line">  <span class="title function_">addTodo</span>(<span class="params"><span class="attr">text</span>: <span class="built_in">string</span></span>) &#123;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">list</span>.<span class="title function_">push</span>(&#123; text &#125;);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-  @action
-  addTodo(text: string) &#123;
-    this.list.push(&#123; text &#125;);
-  &#125;
-&#125;
-</code></pre>
 <ul>
 <li><code>ViewModule</code>&#x2F;<code>useConnector()</code></li>
 </ul>
@@ -502,11 +362,11 @@ createSharedApp(&#123;
 <li><code>createSharedApp()</code></li>
 </ul>
 <p>reactant-share supports multiple modes, and you can use <code>createSharedApp()</code> to create multiple different Shared Web Apps that interact with each other via transport APIs.</p>
-<h2 id="Q-amp-A"><a href="#Q-amp-A" class="headerlink" title="Q&amp;A"></a>Q&amp;A</h2><ul>
+<h2 id="Q-A"><a href="#Q-A" class="headerlink" title="Q&amp;A"></a>Q&amp;A</h2><ul>
 <li>Can reactant-share completely solve the complexity of the architecture?</li>
 </ul>
 <p>Although reactant-share tries to reduce some complexity at the framework level, the complexity of large applications does not depend entirely on the framework itself, so even using reactant-share to architect a large project does not completely guarantee that it is absolutely clean, efficient, and maintainable. It involves testing strategy, code specification, CI&#x2F;CD, development process, module design, and many other point.</p>
-<p>But in terms of module model and shared model, reactant-share already provides as clean a design as possible. If you are interested in <a target="_blank" rel="noopener" href="https://github.com/unadlib/reactant/tree/master/packages/reactant-share">reactant-share</a>, you can try it quickly.</p>
+<p>But in terms of module model and shared model, reactant-share already provides as clean a design as possible. If you are interested in <a href="https://github.com/unadlib/reactant/tree/master/packages/reactant-share">reactant-share</a>, you can try it quickly.</p>
 <ul>
 <li>Does reactant-share have no cons at all? Are there any limitations to using it?</li>
 </ul>
@@ -516,7 +376,7 @@ createSharedApp(&#123;
 <h2 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h2><p>Front-end frameworks and architectures are always evolving. With full Worker support in modern browsers and an increasing number of multi-core CPU devices, we have reached a mature stage in our exploration of some multi-threaded running Web Apps. We have reasons to believe that the future Web App will be designed with lower complexity and run smoothly with multiple threads. It can fully utilize the user’s device resources and give the user a good experience, and the developer does not need to have too many multi-threaded programming burden.</p>
 <p>This is what reactant-share wants to try and work on.</p>
 <p>If you think reactant-share is interesting, feel free to give it a star.</p>
-<p>Repo: <a target="_blank" rel="noopener" href="https://github.com/unadlib/reactant">reactant</a></p>
+<p>Repo: <a href="https://github.com/unadlib/reactant">reactant</a></p>
 
   </div>
 </article>

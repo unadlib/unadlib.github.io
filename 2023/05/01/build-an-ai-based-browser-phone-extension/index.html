@@ -162,7 +162,7 @@
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/theme/seti.min.css">
     
   
-<meta name="generator" content="Hexo 6.3.0"></head>
+<meta name="generator" content="Hexo 8.1.1"></head>
 <body class="cm-s-seti">
 
 <div id="content-outer">
@@ -199,476 +199,72 @@
 </ul>
 <p>We will designate content.js as the JavaScript file that the extension will inject by default into any tabs. We will designate background.js as the browser’s service worker, which will be used to pop up a separate page (client.js) that can function as the Phone app.</p>
 <p>Taking the manifest.json configuration of a Chrome MV3 extension as an example:</p>
-<pre><code class="javascript">&#123;
-  &quot;manifest_version&quot;: 3,
-  &quot;name&quot;: &quot;demo&quot;,
-  &quot;version&quot;: &quot;0.0.1&quot;,
-  &quot;description&quot;: &quot;A browser extension demo&quot;,
-  &quot;background&quot;: &#123;
-    &quot;service_worker&quot;: &quot;background.js&quot;
-  &#125;,
-  &quot;action&quot;: &#123;&#125;,
-  &quot;icons&quot;: &#123;
-    &quot;128&quot;: &quot;logo.png&quot;
-  &#125;,
-  &quot;permissions&quot;: [&quot;tabs&quot;, &quot;activeTab&quot;, &quot;debugger&quot;, &quot;management&quot;],
-  &quot;host_permissions&quot;: [&quot;http://*/&quot;, &quot;https://*/&quot;],
-  &quot;content_scripts&quot;: [
-    &#123;
-      &quot;matches&quot;: [&quot;http://*/*&quot;, &quot;https://*/*&quot;, &quot;&lt;all_urls&gt;&quot;],
-      &quot;js&quot;: [&quot;content.js&quot;],
-      &quot;css&quot;: [&quot;content.styles.css&quot;]
-    &#125;
-  ],
-  &quot;web_accessible_resources&quot;: [
-    &#123;
-      &quot;resources&quot;: [&quot;content.styles.css&quot;, &quot;logo.png&quot;],
-      &quot;matches&quot;: []
-    &#125;,
-    &#123;
-      &quot;resources&quot;: [&quot;client.html&quot;, &quot;redirect.html&quot;, &quot;logo.png&quot;],
-      &quot;matches&quot;: [&quot;&lt;all_urls&gt;&quot;]
-    &#125;
-  ]
-&#125;
-</code></pre>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="string">&quot;manifest_version&quot;</span>: <span class="number">3</span>,</span><br><span class="line">  <span class="string">&quot;name&quot;</span>: <span class="string">&quot;demo&quot;</span>,</span><br><span class="line">  <span class="string">&quot;version&quot;</span>: <span class="string">&quot;0.0.1&quot;</span>,</span><br><span class="line">  <span class="string">&quot;description&quot;</span>: <span class="string">&quot;A browser extension demo&quot;</span>,</span><br><span class="line">  <span class="string">&quot;background&quot;</span>: &#123;</span><br><span class="line">    <span class="string">&quot;service_worker&quot;</span>: <span class="string">&quot;background.js&quot;</span></span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="string">&quot;action&quot;</span>: &#123;&#125;,</span><br><span class="line">  <span class="string">&quot;icons&quot;</span>: &#123;</span><br><span class="line">    <span class="string">&quot;128&quot;</span>: <span class="string">&quot;logo.png&quot;</span></span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="string">&quot;permissions&quot;</span>: [<span class="string">&quot;tabs&quot;</span>, <span class="string">&quot;activeTab&quot;</span>, <span class="string">&quot;debugger&quot;</span>, <span class="string">&quot;management&quot;</span>],</span><br><span class="line">  <span class="string">&quot;host_permissions&quot;</span>: [<span class="string">&quot;http://*/&quot;</span>, <span class="string">&quot;https://*/&quot;</span>],</span><br><span class="line">  <span class="string">&quot;content_scripts&quot;</span>: [</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="string">&quot;matches&quot;</span>: [<span class="string">&quot;http://*/*&quot;</span>, <span class="string">&quot;https://*/*&quot;</span>, <span class="string">&quot;&lt;all_urls&gt;&quot;</span>],</span><br><span class="line">      <span class="string">&quot;js&quot;</span>: [<span class="string">&quot;content.js&quot;</span>],</span><br><span class="line">      <span class="string">&quot;css&quot;</span>: [<span class="string">&quot;content.styles.css&quot;</span>]</span><br><span class="line">    &#125;</span><br><span class="line">  ],</span><br><span class="line">  <span class="string">&quot;web_accessible_resources&quot;</span>: [</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="string">&quot;resources&quot;</span>: [<span class="string">&quot;content.styles.css&quot;</span>, <span class="string">&quot;logo.png&quot;</span>],</span><br><span class="line">      <span class="string">&quot;matches&quot;</span>: []</span><br><span class="line">    &#125;,</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="string">&quot;resources&quot;</span>: [<span class="string">&quot;client.html&quot;</span>, <span class="string">&quot;redirect.html&quot;</span>, <span class="string">&quot;logo.png&quot;</span>],</span><br><span class="line">      <span class="string">&quot;matches&quot;</span>: [<span class="string">&quot;&lt;all_urls&gt;&quot;</span>]</span><br><span class="line">    &#125;</span><br><span class="line">  ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
 <p>We should primarily focus on the permissions section:</p>
 <ul>
 <li>tabs and activeTab are mainly used for tab communication and status capture, etc.</li>
 <li>debugger will primarily be used for automating webpage operations.</li>
 </ul>
 <h3 id="Implementing-Contact-Information-Extraction-from-Any-Webpage"><a href="#Implementing-Contact-Information-Extraction-from-Any-Webpage" class="headerlink" title="Implementing Contact Information Extraction from Any Webpage"></a>Implementing Contact Information Extraction from Any Webpage</h3><p>In <code>content.js</code>, we will implement basic content extraction from webpages:</p>
-<pre><code class="javascript">chrome.runtime.onMessage.addListener((message, sender, sendResponse) =&gt; &#123;
-  const type = message.type;
-  if (type === &quot;get-webpage-text&quot;) &#123;
-    sendResponse(document.body.innerText);
-  &#125;
-&#125;);
-</code></pre>
-<p>And in <code>client.js</code>, we will implement the corresponding request for webpage content:</p>
-<pre><code class="javascript">async function getActiveTab() &#123;
-  const &#123; id &#125; = await chrome.tabs.getCurrent();
-  const [activeTab] = (await chrome.tabs.query(&#123; active: true &#125;)).filter(
-    (item) =&gt; item.id !== id
-  );
-  return activeTab;
-&#125;
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">chrome.<span class="property">runtime</span>.<span class="property">onMessage</span>.<span class="title function_">addListener</span>(<span class="function">(<span class="params">message, sender, sendResponse</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">const</span> type = message.<span class="property">type</span>;</span><br><span class="line">  <span class="keyword">if</span> (type === <span class="string">&quot;get-webpage-text&quot;</span>) &#123;</span><br><span class="line">    <span class="title function_">sendResponse</span>(<span class="variable language_">document</span>.<span class="property">body</span>.<span class="property">innerText</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
 
-async function getPageText() &#123;
-  const activeTab = await getActiveTab();
-  if (!activeTab) &#123;
-    throw new Error(&quot;No active tab found&quot;);
-  &#125;
-  const response = await chrome.tabs.sendMessage(activeTab.id!, &#123;
-    type: &quot;get-webpage-text&quot;,
-  &#125;);
-  return response;
-&#125;
-</code></pre>
+<p>And in <code>client.js</code>, we will implement the corresponding request for webpage content:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">async</span> <span class="keyword">function</span> <span class="title function_">getActiveTab</span>(<span class="params"></span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> &#123; id &#125; = <span class="keyword">await</span> chrome.<span class="property">tabs</span>.<span class="title function_">getCurrent</span>();</span><br><span class="line">  <span class="keyword">const</span> [activeTab] = (<span class="keyword">await</span> chrome.<span class="property">tabs</span>.<span class="title function_">query</span>(&#123; <span class="attr">active</span>: <span class="literal">true</span> &#125;)).<span class="title function_">filter</span>(</span><br><span class="line">    <span class="function">(<span class="params">item</span>) =&gt;</span> item.<span class="property">id</span> !== id</span><br><span class="line">  );</span><br><span class="line">  <span class="keyword">return</span> activeTab;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">async</span> <span class="keyword">function</span> <span class="title function_">getPageText</span>(<span class="params"></span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> activeTab = <span class="keyword">await</span> <span class="title function_">getActiveTab</span>();</span><br><span class="line">  <span class="keyword">if</span> (!activeTab) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">Error</span>(<span class="string">&quot;No active tab found&quot;</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">const</span> response = <span class="keyword">await</span> chrome.<span class="property">tabs</span>.<span class="title function_">sendMessage</span>(activeTab.<span class="property">id</span>!, &#123;</span><br><span class="line">    <span class="attr">type</span>: <span class="string">&quot;get-webpage-text&quot;</span>,</span><br><span class="line">  &#125;);</span><br><span class="line">  <span class="keyword">return</span> response;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
 <p>We only used the simple API document.body.innerText. A more complete extraction should consider content visibility, iframe content, and many other factors. Due to space limitations, we won’t elaborate further here.</p>
 <p>Next, we will submit the extracted content to the OpenAI API to extract contact information:</p>
-<pre><code class="javascript">async function fetchContactsInfo() &#123;
-  const text = await getPageText();
-  const content = `The following is the text of a web page using &#39;document.body.innerText&#39;, please help me to extract the information about the contact \n&#39;$&#123;text&#125;&#39;, result should be Array JSON format and data format be like below
-  
-      &#123;
-        name: string;
-        title: string;
-        phone: string;
-        email: string[];
-      &#125;[]
-  
-      IMPORTANT: only respond to the Array JSON result.
-      `;
-  const result = await fetchGPT(&#123;
-    content,
-  &#125;);
-  return result;
-&#125;
-</code></pre>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">async</span> <span class="keyword">function</span> <span class="title function_">fetchContactsInfo</span>(<span class="params"></span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> text = <span class="keyword">await</span> <span class="title function_">getPageText</span>();</span><br><span class="line">  <span class="keyword">const</span> content = <span class="string">`The following is the text of a web page using &#x27;document.body.innerText&#x27;, please help me to extract the information about the contact \n&#x27;<span class="subst">$&#123;text&#125;</span>&#x27;, result should be Array JSON format and data format be like below</span></span><br><span class="line"><span class="string">  </span></span><br><span class="line"><span class="string">      &#123;</span></span><br><span class="line"><span class="string">        name: string;</span></span><br><span class="line"><span class="string">        title: string;</span></span><br><span class="line"><span class="string">        phone: string;</span></span><br><span class="line"><span class="string">        email: string[];</span></span><br><span class="line"><span class="string">      &#125;[]</span></span><br><span class="line"><span class="string">  </span></span><br><span class="line"><span class="string">      IMPORTANT: only respond to the Array JSON result.</span></span><br><span class="line"><span class="string">      `</span>;</span><br><span class="line">  <span class="keyword">const</span> result = <span class="keyword">await</span> <span class="title function_">fetchGPT</span>(&#123;</span><br><span class="line">    content,</span><br><span class="line">  &#125;);</span><br><span class="line">  <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
 <p>It’s worth mentioning that here we used a TypeScript interface as the prompt to ensure OpenAI returns a stable JSON data structure.</p>
 <p>fetchGPT can be implemented independently. You can install the OpenAI SDK (openai) and set up your own API server.</p>
 <h3 id="Intelligent-Contact-Analysis-and-Sorting"><a href="#Intelligent-Contact-Analysis-and-Sorting" class="headerlink" title="Intelligent Contact Analysis and Sorting"></a>Intelligent Contact Analysis and Sorting</h3><p>Once we have obtained contact information, we can match it with contacts in the current phone system and also match the corresponding call recordings, voicemails, and SMS messages. SMS messages are typically text-based, so we can organize this information and submit it directly to OpenAI. However, call recordings and voicemails are audio files, so we will need to use the OpenAI audio&#x2F;transcriptions API.</p>
-<pre><code class="javascript">async function transcriptVoicemail(files) &#123;
-  const results = await Promise.allSettled(
-    files.map(async (file) =&gt; &#123;
-      const body = &#123;
-        file: file.file,
-        model: &quot;whisper-1&quot;,
-        temperature: 0,
-        response_format: &quot;json&quot;,
-      &#125;;
-      const formData = new FormData();
-      for (const [name, value] of Object.entries(body)) &#123;
-        formData.append(name, value as never);
-      &#125;
-      const data = await firstValueFrom(
-        defer(async () =&gt; &#123;
-          const response = await fetch(`$&#123;baseUrl&#125;/v1/audio/transcriptions`, &#123;
-            method: &quot;POST&quot;,
-            headers: &#123;
-              &quot;Access-Control-Allow-Origin&quot;: &quot;*&quot;,
-              Authorization: &quot;Bearer your-api-key&quot;,
-            &#125;,
-            body: formData,
-          &#125;);
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">async</span> <span class="keyword">function</span> <span class="title function_">transcriptVoicemail</span>(<span class="params">files</span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> results = <span class="keyword">await</span> <span class="title class_">Promise</span>.<span class="title function_">allSettled</span>(</span><br><span class="line">    files.<span class="title function_">map</span>(<span class="title function_">async</span> (file) =&gt; &#123;</span><br><span class="line">      <span class="keyword">const</span> body = &#123;</span><br><span class="line">        <span class="attr">file</span>: file.<span class="property">file</span>,</span><br><span class="line">        <span class="attr">model</span>: <span class="string">&quot;whisper-1&quot;</span>,</span><br><span class="line">        <span class="attr">temperature</span>: <span class="number">0</span>,</span><br><span class="line">        <span class="attr">response_format</span>: <span class="string">&quot;json&quot;</span>,</span><br><span class="line">      &#125;;</span><br><span class="line">      <span class="keyword">const</span> formData = <span class="keyword">new</span> <span class="title class_">FormData</span>();</span><br><span class="line">      <span class="keyword">for</span> (<span class="keyword">const</span> [name, value] <span class="keyword">of</span> <span class="title class_">Object</span>.<span class="title function_">entries</span>(body)) &#123;</span><br><span class="line">        formData.<span class="title function_">append</span>(name, value <span class="keyword">as</span> never);</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">const</span> data = <span class="keyword">await</span> <span class="title function_">firstValueFrom</span>(</span><br><span class="line">        <span class="title function_">defer</span>(<span class="title function_">async</span> () =&gt; &#123;</span><br><span class="line">          <span class="keyword">const</span> response = <span class="keyword">await</span> <span class="title function_">fetch</span>(<span class="string">`<span class="subst">$&#123;baseUrl&#125;</span>/v1/audio/transcriptions`</span>, &#123;</span><br><span class="line">            <span class="attr">method</span>: <span class="string">&quot;POST&quot;</span>,</span><br><span class="line">            <span class="attr">headers</span>: &#123;</span><br><span class="line">              <span class="string">&quot;Access-Control-Allow-Origin&quot;</span>: <span class="string">&quot;*&quot;</span>,</span><br><span class="line">              <span class="title class_">Authorization</span>: <span class="string">&quot;Bearer your-api-key&quot;</span>,</span><br><span class="line">            &#125;,</span><br><span class="line">            <span class="attr">body</span>: formData,</span><br><span class="line">          &#125;);</span><br><span class="line"></span><br><span class="line">          <span class="keyword">if</span> (!response.<span class="property">ok</span>) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">Error</span>(<span class="string">&quot;fetch API failed&quot;</span>);</span><br><span class="line">          &#125;</span><br><span class="line"></span><br><span class="line">          <span class="keyword">const</span> <span class="attr">data</span>: &#123;</span><br><span class="line">            <span class="attr">text</span>: string;</span><br><span class="line">          &#125; = <span class="keyword">await</span> response.<span class="title function_">json</span>();</span><br><span class="line"></span><br><span class="line">          <span class="keyword">return</span> data;</span><br><span class="line">        &#125;).<span class="title function_">pipe</span>(<span class="title function_">retry</span>(<span class="number">3</span>))</span><br><span class="line">      );</span><br><span class="line"></span><br><span class="line">      <span class="keyword">return</span> &#123; <span class="attr">text</span>: data.<span class="property">text</span>, <span class="attr">url</span>: file.<span class="property">url</span> &#125;;</span><br><span class="line">    &#125;)</span><br><span class="line">  );</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> voiceMailTranscriptions = results.<span class="title function_">reduce</span>(<span class="function">(<span class="params">acc, result, i</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (result.<span class="property">status</span> === <span class="string">&quot;fulfilled&quot;</span>) &#123;</span><br><span class="line">      <span class="keyword">const</span> id = voiceMails[i].<span class="property">id</span>!;</span><br><span class="line">      <span class="keyword">const</span> value = result.<span class="property">value</span>;</span><br><span class="line">      acc[id] = &#123;</span><br><span class="line">        ...voiceMails[i],</span><br><span class="line">        <span class="attr">transcription</span>: value.<span class="property">text</span>,</span><br><span class="line">        <span class="attr">playURL</span>: value.<span class="property">url</span>,</span><br><span class="line">      &#125;;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> acc;</span><br><span class="line">  &#125;, &#123;&#125;);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> voiceMailTranscriptions;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-          if (!response.ok) &#123;
-            throw new Error(&quot;fetch API failed&quot;);
-          &#125;
-
-          const data: &#123;
-            text: string;
-          &#125; = await response.json();
-
-          return data;
-        &#125;).pipe(retry(3))
-      );
-
-      return &#123; text: data.text, url: file.url &#125;;
-    &#125;)
-  );
-
-  const voiceMailTranscriptions = results.reduce((acc, result, i) =&gt; &#123;
-    if (result.status === &quot;fulfilled&quot;) &#123;
-      const id = voiceMails[i].id!;
-      const value = result.value;
-      acc[id] = &#123;
-        ...voiceMails[i],
-        transcription: value.text,
-        playURL: value.url,
-      &#125;;
-    &#125;
-    return acc;
-  &#125;, &#123;&#125;);
-
-  return voiceMailTranscriptions;
-&#125;
-</code></pre>
 <p>This way, we can obtain transcriptions of voicemails. Similarly, we can also get transcriptions of call recordings.</p>
 <p>Next, we will submit this information to OpenAI to analyze emotion:</p>
-<pre><code class="javascript">async function getEmotion(callRecordings, voiceMails, sms) &#123;
-  const content = `
-  Please give me the user&#39;s emotion based on Below Call recordings, Voicemails and SMS, the emotion score between 0 to 100, angry is 0, peaceful is 100.
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">async</span> <span class="keyword">function</span> <span class="title function_">getEmotion</span>(<span class="params">callRecordings, voiceMails, sms</span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> content = <span class="string">`</span></span><br><span class="line"><span class="string">  Please give me the user&#x27;s emotion based on Below Call recordings, Voicemails and SMS, the emotion score between 0 to 100, angry is 0, peaceful is 100.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  Call recordings:</span></span><br><span class="line"><span class="string">  <span class="subst">$&#123;callRecordings&#125;</span></span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  Voicemails:</span></span><br><span class="line"><span class="string">  <span class="subst">$&#123;voiceMails&#125;</span></span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  SMS:</span></span><br><span class="line"><span class="string">  <span class="subst">$&#123;sms&#125;</span></span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  Your response result should be JSON format and the data type be like below:</span></span><br><span class="line"><span class="string">  &#123;</span></span><br><span class="line"><span class="string">    score: number;</span></span><br><span class="line"><span class="string">    description: string;</span></span><br><span class="line"><span class="string">  &#125;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  IMPORTANT: only give me the json result</span></span><br><span class="line"><span class="string">  `</span>;</span><br><span class="line">  <span class="keyword">const</span> result = <span class="keyword">await</span> <span class="title function_">fetchGPT</span>(&#123;</span><br><span class="line">    content,</span><br><span class="line">  &#125;);</span><br><span class="line">  <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-  Call recordings:
-  $&#123;callRecordings&#125;
-
-  Voicemails:
-  $&#123;voiceMails&#125;
-
-  SMS:
-  $&#123;sms&#125;
-
-  Your response result should be JSON format and the data type be like below:
-  &#123;
-    score: number;
-    description: string;
-  &#125;
-
-  IMPORTANT: only give me the json result
-  `;
-  const result = await fetchGPT(&#123;
-    content,
-  &#125;);
-  return result;
-&#125;
-</code></pre>
 <p>Once we obtain the emotion analysis for each contact, we can sort these analyses to let users know the potential emotions associated with customer communication for each contact. This could indicate the ease or difficulty of communication, allowing users to plan their call strategies and schedules accordingly.</p>
 <h3 id="Real-time-STT"><a href="#Real-time-STT" class="headerlink" title="Real-time STT"></a>Real-time STT</h3><p>Azure provides real-time STT and TTS services. We will use the official SDK, <code>microsoft-cognitiveservices-speech-sdk</code>, to implement STT:</p>
-<pre><code class="javascript">import * as sdk from &quot;microsoft-cognitiveservices-speech-sdk&quot;;
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> * <span class="keyword">as</span> sdk <span class="keyword">from</span> <span class="string">&quot;microsoft-cognitiveservices-speech-sdk&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">startSpeechRecognition</span>(<span class="params"></span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> speechConfig = sdk.<span class="property">SpeechConfig</span>.<span class="title function_">fromSubscription</span>(</span><br><span class="line">    subscriptionKey,</span><br><span class="line">    region</span><br><span class="line">  );</span><br><span class="line">  speechConfig.<span class="property">speechRecognitionLanguage</span> = language;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> stream = <span class="title function_">getMediaStream</span>();</span><br><span class="line">  <span class="keyword">if</span> (!stream) <span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> audioConfig = sdk.<span class="property">AudioConfig</span>.<span class="title function_">fromStreamInput</span>(stream);</span><br><span class="line">  <span class="keyword">const</span> newRecognizer = <span class="keyword">new</span> sdk.<span class="title class_">SpeechRecognizer</span>(speechConfig, audioConfig);</span><br><span class="line"></span><br><span class="line">  newRecognizer.<span class="property">recognizing</span> = <span class="function">(<span class="params">s, e</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">`Recognizing: <span class="subst">$&#123;e.result.text&#125;</span>`</span>);</span><br><span class="line">  &#125;;</span><br><span class="line"></span><br><span class="line">  newRecognizer.<span class="property">recognized</span> = <span class="function">(<span class="params">s, e</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">`Recognized: <span class="subst">$&#123;e.result.text&#125;</span>`</span>);</span><br><span class="line">    <span class="keyword">if</span> (e.<span class="property">result</span>.<span class="property">text</span> !== <span class="literal">undefined</span>) &#123;</span><br><span class="line">      <span class="title function_">setTranscript</span>(e.<span class="property">result</span>.<span class="property">text</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;;</span><br><span class="line"></span><br><span class="line">  newRecognizer.<span class="property">canceled</span> = <span class="function">(<span class="params">s, e</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (e.<span class="property">errorCode</span> === sdk.<span class="property">CancellationErrorCode</span>.<span class="property">ErrorAPIKey</span>) &#123;</span><br><span class="line">      <span class="variable language_">console</span>.<span class="title function_">error</span>(<span class="string">&quot;Invalid or incorrect subscription key&quot;</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">`Canceled: <span class="subst">$&#123;e.errorDetails&#125;</span>`</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="title function_">setIsListening</span>(<span class="literal">false</span>);</span><br><span class="line">  &#125;;</span><br><span class="line"></span><br><span class="line">  newRecognizer.<span class="property">sessionStopped</span> = <span class="function">(<span class="params">s, e</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&quot;Session stopped&quot;</span>);</span><br><span class="line">    newRecognizer.<span class="title function_">stopContinuousRecognitionAsync</span>();</span><br><span class="line">    <span class="title function_">setIsListening</span>(<span class="literal">false</span>);</span><br><span class="line">  &#125;;</span><br><span class="line"></span><br><span class="line">  newRecognizer.<span class="title function_">startContinuousRecognitionAsync</span>(</span><br><span class="line">    <span class="function">() =&gt;</span> &#123;</span><br><span class="line">      <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&quot;Listening...&quot;</span>);</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="function">(<span class="params">error</span>) =&gt;</span> &#123;</span><br><span class="line">      <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">`Error: <span class="subst">$&#123;error&#125;</span>`</span>);</span><br><span class="line">      newRecognizer.<span class="title function_">stopContinuousRecognitionAsync</span>();</span><br><span class="line">      <span class="title function_">setIsListening</span>(<span class="literal">false</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  );</span><br><span class="line"></span><br><span class="line">  <span class="title function_">setRecognizer</span>(newRecognizer);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-function startSpeechRecognition() &#123;
-  const speechConfig = sdk.SpeechConfig.fromSubscription(
-    subscriptionKey,
-    region
-  );
-  speechConfig.speechRecognitionLanguage = language;
-
-  const stream = getMediaStream();
-  if (!stream) return null;
-
-  const audioConfig = sdk.AudioConfig.fromStreamInput(stream);
-  const newRecognizer = new sdk.SpeechRecognizer(speechConfig, audioConfig);
-
-  newRecognizer.recognizing = (s, e) =&gt; &#123;
-    console.log(`Recognizing: $&#123;e.result.text&#125;`);
-  &#125;;
-
-  newRecognizer.recognized = (s, e) =&gt; &#123;
-    console.log(`Recognized: $&#123;e.result.text&#125;`);
-    if (e.result.text !== undefined) &#123;
-      setTranscript(e.result.text);
-    &#125;
-  &#125;;
-
-  newRecognizer.canceled = (s, e) =&gt; &#123;
-    if (e.errorCode === sdk.CancellationErrorCode.ErrorAPIKey) &#123;
-      console.error(&quot;Invalid or incorrect subscription key&quot;);
-    &#125; else &#123;
-      console.log(`Canceled: $&#123;e.errorDetails&#125;`);
-    &#125;
-    setIsListening(false);
-  &#125;;
-
-  newRecognizer.sessionStopped = (s, e) =&gt; &#123;
-    console.log(&quot;Session stopped&quot;);
-    newRecognizer.stopContinuousRecognitionAsync();
-    setIsListening(false);
-  &#125;;
-
-  newRecognizer.startContinuousRecognitionAsync(
-    () =&gt; &#123;
-      console.log(&quot;Listening...&quot;);
-    &#125;,
-    (error) =&gt; &#123;
-      console.log(`Error: $&#123;error&#125;`);
-      newRecognizer.stopContinuousRecognitionAsync();
-      setIsListening(false);
-    &#125;
-  );
-
-  setRecognizer(newRecognizer);
-&#125;
-</code></pre>
 <p>In this way, using sdk.AudioConfig.fromStreamInput(stream) with our WebRTC stream allows us to achieve real-time STT. Furthermore, by calling this method separately for both the input and output streams of WebRTC, we can obtain real-time text content for both sides of the conversation.</p>
 <p>It’s worth noting that <code>microsoft-cognitiveservices-speech-sdk</code> provides a remarkably comprehensive set of input and output stream configurations to accommodate a wide range of STT scenarios.</p>
 <h3 id="Intelligent-Hints-During-Calls"><a href="#Intelligent-Hints-During-Calls" class="headerlink" title="Intelligent Hints During Calls"></a>Intelligent Hints During Calls</h3><p>In the Azure SDK, the recognized event represents an intermediate, paused result in the ongoing speech recognition. When this event is triggered, we can submit the in-progress conversation text to OpenAI to help provide potential information:</p>
-<pre><code class="javascript">async function getHint(conversation) &#123;
-  const content = `
-  You are a conversational intelligent assistant, please give possible hints based on the following conversation:
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">async</span> <span class="keyword">function</span> <span class="title function_">getHint</span>(<span class="params">conversation</span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> content = <span class="string">`</span></span><br><span class="line"><span class="string">  You are a conversational intelligent assistant, please give possible hints based on the following conversation:</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  <span class="subst">$&#123;conversation&#125;</span></span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  Your response result should be JSON format and the data type be like below:</span></span><br><span class="line"><span class="string">  &#123;</span></span><br><span class="line"><span class="string">    hint: string;</span></span><br><span class="line"><span class="string">  &#125;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  IMPORTANT: only give me the json result</span></span><br><span class="line"><span class="string">  `</span>;</span><br><span class="line">  <span class="keyword">const</span> result = <span class="keyword">await</span> <span class="title function_">fetchGPT</span>(&#123;</span><br><span class="line">    content,</span><br><span class="line">  &#125;);</span><br><span class="line">  <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-  $&#123;conversation&#125;
-
-  Your response result should be JSON format and the data type be like below:
-  &#123;
-    hint: string;
-  &#125;
-
-  IMPORTANT: only give me the json result
-  `;
-  const result = await fetchGPT(&#123;
-    content,
-  &#125;);
-  return result;
-&#125;
-</code></pre>
 <p>The hints we obtain will also be displayed in the conversation UI, shown to the user in real-time to provide this intelligent assistance. For example, if the conversation involves discussing discount calculations, the AI will provide the calculated results.</p>
 <h3 id="Generating-Emotion-Summary-and-To-Do-List-After-the-Call"><a href="#Generating-Emotion-Summary-and-To-Do-List-After-the-Call" class="headerlink" title="Generating Emotion, Summary, and To-Do List After the Call"></a>Generating Emotion, Summary, and To-Do List After the Call</h3><p>We will generate reports such as emotion analysis and summaries by using the complete conversation text as part of the prompt for OpenAI:</p>
-<pre><code class="javascript">async function getReport(conversation) &#123;
-  const content = `
-  Please help me to &quot;summarize&quot;, &quot;improvements&quot;, and &quot;evaluate&quot; the quality of the customer service from the following conversation,
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">async</span> <span class="keyword">function</span> <span class="title function_">getReport</span>(<span class="params">conversation</span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> content = <span class="string">`</span></span><br><span class="line"><span class="string">  Please help me to &quot;summarize&quot;, &quot;improvements&quot;, and &quot;evaluate&quot; the quality of the customer service from the following conversation,</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  <span class="subst">$&#123;conversation&#125;</span></span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  result should be JSON format,</span></span><br><span class="line"><span class="string">  summary and improvement please be more detailed, and format be like below</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  interface Report &#123;</span></span><br><span class="line"><span class="string">    summary: string;</span></span><br><span class="line"><span class="string">    improvements: string[];</span></span><br><span class="line"><span class="string">    evaluation: Evaluation;</span></span><br><span class="line"><span class="string">  &#125;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  interface Evaluation &#123;</span></span><br><span class="line"><span class="string">    sellResult: &#x27;Deal&#x27; | &#x27;Lost deal&#x27; | &#x27;Follow up&#x27;;</span></span><br><span class="line"><span class="string">    customerEmotion: &#x27;Happy&#x27; | &#x27;Sad&#x27; | &#x27;Unhappy&#x27;;</span></span><br><span class="line"><span class="string">  &#125;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  IMPORTANT: only give me the json result</span></span><br><span class="line"><span class="string">  `</span>;</span><br><span class="line">  <span class="keyword">const</span> result = <span class="keyword">await</span> <span class="title function_">fetchGPT</span>(&#123;</span><br><span class="line">    content,</span><br><span class="line">  &#125;);</span><br><span class="line">  <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-  $&#123;conversation&#125;
-
-  result should be JSON format,
-  summary and improvement please be more detailed, and format be like below
-
-  interface Report &#123;
-    summary: string;
-    improvements: string[];
-    evaluation: Evaluation;
-  &#125;
-
-  interface Evaluation &#123;
-    sellResult: &#39;Deal&#39; | &#39;Lost deal&#39; | &#39;Follow up&#39;;
-    customerEmotion: &#39;Happy&#39; | &#39;Sad&#39; | &#39;Unhappy&#39;;
-  &#125;
-
-  IMPORTANT: only give me the json result
-  `;
-  const result = await fetchGPT(&#123;
-    content,
-  &#125;);
-  return result;
-&#125;
-</code></pre>
 <p>In a similar manner, we will also generate a to-do list for the current conversation:</p>
-<pre><code class="javascript">async function getTodoList(conversation) &#123;
-  const content = `
-  I am a sales agent. Please Help me generate a todo list in customer relationship management platform for the following conversation.
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">async</span> <span class="keyword">function</span> <span class="title function_">getTodoList</span>(<span class="params">conversation</span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> content = <span class="string">`</span></span><br><span class="line"><span class="string">  I am a sales agent. Please Help me generate a todo list in customer relationship management platform for the following conversation.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  <span class="subst">$&#123;conversations&#125;</span></span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  result should be Array JSON format, and checked, processing to be false</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  type ToDoListItem = &#123;</span></span><br><span class="line"><span class="string">    id: string;</span></span><br><span class="line"><span class="string">    checked: boolean;</span></span><br><span class="line"><span class="string">    message: string;</span></span><br><span class="line"><span class="string">    processing: boolean;</span></span><br><span class="line"><span class="string">  &#125;[];</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  IMPORTANT: only give me the Array JSON result, make sure that only the above conversation is relevant.</span></span><br><span class="line"><span class="string">  `</span>;</span><br><span class="line">  <span class="keyword">const</span> result = <span class="keyword">await</span> <span class="title function_">fetchGPT</span>(&#123;</span><br><span class="line">    content,</span><br><span class="line">  &#125;);</span><br><span class="line">  <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-  $&#123;conversations&#125;
-
-  result should be Array JSON format, and checked, processing to be false
-
-  type ToDoListItem = &#123;
-    id: string;
-    checked: boolean;
-    message: string;
-    processing: boolean;
-  &#125;[];
-
-  IMPORTANT: only give me the Array JSON result, make sure that only the above conversation is relevant.
-  `;
-  const result = await fetchGPT(&#123;
-    content,
-  &#125;);
-  return result;
-&#125;
-</code></pre>
 <h3 id="Intelligently-Filling-Out-Forms"><a href="#Intelligently-Filling-Out-Forms" class="headerlink" title="Intelligently Filling Out Forms"></a>Intelligently Filling Out Forms</h3><p>As a fundamental communication service for businesses, phone systems are commonly integrated with third-party CRM platforms. Therefore, intelligently auto-filling CRM forms can efficiently assist collaboration for ToB (business-to-business) users.</p>
 <p>To implement intelligent form filling, the first step is to address how to extract and compress DOM information from form pages of any third-party CRM. Here, we reference TaxyAI’s DOM compression model:</p>
 <p>By traversing all nodes in the DOM and analyzing their validity, we retain valid attribute information and assign a DI (presumably “DOM Identifier”) tag to each valid node.</p>
-<pre><code class="javascript">const allowedAttributes = [
-  &quot;aria-label&quot;,
-  &quot;data-name&quot;,
-  &quot;name&quot;,
-  &quot;type&quot;,
-  &quot;placeholder&quot;,
-  &quot;value&quot;,
-  &quot;role&quot;,
-  &quot;title&quot;,
-];
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> allowedAttributes = [</span><br><span class="line">  <span class="string">&quot;aria-label&quot;</span>,</span><br><span class="line">  <span class="string">&quot;data-name&quot;</span>,</span><br><span class="line">  <span class="string">&quot;name&quot;</span>,</span><br><span class="line">  <span class="string">&quot;type&quot;</span>,</span><br><span class="line">  <span class="string">&quot;placeholder&quot;</span>,</span><br><span class="line">  <span class="string">&quot;value&quot;</span>,</span><br><span class="line">  <span class="string">&quot;role&quot;</span>,</span><br><span class="line">  <span class="string">&quot;title&quot;</span>,</span><br><span class="line">];</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> sample = <span class="string">`</span></span><br><span class="line"><span class="string">&lt;div&gt;</span></span><br><span class="line"><span class="string">  &lt;button</span></span><br><span class="line"><span class="string">    aria-label=&quot;Add to wishlist: Brinnon, Washington&quot;</span></span><br><span class="line"><span class="string">    type=&quot;button&quot;</span></span><br><span class="line"><span class="string">    id=&quot;1396&quot;</span></span><br><span class="line"><span class="string">  &gt;&lt;/button&gt;</span></span><br><span class="line"><span class="string">  &lt;div aria-label=&quot;Photo 1 of 6&quot;&gt;&lt;/div&gt;</span></span><br><span class="line"><span class="string">&lt;/div&gt;</span></span><br><span class="line"><span class="string">`</span>;</span><br></pre></td></tr></table></figure>
 
-const sample = `
-&lt;div&gt;
-  &lt;button
-    aria-label=&quot;Add to wishlist: Brinnon, Washington&quot;
-    type=&quot;button&quot;
-    id=&quot;1396&quot;
-  &gt;&lt;/button&gt;
-  &lt;div aria-label=&quot;Photo 1 of 6&quot;&gt;&lt;/div&gt;
-&lt;/div&gt;
-`;
-</code></pre>
 <p>Once we have the compressed DOM information, we can also obtain the webpage labels by analyzing it (through analyzing attributes such as visibility, effective width and height, and operability). Then, we submit this to OpenAI:</p>
-<pre><code class="javascript">async function getFieldValues(
-  labels,
-  domainInfo,
-  callInfo,
-  conversation,
-  summary
-) &#123;
-  const content = `
-  You are a browser DOM automation assistant. Your goal is to help me fill in the customer relationship management Task form based on the conversation I provided.
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">async</span> <span class="keyword">function</span> <span class="title function_">getFieldValues</span>(<span class="params"></span></span><br><span class="line"><span class="params">  labels,</span></span><br><span class="line"><span class="params">  domainInfo,</span></span><br><span class="line"><span class="params">  callInfo,</span></span><br><span class="line"><span class="params">  conversation,</span></span><br><span class="line"><span class="params">  summary</span></span><br><span class="line"><span class="params"></span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> content = <span class="string">`</span></span><br><span class="line"><span class="string">  You are a browser DOM automation assistant. Your goal is to help me fill in the customer relationship management Task form based on the conversation I provided.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  In the summary field, input the summary of the conversation, and the call transcription.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  This is an example of the field</span></span><br><span class="line"><span class="string">  &#123; key: &#x27;Title&#x27; &#125;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  This is an example of the response</span></span><br><span class="line"><span class="string">  &#123; key: &#x27;Title&#x27;, value: &#x27;Here is the value for title&#x27; &#125;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  You must always keep result should be JSON format and data format be like below:</span></span><br><span class="line"><span class="string">  &#123;</span></span><br><span class="line"><span class="string">    key: string;</span></span><br><span class="line"><span class="string">    value: string;</span></span><br><span class="line"><span class="string">  &#125;[]</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  the list of input fields:</span></span><br><span class="line"><span class="string">  <span class="subst">$&#123;<span class="built_in">JSON</span>.stringify(labels, <span class="literal">null</span>, <span class="number">2</span>)&#125;</span></span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  Domain information:</span></span><br><span class="line"><span class="string">  <span class="subst">$&#123;domainInfo&#125;</span></span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  Call information:</span></span><br><span class="line"><span class="string">  <span class="subst">$&#123;callInfo&#125;</span></span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  Conversation:</span></span><br><span class="line"><span class="string">  <span class="subst">$&#123;conversation&#125;</span></span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  Summary:</span></span><br><span class="line"><span class="string">  <span class="subst">$&#123;summary&#125;</span></span></span><br><span class="line"><span class="string">  `</span>;</span><br><span class="line">  <span class="keyword">const</span> result = <span class="keyword">await</span> <span class="title function_">fetchGPT</span>(&#123;</span><br><span class="line">    content,</span><br><span class="line">  &#125;);</span><br><span class="line">  <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-  In the summary field, input the summary of the conversation, and the call transcription.
-
-  This is an example of the field
-  &#123; key: &#39;Title&#39; &#125;
-
-  This is an example of the response
-  &#123; key: &#39;Title&#39;, value: &#39;Here is the value for title&#39; &#125;
-
-  You must always keep result should be JSON format and data format be like below:
-  &#123;
-    key: string;
-    value: string;
-  &#125;[]
-
-  the list of input fields:
-  $&#123;JSON.stringify(labels, null, 2)&#125;
-
-  Domain information:
-  $&#123;domainInfo&#125;
-
-  Call information:
-  $&#123;callInfo&#125;
-
-  Conversation:
-  $&#123;conversation&#125;
-
-  Summary:
-  $&#123;summary&#125;
-  `;
-  const result = await fetchGPT(&#123;
-    content,
-  &#125;);
-  return result;
-&#125;
-</code></pre>
 <p>Once we have fieldValues, we submit the current page and fieldValues to OpenAI, so that it can generate the values for the corresponding input fields:</p>
-<pre><code class="javascript">async function getInputValues(fieldValues, dom) &#123;
-  const content = `
-  You are a browser automation assistant.
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">async</span> <span class="keyword">function</span> <span class="title function_">getInputValues</span>(<span class="params">fieldValues, dom</span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> content = <span class="string">`</span></span><br><span class="line"><span class="string">  You are a browser automation assistant.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  You will be given a webpage DOM data and a list of input data. You should tell me how I can fill in the field based on the information.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  This is an example of the DOM:</span></span><br><span class="line"><span class="string">  &lt;div id=&quot;1101&quot;&gt;Title&lt;input id=&quot;1102&quot;&gt;&lt;div&gt;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  This is an example of the input data:</span></span><br><span class="line"><span class="string">  &#123; key: &#x27;Title&#x27;, value: &#x27;Here is the value for title&#x27; &#125;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  This is an example of the response:</span></span><br><span class="line"><span class="string">  &#123; id: &#x27;1102&#x27;, value: &#x27;Here is the value for title&#x27; &#125;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  Here is the list of input data:</span></span><br><span class="line"><span class="string">  <span class="subst">$&#123;fieldValues&#125;</span></span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  Here is the webpage DOM:</span></span><br><span class="line"><span class="string">  <span class="subst">$&#123;dom&#125;</span></span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  Your response result should be JSON format and the data type be like below:</span></span><br><span class="line"><span class="string">  &#123;</span></span><br><span class="line"><span class="string">    id: string;</span></span><br><span class="line"><span class="string">    value: string;</span></span><br><span class="line"><span class="string">  &#125;[]</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  IMPORTANT: only give me the json result</span></span><br><span class="line"><span class="string">  `</span>;</span><br><span class="line">  <span class="keyword">const</span> result = <span class="keyword">await</span> <span class="title function_">fetchGPT</span>(&#123;</span><br><span class="line">    content,</span><br><span class="line">  &#125;);</span><br><span class="line">  <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-  You will be given a webpage DOM data and a list of input data. You should tell me how I can fill in the field based on the information.
-
-  This is an example of the DOM:
-  &lt;div id=&quot;1101&quot;&gt;Title&lt;input id=&quot;1102&quot;&gt;&lt;div&gt;
-
-  This is an example of the input data:
-  &#123; key: &#39;Title&#39;, value: &#39;Here is the value for title&#39; &#125;
-
-  This is an example of the response:
-  &#123; id: &#39;1102&#39;, value: &#39;Here is the value for title&#39; &#125;
-
-  Here is the list of input data:
-  $&#123;fieldValues&#125;
-
-  Here is the webpage DOM:
-  $&#123;dom&#125;
-
-  Your response result should be JSON format and the data type be like below:
-  &#123;
-    id: string;
-    value: string;
-  &#125;[]
-
-  IMPORTANT: only give me the json result
-  `;
-  const result = await fetchGPT(&#123;
-    content,
-  &#125;);
-  return result;
-&#125;
-</code></pre>
 <p>Then, we send these values to the current CRM form page to complete the automatic form filling.</p>
 <p>In <code>client.js</code>, we send inputValues:</p>
-<pre><code class="javascript">async function sendInputValues() &#123;
-  await chrome.tabs.sendMessage(activeTab.id!, &#123;
-    type: &#39;auto-run-action&#39;,
-    action: inputValues.filter((item) =&gt; item.value),
-  &#125;);
-&#125;
-</code></pre>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">async</span> <span class="keyword">function</span> <span class="title function_">sendInputValues</span>(<span class="params"></span>) &#123;</span><br><span class="line">  <span class="keyword">await</span> chrome.<span class="property">tabs</span>.<span class="title function_">sendMessage</span>(activeTab.<span class="property">id</span>!, &#123;</span><br><span class="line">    <span class="attr">type</span>: <span class="string">&#x27;auto-run-action&#x27;</span>,</span><br><span class="line">    <span class="attr">action</span>: inputValues.<span class="title function_">filter</span>(<span class="function">(<span class="params">item</span>) =&gt;</span> item.<span class="property">value</span>),</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
 <p>In <code>content.js</code>, complete the final input filling:</p>
-<pre><code class="javascript">chrome.runtime.onMessage.addListener((message, sender, sendResponse) =&gt; &#123;
-  const &#123; type, action &#125; = message;
-  if (type === &quot;auto-run-action&quot;) &#123;
-    action.forEach((&#123; id, value &#125;) =&gt; &#123;
-      const inputElement = getElementById(id);
-      if (!inputElement) &#123;
-        console.error(&quot;Could not find element with id&quot;, id);
-        return;
-      &#125;
-      inputElement.value = value;
-      inputElement.dispatchEvent(new Event(&quot;change&quot;, &#123; bubbles: true &#125;));
-    &#125;);
-    sendResponse();
-  &#125;
-&#125;);
-</code></pre>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">chrome.<span class="property">runtime</span>.<span class="property">onMessage</span>.<span class="title function_">addListener</span>(<span class="function">(<span class="params">message, sender, sendResponse</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">const</span> &#123; type, action &#125; = message;</span><br><span class="line">  <span class="keyword">if</span> (type === <span class="string">&quot;auto-run-action&quot;</span>) &#123;</span><br><span class="line">    action.<span class="title function_">forEach</span>(<span class="function">(<span class="params">&#123; id, value &#125;</span>) =&gt;</span> &#123;</span><br><span class="line">      <span class="keyword">const</span> inputElement = <span class="title function_">getElementById</span>(id);</span><br><span class="line">      <span class="keyword">if</span> (!inputElement) &#123;</span><br><span class="line">        <span class="variable language_">console</span>.<span class="title function_">error</span>(<span class="string">&quot;Could not find element with id&quot;</span>, id);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      inputElement.<span class="property">value</span> = value;</span><br><span class="line">      inputElement.<span class="title function_">dispatchEvent</span>(<span class="keyword">new</span> <span class="title class_">Event</span>(<span class="string">&quot;change&quot;</span>, &#123; <span class="attr">bubbles</span>: <span class="literal">true</span> &#125;));</span><br><span class="line">    &#125;);</span><br><span class="line">    <span class="title function_">sendResponse</span>();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
 <p>We omit the details of handling more complex form types.</p>
 <h3 id="Browser-Automated-To-Do-Execution"><a href="#Browser-Automated-To-Do-Execution" class="headerlink" title="Browser Automated To-Do Execution"></a>Browser Automated To-Do Execution</h3><p>We leverage the TaxyAI automated execution DOM operation model mentioned earlier, which utilizes OpenAI to control the browser and perform repetitive actions on behalf of the user.</p>
 <p>By appending Thought and Action contextual prompts, OpenAI will iteratively and logically deduce the next DOM operation until the current to-do item is fulfilled.</p>
 <p>This is the crucial function for formatting the prompt:</p>
-<pre><code class="javascript">function formatPrompt(taskInstructions, previousActions, pageContents) &#123;
-  let previousActionsString = &quot;&quot;;
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">formatPrompt</span>(<span class="params">taskInstructions, previousActions, pageContents</span>) &#123;</span><br><span class="line">  <span class="keyword">let</span> previousActionsString = <span class="string">&quot;&quot;</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (previousActions.<span class="property">length</span> &gt; <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="keyword">const</span> serializedActions = previousActions</span><br><span class="line">      .<span class="title function_">map</span>(</span><br><span class="line">        <span class="function">(<span class="params">action</span>) =&gt;</span></span><br><span class="line">          <span class="string">`&lt;Thought&gt;<span class="subst">$&#123;action.thought&#125;</span>&lt;/Thought&gt;\n&lt;Action&gt;<span class="subst">$&#123;action.action&#125;</span>&lt;/Action&gt;`</span></span><br><span class="line">      )</span><br><span class="line">      .<span class="title function_">join</span>(<span class="string">&quot;\n\n&quot;</span>);</span><br><span class="line">    previousActionsString = <span class="string">`You have already taken the following actions: \n<span class="subst">$&#123;serializedActions&#125;</span>\n\n`</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="string">`The user requests the following task:</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string"><span class="subst">$&#123;taskInstructions&#125;</span></span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string"><span class="subst">$&#123;previousActionsString&#125;</span></span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">Current time: <span class="subst">$&#123;<span class="keyword">new</span> <span class="built_in">Date</span>().toLocaleString()&#125;</span></span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">Current page contents:</span></span><br><span class="line"><span class="string"><span class="subst">$&#123;pageContents&#125;</span>`</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-  if (previousActions.length &gt; 0) &#123;
-    const serializedActions = previousActions
-      .map(
-        (action) =&gt;
-          `&lt;Thought&gt;$&#123;action.thought&#125;&lt;/Thought&gt;\n&lt;Action&gt;$&#123;action.action&#125;&lt;/Action&gt;`
-      )
-      .join(&quot;\n\n&quot;);
-    previousActionsString = `You have already taken the following actions: \n$&#123;serializedActions&#125;\n\n`;
-  &#125;
-
-  return `The user requests the following task:
-
-$&#123;taskInstructions&#125;
-
-$&#123;previousActionsString&#125;
-
-Current time: $&#123;new Date().toLocaleString()&#125;
-
-Current page contents:
-$&#123;pageContents&#125;`;
-&#125;
-</code></pre>
 <h2 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h2><p>At this point, we have essentially implemented an AI-based browser phone extension that covers the entire phone call workflow.</p>
 <p>This article serves as a Proof of Concept (PoC) and aims to outline the general implementation of the relevant processes. However, the application still has many details requiring improvement in areas such as cost, privacy and security, and performance. For instance, cost control might be achieved through techniques like pre-calculating tokens for segmented requests, and privacy concerns could be addressed by employing local Web LLM-based de-sensitization processing, and so on.</p>
 
