@@ -1,0 +1,639 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+  <title>Renderify - A Runtime Engine for Rendering LLM-Generated UI Instantly in the Browserunadlib&#39;s Notes</title>
+  <script>
+    (function() {
+      try {
+        var themeKey = 'attraction-theme';
+        var savedTheme = localStorage.getItem(themeKey);
+        var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        var theme = savedTheme || (prefersDark ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', theme);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+  <style type="text/css">
+    body, html {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+      font-size: 18px;
+      line-height: 1.8;
+      user-select: none;
+      box-sizing: border-box;
+      touch-action: manipulation;
+    }
+
+    a.title {
+      text-decoration: none;
+    }
+
+    #content-outer {
+      margin: 4% 14%;
+      padding: 4% 8%;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+
+    #content-inner {
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .recent-post-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+    }
+
+    .recent-post-item .title {
+      overflow: hidden;
+      text-overflow:ellipsis;
+      white-space: nowrap;
+    }
+
+    .recent-post-item .time {
+      font-size: 14px;
+      line-height: 32px;
+      min-width: 81px;
+      text-align: right;
+    }
+
+    #post img {
+      max-width: 100%;
+    }
+
+    #post h1.title {
+      text-align: center;
+      font-size: 2em;
+      margin-block-start: 0.67em;
+      margin-block-end: 0.67em;
+      line-height: 1;
+    }
+
+    #post .time {
+      text-align: center;
+      font-size: 14px;
+    }
+
+    #post .content {
+      margin-top: 8%;
+    }
+
+    #post .content blockquote {
+      padding-left: 20px;
+      margin: 0;
+    }
+
+    #post .content .gutter {
+      display: none;
+    }
+
+    code, kbd, pre, samp {
+      font-size: 16px !important;
+    }
+
+    .CodeMirror {
+      height: auto !important;
+      padding: 36px 24px 0;
+      border-radius: 6px;
+    }
+
+    #post .content figure {
+      padding: 0 1em;
+      margin: 0;
+      overflow: auto;
+    }
+
+    #post .content figure table {
+      width: 100%;
+    }
+
+    @media screen and (max-width: 1024px)  {
+      #content-outer {
+        margin: 2% 7%;
+        padding: 2% 4%;
+      }
+
+      .recent-post-item:first-child {
+        margin-top: 16px;
+      }
+    }
+
+    @media screen and (max-width: 480px) {
+      body{
+        -webkit-text-size-adjust: none;
+      }
+
+      #content-outer {
+        margin: 0;
+        padding: 2% 4%;
+        border-radius: 0;
+      }
+
+      .recent-post-item:first-child {
+        margin-top: 32px;
+      }
+
+      .recent-post-item:last-child {
+        border-bottom: none;
+      }
+    }
+  </style>
+  
+    <!-- styles list from theme config.yml -->
+    
+      <link rel="stylesheet" href="/css/theme.css">
+    
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/codemirror.min.css">
+    
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/theme/seti.min.css">
+    
+  
+<meta name="generator" content="Hexo 8.1.1"></head>
+<body class="cm-s-seti">
+
+<div id="content-outer">
+  <div id="content-inner">
+    
+<article id="post">
+  <h1 class="title">Renderify - A Runtime Engine for Rendering LLM-Generated UI Instantly in the Browser</h1>
+  <p class="time">2026-02-16</span>
+  <div class="content">
+      <p>Repo: <a href="https://github.com/webllm/renderify">github.com&#x2F;webllm&#x2F;renderify</a></p>
+<h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>As large language models (LLMs) advance rapidly, AI can now generate structurally complete and logically sound UI code. Yet a key engineering question remains open: <strong>how do you safely and efficiently render LLM-generated UI directly in the browser — without any backend compilation or deployment pipeline?</strong></p>
+<p>Existing approaches each have limitations: v0&#x2F;Bolt.new rely on a full Next.js compilation backend; Streamlit&#x2F;Gradio are Python-based and server-rendered; Anthropic Artifacts is closed-source and non-embeddable; JSON Schema renderers can only express a predefined component set; Sandpack&#x2F;WebContainers are powerful but heavyweight.</p>
+<p><strong>Renderify</strong> was built to fill this gap. It is a runtime-first dynamic rendering engine that transpiles, sandboxes, and renders LLM-generated JSX&#x2F;TSX (or structured JSON plans) directly in the browser as interactive UI — with zero build steps, zero server-side compilation, and zero deployment pipeline.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">LLM Output (JSX/TSX or Structured Plan)</span><br><span class="line">  → Code Generator (parse + normalize)</span><br><span class="line">    → Security Policy Check (intercept before execution)</span><br><span class="line">      → Runtime Execution (Babel transpilation + JSPM module resolution)</span><br><span class="line">        → Interactive UI rendered in the browser</span><br></pre></td></tr></table></figure>
+
+<h2 id="Industry-Landscape-as-of-2026-02-16"><a href="#Industry-Landscape-as-of-2026-02-16" class="headerlink" title="Industry Landscape (as of 2026-02-16)"></a>Industry Landscape (as of 2026-02-16)</h2><p>Before discussing Renderify’s differentiation, it helps to establish a common framework. The diagram below breaks the “LLM → UI” path into six stages:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">User Intent</span><br><span class="line">  -&gt; [A] LLM generates code / description</span><br><span class="line">    -&gt; [B] Code parsing / transformation / orchestration</span><br><span class="line">      -&gt; [C] Security checks + sandboxing</span><br><span class="line">        -&gt; [D] Browser module resolution (bare import -&gt; URL)</span><br><span class="line">          -&gt; [E] Runtime execution + DOM rendering</span><br><span class="line">            -&gt; [F] State management + interaction</span><br></pre></td></tr></table></figure>
+
+<p>Definitions:</p>
+<ul>
+<li><strong>Open Source</strong>: Whether the core SDK&#x2F;runtime has public source code (the platform service itself may be closed-source).</li>
+<li><strong>Embeddable</strong>: Whether it can be integrated as a capability into your own application, rather than used only within the vendor’s hosted product.</li>
+<li><strong>Stages Covered</strong>: Represents the typical primary path, not the full capability boundary.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Solution</th>
+<th>Stages Covered (typical)</th>
+<th>Core Path</th>
+<th>Open Source</th>
+<th>Embeddable</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>v0 (Vercel)</td>
+<td>A→E (backend build path)</td>
+<td>LLM → Next.js compile&#x2F;deploy</td>
+<td>Platform closed-source, SDK open-source</td>
+<td>✅ (Platform API&#x2F;SDK)</td>
+</tr>
+<tr>
+<td>Bolt.new (StackBlitz)</td>
+<td>A→E (WebContainers path)</td>
+<td>LLM → WebContainers → full Node.js</td>
+<td>Partial (frontend open-source, WebContainers engine closed-source)</td>
+<td>Limited (primarily a product)</td>
+</tr>
+<tr>
+<td>Anthropic Artifacts</td>
+<td>A→E (private sandbox)</td>
+<td>LLM → private render sandbox</td>
+<td>❌</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>Vercel AI SDK</td>
+<td>A + E (+ experimental RSC)</td>
+<td>LLM orchestration → framework UI</td>
+<td>✅</td>
+<td>✅ (multiple frameworks)</td>
+</tr>
+<tr>
+<td>AI.JSX</td>
+<td>A→B</td>
+<td>LLM selects&#x2F;orchestrates predefined components</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>llm-ui</td>
+<td>E</td>
+<td>LLM text → Markdown&#x2F;JSON components</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Gen-UI-Lang</td>
+<td>A→B</td>
+<td>LLM → DSL → multi-target output</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Thesys GenUI</td>
+<td>A→E</td>
+<td>LLM → structured DSL&#x2F;API → React render layer</td>
+<td>Partial (SDK&#x2F;examples open-source)</td>
+<td>✅ (primarily React SDK)</td>
+</tr>
+<tr>
+<td>Sandpack</td>
+<td>D→E</td>
+<td>Predefined code → iframe bundler execution</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>WebContainers</td>
+<td>D→E</td>
+<td>In-browser Node.js&#x2F;WASM environment</td>
+<td>Partial</td>
+<td>✅ (provides embed API)</td>
+</tr>
+<tr>
+<td>E2B</td>
+<td>C→E</td>
+<td>Code → remote micro VM execution</td>
+<td>Partial (SDK open-source)</td>
+<td>✅ (typically requires server)</td>
+</tr>
+<tr>
+<td>Renderify</td>
+<td><strong>B→F (core) + A (optional)</strong></td>
+<td>LLM&#x2F;external input → IR → security policy → Babel&#x2F;JSPM → render</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+</tbody></table>
+<p>From this perspective, Renderify’s positioning is more precisely described as:</p>
+<ul>
+<li>A browser-runtime-centric, locally embeddable execution chain covering stages <strong>B→F</strong>.</li>
+<li><strong>Stage A is optional</strong> — you can plug in <code>@renderify/llm</code>, or supply a RuntimePlan from any external system.</li>
+</ul>
+<h2 id="Core-Architecture"><a href="#Core-Architecture" class="headerlink" title="Core Architecture"></a>Core Architecture</h2><h3 id="Monorepo-Package-Topology"><a href="#Monorepo-Package-Topology" class="headerlink" title="Monorepo Package Topology"></a>Monorepo Package Topology</h3><p>Renderify is organized as a monorepo using pnpm workspaces + Turborepo, consisting of seven packages with clearly separated responsibilities:</p>
+<table>
+<thead>
+<tr>
+<th>Package</th>
+<th>Responsibility</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>@renderify/ir</code></td>
+<td>Intermediate representation — RuntimePlan&#x2F;Node&#x2F;State&#x2F;Action type contracts</td>
+</tr>
+<tr>
+<td><code>@renderify/security</code></td>
+<td>Security policy engine — profile configuration, static analysis, module allowlists</td>
+</tr>
+<tr>
+<td><code>@renderify/runtime</code></td>
+<td>Runtime execution engine — transpilation, module loading, sandboxed execution, UI rendering</td>
+</tr>
+<tr>
+<td><code>@renderify/core</code></td>
+<td>Orchestration layer — RenderifyApp full pipeline, streaming, plugin system</td>
+</tr>
+<tr>
+<td><code>@renderify/llm</code></td>
+<td>LLM provider abstraction — OpenAI&#x2F;Anthropic&#x2F;Google&#x2F;Ollama&#x2F;LMStudio</td>
+</tr>
+<tr>
+<td><code>renderify</code></td>
+<td>Top-level SDK facade — the recommended application entry point</td>
+</tr>
+<tr>
+<td><code>@renderify/cli</code></td>
+<td>CLI tooling + browser Playground</td>
+</tr>
+</tbody></table>
+<p>Package dependencies form a clean directed acyclic graph (DAG). <code>@renderify/ir</code> is a leaf node with no internal dependencies; all other packages build upon it layer by layer.</p>
+<h3 id="Five-Stage-Pipeline"><a href="#Five-Stage-Pipeline" class="headerlink" title="Five-Stage Pipeline"></a>Five-Stage Pipeline</h3><p>The rendering pipeline consists of five strictly ordered stages:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐</span><br><span class="line">│  LLM Interpreter │────▶│  Code Generator  │────▶│   RuntimePlan    │</span><br><span class="line">│  (OpenAI/Claude/ │     │  (JSON or TSX    │     │   (IR)           │</span><br><span class="line">│   Gemini)        │     │   extraction)    │     │                  │</span><br><span class="line">└──────────────────┘     └──────────────────┘     └────────┬─────────┘</span><br><span class="line">                                                           │</span><br><span class="line">                                                           ▼</span><br><span class="line">                                                  ┌──────────────────┐</span><br><span class="line">                                                  │  Security Policy │</span><br><span class="line">                                                  │  Checker         │</span><br><span class="line">                                                  └────────┬─────────┘</span><br><span class="line">                                                           │</span><br><span class="line">                                                           ▼</span><br><span class="line">                                                 ┌───────────────────┐</span><br><span class="line">                                                 │  Runtime Manager  │</span><br><span class="line">                                                 │  (execute plan,   │</span><br><span class="line">                                                 │   resolve modules,│</span><br><span class="line">                                                 │   transpile)      │</span><br><span class="line">                                                 └─────────┬─────────┘</span><br><span class="line">                                                           │</span><br><span class="line">                                                           ▼</span><br><span class="line">                                                 ┌───────────────────┐</span><br><span class="line">                                                 │  UI Renderer      │</span><br><span class="line">                                                 │  (HTML generation,│</span><br><span class="line">                                                 │   DOM reconcile)  │</span><br><span class="line">                                                 └───────────────────┘</span><br></pre></td></tr></table></figure>
+
+<h2 id="RuntimePlan-The-Unified-Intermediate-Representation"><a href="#RuntimePlan-The-Unified-Intermediate-Representation" class="headerlink" title="RuntimePlan: The Unified Intermediate Representation"></a>RuntimePlan: The Unified Intermediate Representation</h2><p>RuntimePlan is the core contract of the entire system, serving as a stable interface between all pipeline stages. Regardless of the LLM’s output format, everything is normalized into a RuntimePlan before flowing through security checks, runtime execution, and UI rendering.</p>
+<h3 id="Type-Structure"><a href="#Type-Structure" class="headerlink" title="Type Structure"></a>Type Structure</h3><figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Three node types compose the UI tree</span></span><br><span class="line"><span class="keyword">type</span> <span class="title class_">RuntimeNode</span> =</span><br><span class="line">  | <span class="title class_">RuntimeTextNode</span> <span class="comment">// Text node: &#123; type: &quot;text&quot;, value: string &#125;</span></span><br><span class="line">  | <span class="title class_">RuntimeElementNode</span> <span class="comment">// Element node: &#123; type: &quot;element&quot;, tag: string, props?, children? &#125;</span></span><br><span class="line">  | <span class="title class_">RuntimeComponentNode</span>; <span class="comment">// Component node: &#123; type: &quot;component&quot;, module: string, props?, children? &#125;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Complete RuntimePlan structure</span></span><br><span class="line"><span class="keyword">interface</span> <span class="title class_">RuntimePlan</span> &#123;</span><br><span class="line">  <span class="attr">specVersion</span>?: <span class="string">&quot;runtime-plan/v1&quot;</span>;</span><br><span class="line">  <span class="attr">id</span>: <span class="built_in">string</span>;</span><br><span class="line">  <span class="attr">version</span>: <span class="built_in">number</span>;</span><br><span class="line">  <span class="attr">root</span>: <span class="title class_">RuntimeNode</span>; <span class="comment">// Declarative UI tree (required)</span></span><br><span class="line">  <span class="attr">source</span>?: <span class="title class_">RuntimeSourceModule</span>; <span class="comment">// JSX/TSX source code module</span></span><br><span class="line">  <span class="attr">imports</span>?: <span class="built_in">string</span>[]; <span class="comment">// npm dependency declarations</span></span><br><span class="line">  <span class="attr">state</span>?: <span class="title class_">RuntimeStateModel</span>; <span class="comment">// State model</span></span><br><span class="line">  <span class="attr">capabilities</span>?: <span class="title class_">RuntimeCapabilities</span>; <span class="comment">// Capability declarations</span></span><br><span class="line">  <span class="attr">moduleManifest</span>?: <span class="title class_">RuntimeModuleManifest</span>; <span class="comment">// Module resolution manifest</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Dual-Input-Paths"><a href="#Dual-Input-Paths" class="headerlink" title="Dual Input Paths"></a>Dual Input Paths</h3><p>Renderify supports two fundamentally different input formats, both of which converge at the same security check and execution pipeline:</p>
+<p><strong>Path A: Structured RuntimePlan JSON</strong></p>
+<p>The LLM generates a structured RuntimePlan directly via JSON Schema constraints. This path offers maximum control and deterministic behavior, making it ideal for production systems.</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;specVersion&quot;</span><span class="punctuation">:</span> <span class="string">&quot;runtime-plan/v1&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;id&quot;</span><span class="punctuation">:</span> <span class="string">&quot;dashboard-v1&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;version&quot;</span><span class="punctuation">:</span> <span class="number">1</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;root&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;element&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;tag&quot;</span><span class="punctuation">:</span> <span class="string">&quot;div&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;children&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">&#123;</span> <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;text&quot;</span><span class="punctuation">,</span> <span class="attr">&quot;value&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Hello World&quot;</span> <span class="punctuation">&#125;</span><span class="punctuation">]</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;capabilities&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span> <span class="attr">&quot;domWrite&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span> <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>Path B: TSX&#x2F;JSX Source Code</strong></p>
+<p>The LLM generates free-form text containing code blocks. The code generation stage extracts the source code and wraps it as a RuntimePlan with a <code>source</code> field; the runtime then transpiles and executes it.</p>
+<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; useState &#125; <span class="keyword">from</span> <span class="string">&quot;preact/hooks&quot;</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; <span class="title class_">LineChart</span>, <span class="title class_">Line</span> &#125; <span class="keyword">from</span> <span class="string">&quot;recharts&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> <span class="keyword">function</span> <span class="title function_">Dashboard</span>(<span class="params"></span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> [metric, setMetric] = <span class="title function_">useState</span>(<span class="string">&quot;revenue&quot;</span>);</span><br><span class="line">  <span class="keyword">return</span> <span class="language-xml"><span class="tag">&lt;<span class="name">div</span>&gt;</span>...<span class="tag">&lt;/<span class="name">div</span>&gt;</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>This dual-path design maximizes flexibility — structured JSON suits scenarios that demand precise control, while TSX&#x2F;JSX code blocks feel more natural for LLMs and can express richer interactive logic.</p>
+<h2 id="Security-Defense-in-Depth"><a href="#Security-Defense-in-Depth" class="headerlink" title="Security: Defense in Depth"></a>Security: Defense in Depth</h2><p>When LLMs generate code, security is paramount. An LLM may produce <code>&lt;script&gt;</code> tags, <code>eval()</code> calls, or unsafe network requests. Renderify employs multiple independent defense layers, enforcing strict security policies before any code executes.</p>
+<h3 id="Three-Security-Profiles"><a href="#Three-Security-Profiles" class="headerlink" title="Three Security Profiles"></a>Three Security Profiles</h3><table>
+<thead>
+<tr>
+<th>Policy</th>
+<th>Strict</th>
+<th>Balanced (default)</th>
+<th>Relaxed</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Max tree depth</td>
+<td>8</td>
+<td>12</td>
+<td>24</td>
+</tr>
+<tr>
+<td>Max node count</td>
+<td>250</td>
+<td>500</td>
+<td>2,000</td>
+</tr>
+<tr>
+<td>Max source size</td>
+<td>20KB</td>
+<td>80KB</td>
+<td>200KB</td>
+</tr>
+<tr>
+<td>Max imports</td>
+<td>80</td>
+<td>200</td>
+<td>1,000</td>
+</tr>
+<tr>
+<td>Max execution time</td>
+<td>5s</td>
+<td>15s</td>
+<td>60s</td>
+</tr>
+<tr>
+<td>Manifest required</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Module integrity</td>
+<td>Required</td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Dynamic imports</td>
+<td>Blocked</td>
+<td>Blocked</td>
+<td>Allowed</td>
+</tr>
+</tbody></table>
+<h3 id="Seven-Defense-Layers"><a href="#Seven-Defense-Layers" class="headerlink" title="Seven Defense Layers"></a>Seven Defense Layers</h3><ol>
+<li><strong>Static pattern analysis</strong>: Regex-based detection of dangerous source patterns (<code>eval(</code>, <code>new Function(</code>, <code>fetch(</code>, <code>document.cookie</code>, <code>localStorage</code>, <code>child_process</code>, etc.), plus path-traversal detection on module specifiers (including encoded variants).</li>
+<li><strong>Structural limits</strong>: Tree depth, node count, source byte size.</li>
+<li><strong>Tag blocklist</strong>: Blocks <code>script</code>, <code>iframe</code>, <code>object</code>, <code>embed</code>, and other dangerous tags.</li>
+<li><strong>Module allowlist</strong>: Only pre-approved modules may be imported.</li>
+<li><strong>Manifest integrity</strong>: In strict mode, all imports must have exact URL mappings.</li>
+<li><strong>Execution budgets</strong>: Wall-clock timeouts, import count limits, and component invocation limits, enforced via <code>Promise.race()</code>.</li>
+<li><strong>Sandbox isolation</strong>: Three sandbox modes — Worker&#x2F;iframe&#x2F;ShadowRealm — with automatic fallback chains.</li>
+</ol>
+<p>The overall strategy is <strong>fail-closed by default</strong>: tags, modules, hosts, and execution profiles not explicitly permitted by the policy are rejected. In strict&#x2F;balanced mode, uncovered bare specifiers are also rejected. The <code>relaxed</code> profile selectively loosens these constraints.</p>
+<h2 id="Browser-ESM-Module-Graph-Materialization"><a href="#Browser-ESM-Module-Graph-Materialization" class="headerlink" title="Browser ESM Module Graph Materialization"></a>Browser ESM Module Graph Materialization</h2><p>A key engineering capability of Renderify is how it resolves and loads npm packages entirely in the browser — without any server-side bundler.</p>
+<h3 id="Background"><a href="#Background" class="headerlink" title="Background"></a>Background</h3><p>Browsers natively support ES Modules, but with one critical limitation: <strong>bare specifiers are not supported</strong>. You cannot directly <code>import { format } from &quot;date-fns&quot;</code> in the browser. Traditional solutions require bundlers like webpack or Vite to resolve these specifiers on the server, which contradicts Renderify’s zero-build-step design goal.</p>
+<h3 id="Solution-The-fetch-→-rewrite-→-blob-URL-Pipeline"><a href="#Solution-The-fetch-→-rewrite-→-blob-URL-Pipeline" class="headerlink" title="Solution: The fetch → rewrite → blob URL Pipeline"></a>Solution: The fetch → rewrite → blob URL Pipeline</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Source code</span><br><span class="line">  → es-module-lexer extracts import declarations</span><br><span class="line">    → JSPM CDN resolves bare specifiers</span><br><span class="line">      → Recursively materialize child dependency imports</span><br><span class="line">        → Rewrite import statements to resolved URLs</span><br><span class="line">          → Create blob: URL</span><br><span class="line">            → dynamic import() to load</span><br></pre></td></tr></table></figure>
+
+<p>The detailed flow:</p>
+<ol>
+<li><strong>Lexical extraction</strong>: Use <code>es-module-lexer</code> to extract all import declarations from the source code.</li>
+<li><strong>Specifier resolution</strong>: Resolve bare specifiers (e.g., <code>recharts</code>) to exact CDN URLs via the JSPM CDN.</li>
+<li><strong>Recursive materialization</strong>: Fetch remote module source, parse its child imports, and recursively repeat the same process.</li>
+<li><strong>Rewriting</strong>: Replace all import specifiers with materialized blob&#x2F;data URLs.</li>
+<li><strong>Packaging</strong>: Create a blob URL from the rewritten source.</li>
+<li><strong>Loading</strong>: Load the blob URL via <code>dynamic import()</code>.</li>
+</ol>
+<h3 id="Asset-Proxy-Modules"><a href="#Asset-Proxy-Modules" class="headerlink" title="Asset Proxy Modules"></a>Asset Proxy Modules</h3><p>For non-JavaScript assets, Renderify handles them transparently through proxy modules:</p>
+<ul>
+<li><strong>CSS imports</strong>: Converted to <code>&lt;style&gt;</code> injection proxy modules (deduplicated by FNV-1a hash — created on first encounter, reused on subsequent ones).</li>
+<li><strong>JSON imports</strong>: Wrapped as <code>export default &lt;parsed-json&gt;</code> ESM modules.</li>
+<li><strong>Binary assets</strong>: Converted to proxy modules that export the CDN URL.</li>
+</ul>
+<h3 id="Auto-Pin-Latest-Strategy"><a href="#Auto-Pin-Latest-Strategy" class="headerlink" title="Auto-Pin-Latest Strategy"></a>Auto-Pin-Latest Strategy</h3><p><code>renderPlanInBrowser</code> enables auto-pin-latest mode by default:</p>
+<ol>
+<li>Developers use bare imports in source code (e.g., <code>import { format } from &quot;date-fns/format&quot;</code>).</li>
+<li>On first run, Renderify resolves the bare specifier to an exact versioned URL via JSPM.</li>
+<li>The resolution result is immediately injected into the <code>moduleManifest</code>; subsequent executions use the pinned version.</li>
+</ol>
+<p>For production, use <code>manifest-only</code> mode (<code>autoPinLatestModuleManifest: false</code>) to ensure fully pre-pinned, auditable dependency mappings.</p>
+<h2 id="React-Ecosystem-Compatibility-Bridge"><a href="#React-Ecosystem-Compatibility-Bridge" class="headerlink" title="React Ecosystem Compatibility Bridge"></a>React Ecosystem Compatibility Bridge</h2><p>LLM-generated code typically uses the React API — it is the most common frontend framework in model training data.</p>
+<p>Renderify transparently redirects common React imports to the Preact compat layer via built-in compatibility mappings (Preact is approximately 3–4KB gzipped, significantly smaller than the React runtime; exact figures vary by version), reducing runtime overhead and improving cold-start performance:</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> <span class="variable constant_">DEFAULT_JSPM_SPECIFIER_OVERRIDES</span> = &#123;</span><br><span class="line">  <span class="attr">react</span>: <span class="string">&quot;preact/compat&quot;</span>,</span><br><span class="line">  <span class="string">&quot;react-dom&quot;</span>: <span class="string">&quot;preact/compat&quot;</span>,</span><br><span class="line">  <span class="string">&quot;react-dom/client&quot;</span>: <span class="string">&quot;preact/compat&quot;</span>,</span><br><span class="line">  <span class="string">&quot;react/jsx-runtime&quot;</span>: <span class="string">&quot;preact/jsx-runtime&quot;</span>,</span><br><span class="line">  <span class="attr">recharts</span>: <span class="string">&quot;recharts@3.3.0&quot;</span>,</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>This means LLMs can freely generate standard React code, and it will execute on the smaller, faster Preact runtime. React ecosystem libraries such as Recharts and MUI work as expected.</p>
+<h2 id="Streaming-Rendering-Architecture"><a href="#Streaming-Rendering-Architecture" class="headerlink" title="Streaming Rendering Architecture"></a>Streaming Rendering Architecture</h2><p>In Chat UI scenarios, users expect real-time feedback. Renderify’s streaming pipeline delivers progressive preview updates while the LLM is still generating code:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">LLM tokens ──▶ llm-delta chunks ──▶ preview renders ──▶ final render</span><br></pre></td></tr></table></figure>
+
+<ol>
+<li><strong>llm-delta</strong>: Each token from the LLM is emitted as a chunk.</li>
+<li><strong>preview</strong>: At configurable intervals, the accumulated text is parsed and rendered as a preview.</li>
+<li><strong>final</strong>: After LLM completion, the full pipeline executes and emits the final result.</li>
+<li><strong>error</strong>: If any stage fails, an error chunk is emitted before the exception propagates.</li>
+</ol>
+<h3 id="Efficient-Change-Detection"><a href="#Efficient-Change-Detection" class="headerlink" title="Efficient Change Detection"></a>Efficient Change Detection</h3><p>The streaming code generation stage uses FNV-1a 64-bit hashing for efficient change detection. As the LLM continuously outputs tokens, the system computes a hash signature over the accumulated text — only re-parsing and re-rendering when the signature changes. This avoids redundant computation during streaming while maintaining responsive incremental previews.</p>
+<h2 id="Plugin-System"><a href="#Plugin-System" class="headerlink" title="Plugin System"></a>Plugin System</h2><p>The <code>CustomizationEngine</code> provides 10 hook points covering every pipeline stage:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">beforeLLM → [LLM] → afterLLM</span><br><span class="line">  → beforeCodeGen → [CodeGen] → afterCodeGen</span><br><span class="line">    → beforePolicyCheck → [Security] → afterPolicyCheck</span><br><span class="line">      → beforeRuntime → [Runtime] → afterRuntime</span><br><span class="line">        → beforeRender → [UI] → afterRender</span><br></pre></td></tr></table></figure>
+
+<p>Each hook receives the current stage’s payload and can transform it before passing it to the next stage. Multiple plugins execute in registration order. This design lets developers inject custom logic without forking the core — from modifying the LLM prompt to post-processing render output.</p>
+<h2 id="Sandbox-Execution-Model"><a href="#Sandbox-Execution-Model" class="headerlink" title="Sandbox Execution Model"></a>Sandbox Execution Model</h2><p>For scenarios requiring stronger isolation, Renderify offers three browser sandbox modes:</p>
+<table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>Mechanism</th>
+<th>Characteristics</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>sandbox-worker</code></td>
+<td>Web Worker + blob URL + <code>postMessage</code></td>
+<td>Separate-thread execution with timeout and abort support</td>
+</tr>
+<tr>
+<td><code>sandbox-iframe</code></td>
+<td><code>sandbox=&quot;allow-scripts&quot;</code> iframe + MessageChannel</td>
+<td>Isolated document context</td>
+</tr>
+<tr>
+<td><code>sandbox-shadowrealm</code></td>
+<td>ShadowRealm API + blob URL bridge</td>
+<td>Same-thread isolated realm</td>
+</tr>
+</tbody></table>
+<p>The three modes support automatic fallback chains — if the preferred mode is unavailable, execution automatically falls back to the next one. Each mode supports configurable timeouts and fail-closed behavior (fail-closed by default; can be disabled via <code>browserSourceSandboxFailClosed</code> to fall back to non-sandboxed execution on failure).</p>
+<h2 id="DOM-Reconciliation-and-UI-Rendering"><a href="#DOM-Reconciliation-and-UI-Rendering" class="headerlink" title="DOM Reconciliation and UI Rendering"></a>DOM Reconciliation and UI Rendering</h2><p><code>DefaultUIRenderer</code> is not a simple <code>innerHTML</code> replacement — it implements a full DOM reconciliation algorithm:</p>
+<ol>
+<li><strong>Keyed + positional child matching</strong>: Prioritizes key-based matching, then falls back to positional matching.</li>
+<li><strong>Differential attribute updates</strong>: Only updates attributes that have actually changed.</li>
+<li><strong>Text node updates</strong>: Directly modifies <code>textContent</code> rather than replacing the node.</li>
+<li><strong>Interactive state preservation</strong>: Preserves scroll positions during reconciliation and avoids overwriting <code>value</code>&#x2F;<code>checked</code> on focused input elements.</li>
+<li><strong>Event delegation</strong>: Implements event handling via <code>data-renderify-event-*</code> attributes and <code>CustomEvent</code> dispatch.</li>
+<li><strong>XSS protection</strong>: Blocks dangerous tags&#x2F;attributes and sanitizes inline styles (blocking <code>expression()</code>, <code>url()</code>, <code>javascript:</code>, etc.).</li>
+</ol>
+<h2 id="One-Line-Embed-API"><a href="#One-Line-Embed-API" class="headerlink" title="One-Line Embed API"></a>One-Line Embed API</h2><p>Renderify provides a minimal embed API — a single call completes the entire flow from Plan to rendered UI:</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; renderPlanInBrowser &#125; <span class="keyword">from</span> <span class="string">&quot;renderify&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">await</span> <span class="title function_">renderPlanInBrowser</span>(plan, &#123; <span class="attr">target</span>: <span class="string">&quot;#mount&quot;</span> &#125;);</span><br></pre></td></tr></table></figure>
+
+<p>Internally, this call automatically creates all required infrastructure — module loader, security checker, runtime manager, UI renderer — and uses a <code>WeakMap</code>-backed render lock to ensure concurrent renders to the same DOM target are properly serialized.</p>
+<p>A complete 30-second example:</p>
+<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; renderPlanInBrowser &#125; <span class="keyword">from</span> <span class="string">&quot;renderify&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="title function_">renderPlanInBrowser</span>(</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="attr">id</span>: <span class="string">&quot;hello_jsx_runtime&quot;</span>,</span><br><span class="line">    <span class="attr">version</span>: <span class="number">1</span>,</span><br><span class="line">    <span class="attr">root</span>: &#123; <span class="attr">type</span>: <span class="string">&quot;text&quot;</span>, <span class="attr">value</span>: <span class="string">&quot;Loading...&quot;</span> &#125;,</span><br><span class="line">    <span class="attr">source</span>: &#123;</span><br><span class="line">      <span class="attr">language</span>: <span class="string">&quot;tsx&quot;</span>,</span><br><span class="line">      <span class="attr">code</span>: <span class="string">`</span></span><br><span class="line"><span class="string">        import &#123; format &#125; from &quot;date-fns/format&quot;;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">        export default function App() &#123;</span></span><br><span class="line"><span class="string">          return &lt;section&gt;Today: &#123;format(new Date(), &quot;yyyy-MM-dd&quot;)&#125;&lt;/section&gt;;</span></span><br><span class="line"><span class="string">        &#125;</span></span><br><span class="line"><span class="string">      `</span>,</span><br><span class="line">    &#125;,</span><br><span class="line">  &#125;,</span><br><span class="line">  &#123; <span class="attr">target</span>: <span class="string">&quot;#mount&quot;</span> &#125;,</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+
+<p>The code above does three things: (1) executes JSX&#x2F;TSX directly at browser runtime; (2) auto-resolves the <code>date-fns</code> bare import via JSPM; (3) pins the resolved URL into <code>moduleManifest</code> before execution.</p>
+<h2 id="Performance-Optimization-Strategies"><a href="#Performance-Optimization-Strategies" class="headerlink" title="Performance Optimization Strategies"></a>Performance Optimization Strategies</h2><h3 id="Transpilation-Cache"><a href="#Transpilation-Cache" class="headerlink" title="Transpilation Cache"></a>Transpilation Cache</h3><p>The runtime transpiler uses an LRU cache (256 entries) with cache keys composed from <code>language/runtime/filename/code</code>, avoiding redundant transpilation of unchanged source code.</p>
+<h3 id="Request-Deduplication"><a href="#Request-Deduplication" class="headerlink" title="Request Deduplication"></a>Request Deduplication</h3><p>Both <code>JspmModuleLoader</code> and <code>RuntimeSourceModuleLoader</code> implement request deduplication — when multiple components request the same module concurrently, only a single network request is made.</p>
+<h3 id="Multi-CDN-Fault-Tolerance"><a href="#Multi-CDN-Fault-Tolerance" class="headerlink" title="Multi-CDN Fault Tolerance"></a>Multi-CDN Fault Tolerance</h3><p>Module fetching supports multi-CDN fallback using <code>Promise.any</code> for hedged requests. The default source is the JSPM GA CDN, with fallback to esm.sh and other alternative CDNs on failure.</p>
+<h3 id="Budget-Racing"><a href="#Budget-Racing" class="headerlink" title="Budget Racing"></a>Budget Racing</h3><p>Execution budgets constrain async paths via remaining-time calculation + <code>Promise.race()</code>. For synchronously blocking code, sandboxed execution (such as browser sandbox or <code>isolated-vm</code>) is still required to mitigate the risk of main-thread stalls.</p>
+<h3 id="Blob-URL-Cleanup"><a href="#Blob-URL-Cleanup" class="headerlink" title="Blob URL Cleanup"></a>Blob URL Cleanup</h3><p>The runtime manager tracks all created blob URLs and revokes them in bulk during cleanup to prevent memory leaks.</p>
+<h3 id="Tuning-Parameters"><a href="#Tuning-Parameters" class="headerlink" title="Tuning Parameters"></a>Tuning Parameters</h3><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Default</th>
+<th>Impact</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>enableDependencyPreflight</code></td>
+<td><code>true</code></td>
+<td>Better safety and earlier failure signals</td>
+</tr>
+<tr>
+<td><code>remoteFetchTimeoutMs</code></td>
+<td><code>12000</code></td>
+<td>Prevents long hangs</td>
+</tr>
+<tr>
+<td><code>remoteFetchRetries</code></td>
+<td><code>2</code></td>
+<td>Better resilience</td>
+</tr>
+<tr>
+<td><code>browserSourceSandboxMode</code></td>
+<td><code>worker</code> in browser (<code>none</code> outside browser)</td>
+<td>Isolation for untrusted source code</td>
+</tr>
+<tr>
+<td><code>autoPinLatestModuleManifest</code></td>
+<td><code>true</code></td>
+<td>Developer experience for bare imports</td>
+</tr>
+</tbody></table>
+<h2 id="Use-Cases"><a href="#Use-Cases" class="headerlink" title="Use Cases"></a>Use Cases</h2><p>Renderify is well-suited for the following scenarios:</p>
+<ul>
+<li><strong>LLM Chat &#x2F; Agent platforms</strong>: Render dynamic UI from model output — dashboards, forms, cards, data visualizations.</li>
+<li><strong>AI Agent toolchains</strong>: An Agent analyzes user data and dynamically generates interactive dashboards or operation interfaces, rather than just returning text.</li>
+<li><strong>Low-Code &#x2F; No-Code AI backends</strong>: Users describe intent in natural language; the LLM generates a runnable UI component on the fly.</li>
+<li><strong>Dynamic forms and approval workflows</strong>: Generate context-aware forms at runtime, more flexible than JSON Schema renderers.</li>
+<li><strong>Rapid prototyping</strong>: Go from prompt to rendered UI in seconds, not minutes.</li>
+<li><strong>Safe rendering of untrusted UI</strong>: Any application that needs to securely render dynamically generated UI in the browser.</li>
+</ul>
+<h2 id="Getting-Started"><a href="#Getting-Started" class="headerlink" title="Getting Started"></a>Getting Started</h2><h3 id="SDK-Embedding-Recommended"><a href="#SDK-Embedding-Recommended" class="headerlink" title="SDK Embedding (Recommended)"></a>SDK Embedding (Recommended)</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pnpm add renderify</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; renderPlanInBrowser &#125; <span class="keyword">from</span> <span class="string">&quot;renderify&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">await</span> <span class="title function_">renderPlanInBrowser</span>(</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="attr">id</span>: <span class="string">&quot;quickstart&quot;</span>,</span><br><span class="line">    <span class="attr">version</span>: <span class="number">1</span>,</span><br><span class="line">    <span class="attr">root</span>: &#123; <span class="attr">type</span>: <span class="string">&quot;text&quot;</span>, <span class="attr">value</span>: <span class="string">&quot;Loading...&quot;</span> &#125;,</span><br><span class="line">    <span class="attr">source</span>: &#123;</span><br><span class="line">      <span class="attr">language</span>: <span class="string">&quot;tsx&quot;</span>,</span><br><span class="line">      <span class="attr">code</span>: <span class="string">`export default () =&gt; &lt;section&gt;Hello from Renderify&lt;/section&gt;;`</span>,</span><br><span class="line">    &#125;,</span><br><span class="line">  &#125;,</span><br><span class="line">  &#123; <span class="attr">target</span>: <span class="string">&quot;#mount&quot;</span> &#125;,</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+
+<h3 id="CLI-Playground"><a href="#CLI-Playground" class="headerlink" title="CLI Playground"></a>CLI Playground</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Start the browser Playground</span></span><br><span class="line">pnpm playground</span><br><span class="line"></span><br><span class="line"><span class="comment"># Render from a prompt</span></span><br><span class="line">pnpm cli -- run <span class="string">&quot;Build a welcome card&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Output RuntimePlan JSON</span></span><br><span class="line">pnpm cli -- plan <span class="string">&quot;Build a welcome card&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Probe plan compatibility (security policy + runtime preflight)</span></span><br><span class="line">pnpm cli -- probe-plan examples/runtime/recharts-dashboard-plan.json</span><br><span class="line"></span><br><span class="line"><span class="comment"># Configure LLM provider</span></span><br><span class="line">RENDERIFY_LLM_PROVIDER=openai RENDERIFY_LLM_API_KEY=&lt;key&gt; pnpm playground</span><br><span class="line">RENDERIFY_LLM_PROVIDER=anthropic RENDERIFY_LLM_API_KEY=&lt;key&gt; pnpm playground</span><br><span class="line">RENDERIFY_LLM_PROVIDER=google RENDERIFY_LLM_API_KEY=&lt;key&gt; pnpm playground</span><br></pre></td></tr></table></figure>
+
+<h3 id="Renderer-Only-Mode-No-LLM"><a href="#Renderer-Only-Mode-No-LLM" class="headerlink" title="Renderer-Only Mode (No LLM)"></a>Renderer-Only Mode (No LLM)</h3><p>From a capability standpoint, Renderify’s LLM integration is optional. You can supply a RuntimePlan from any source — your backend API, another SDK, or a different model provider.</p>
+<p>Note that the top-level <code>renderify</code> package includes <code>@renderify/llm</code> as a dependency for out-of-the-box convenience. If you want to minimize the runtime entry point, use <code>@renderify/runtime</code> + <code>@renderify/ir</code> directly:</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; renderPlanInBrowser &#125; <span class="keyword">from</span> <span class="string">&quot;@renderify/runtime&quot;</span>;</span><br><span class="line"><span class="keyword">import</span> <span class="keyword">type</span> &#123; <span class="title class_">RuntimePlan</span> &#125; <span class="keyword">from</span> <span class="string">&quot;@renderify/ir&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> <span class="attr">plan</span>: <span class="title class_">RuntimePlan</span> = &#123;</span><br><span class="line">  <span class="attr">specVersion</span>: <span class="string">&quot;runtime-plan/v1&quot;</span>,</span><br><span class="line">  <span class="attr">id</span>: <span class="string">&quot;renderer_only&quot;</span>,</span><br><span class="line">  <span class="attr">version</span>: <span class="number">1</span>,</span><br><span class="line">  <span class="attr">root</span>: &#123;</span><br><span class="line">    <span class="attr">type</span>: <span class="string">&quot;element&quot;</span>,</span><br><span class="line">    <span class="attr">tag</span>: <span class="string">&quot;div&quot;</span>,</span><br><span class="line">    <span class="attr">children</span>: [&#123; <span class="attr">type</span>: <span class="string">&quot;text&quot;</span>, <span class="attr">value</span>: <span class="string">&quot;Hello from BYO plan&quot;</span> &#125;],</span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="attr">capabilities</span>: &#123; <span class="attr">domWrite</span>: <span class="literal">true</span> &#125;,</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">await</span> <span class="title function_">renderPlanInBrowser</span>(plan, &#123; <span class="attr">target</span>: <span class="string">&quot;#mount&quot;</span> &#125;);</span><br></pre></td></tr></table></figure>
+
+<h2 id="Design-Philosophy-and-Technical-Highlights"><a href="#Design-Philosophy-and-Technical-Highlights" class="headerlink" title="Design Philosophy and Technical Highlights"></a>Design Philosophy and Technical Highlights</h2><h3 id="1-IR-as-a-Stable-Contract"><a href="#1-IR-as-a-Stable-Contract" class="headerlink" title="1. IR as a Stable Contract"></a>1. IR as a Stable Contract</h3><p>The RuntimePlan intermediate representation fully decouples LLM output format from execution and rendering. Even outside of Renderify, this IR design provides a reusable schema for any system that needs to describe “LLM-generated interactive UI.”</p>
+<h3 id="2-Reusable-Security-Policy-Framework"><a href="#2-Reusable-Security-Policy-Framework" class="headerlink" title="2. Reusable Security Policy Framework"></a>2. Reusable Security Policy Framework</h3><p>A systematic approach to executing untrusted dynamic code — tag blocklists, module allowlists, execution budgets, source pattern analysis — this policy model can be extracted and applied to any browser-side dynamic code execution scenario.</p>
+<h3 id="3-Browser-ESM-Module-Graph-Materialization"><a href="#3-Browser-ESM-Module-Graph-Materialization" class="headerlink" title="3. Browser ESM Module Graph Materialization"></a>3. Browser ESM Module Graph Materialization</h3><p>The <code>fetch → rewrite imports → blob URL</code> pipeline solves a problem that browser standards have not yet natively addressed — bare specifiers are not usable in browsers. This module loading strategy can be extracted as a standalone utility.</p>
+<h3 id="4-Strategy-over-Convention"><a href="#4-Strategy-over-Convention" class="headerlink" title="4. Strategy over Convention"></a>4. Strategy over Convention</h3><p>Key components throughout the system employ the Strategy pattern — transpilers (Babel&#x2F;esbuild), sandbox modes (Worker&#x2F;iframe&#x2F;ShadowRealm), LLM providers (five built-in implementations), module loaders — all are swappable implementations behind interfaces.</p>
+<h3 id="5-Zero-Configuration-React-Compatibility"><a href="#5-Zero-Configuration-React-Compatibility" class="headerlink" title="5. Zero-Configuration React Compatibility"></a>5. Zero-Configuration React Compatibility</h3><p>LLMs generate standard React code that transparently executes on the Preact compat runtime — no additional configuration or special handling required.</p>
+<h2 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h2><p>Renderify represents an important infrastructure layer in LLM application development — it solves the last-mile problem between “an LLM can generate code” and “users can see and interact with that UI.” Its value stems from a set of composable engineering capabilities:</p>
+<ul>
+<li><strong>Zero-build runtime rendering</strong>: Fully browser-side transpilation and module resolution via Babel Standalone + JSPM CDN.</li>
+<li><strong>Defense-in-depth security</strong>: Seven independent defense layers ensuring LLM-generated untrusted code is executed safely.</li>
+<li><strong>Browser ESM module graph materialization</strong>: The fetch → rewrite → blob URL pipeline, constructing module dependency graphs in the browser.</li>
+<li><strong>Streaming rendering</strong>: Efficient change detection based on FNV-1a hashing, delivering real-time incremental UI previews.</li>
+<li><strong>Minimal API</strong>: A single line of code from RuntimePlan to fully rendered interactive UI.</li>
+</ul>
+<p>Renderify provides a solid technical foundation for building the next generation of AI-driven dynamic UI applications. Whether it’s rich interactive components in chat interfaces, AI Agent-generated data dashboards, or natural-language-driven low-code platforms, Renderify turns LLM UI generation capabilities into tangible, interactive product experiences.</p>
+<p>A note on comparisons: cross-product size and performance claims should be substantiated with benchmarks under fixed versions, fixed scenarios, and fixed network conditions before drawing conclusions.</p>
+
+  </div>
+</article>
+
+  </div>
+</div>
+
+
+  <!-- scripts list from theme config.yml -->
+  
+    <script src="/js/attraction.js"></script>
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/codemirror.min.js"></script>
+  
+  <script>
+    var nodes = Array.from(document.querySelectorAll('pre code'));
+    var render = {};
+    var titleSvg = '<svg style="position: absolute;z-index: 1;margin: 12px 0 0 12px;" xmlns="http://www.w3.org/2000/svg" width="54" height="14" viewBox="0 0 54 14"><g fill="none" fill-rule="evenodd" transform="translate(1 1)"><circle cx="6" cy="6" r="6" fill="#FF5F56" stroke="#E0443E" stroke-width=".5"></circle><circle cx="26" cy="6" r="6" fill="#FFBD2E" stroke="#DEA123" stroke-width=".5"></circle><circle cx="46" cy="6" r="6" fill="#27C93F" stroke="#1AAB29" stroke-width=".5"></circle></g></svg>';
+    nodes.forEach((node, index) => {
+      var lang = node.getAttribute('class');
+      var code = node.innerText;
+      var mode = lang;
+      switch(lang) {
+        case 'jsx':
+          lang = 'javascript';
+          mode = 'text/jsx';
+          break;
+        case 'tsx':
+          lang = 'javascript';
+          mode = 'text/typescript-jsx';
+        case 'typescript':
+          lang = 'javascript';
+          mode = 'text/typescript';
+        default:
+          break;
+      }
+      var config = {
+        value: code,
+        mode,
+        theme: 'seti'
+      };
+      if (!lang) return;
+      var hasExisted = nodes.slice(0, index).find(function(node) { return node.getAttribute('class') === lang; });
+      if (hasExisted) {
+        render[lang].push(function() {
+          node.innerHTML = titleSvg;
+          CodeMirror(node, config);
+        });
+        return;
+      }
+      render[lang] = [];
+      var languagePackge = document.createElement('script');
+      languagePackge.src = `https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/mode/${lang}/${lang}.min.js`;
+      languagePackge.onload = () => {
+        setTimeout(() => {
+          node.innerHTML = titleSvg;
+          CodeMirror(node, config);
+          render[lang].forEach(function(callback) { callback(); })
+        }, 0);
+      }
+      document.body.appendChild(languagePackge);
+    });
+  </script>
+
+</body>
+</html>
