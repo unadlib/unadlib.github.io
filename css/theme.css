@@ -111,3 +111,7 @@ a {
     font-size: 16px;
   }
 }
+
+.code > pre {
+  line-height: 21px;
+}
