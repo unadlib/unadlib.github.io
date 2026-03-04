@@ -1,0 +1,521 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+  <title>React Compiler and Beyond - Capability Boundaries of Compiler-Driven UI Frameworksunadlib&#39;s Notes</title>
+  <script>
+    (function() {
+      try {
+        var themeKey = 'attraction-theme';
+        var savedTheme = localStorage.getItem(themeKey);
+        var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        var theme = savedTheme || (prefersDark ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', theme);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+  <style type="text/css">
+    body, html {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+      font-size: 18px;
+      line-height: 1.8;
+      user-select: none;
+      box-sizing: border-box;
+      touch-action: manipulation;
+    }
+
+    a.title {
+      text-decoration: none;
+    }
+
+    #content-outer {
+      margin: 4% 14%;
+      padding: 4% 8%;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+
+    #content-inner {
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .recent-post-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+    }
+
+    .recent-post-item .title {
+      overflow: hidden;
+      text-overflow:ellipsis;
+      white-space: nowrap;
+    }
+
+    .recent-post-item .time {
+      font-size: 14px;
+      line-height: 32px;
+      min-width: 81px;
+      text-align: right;
+    }
+
+    #post img {
+      max-width: 100%;
+    }
+
+    #post h1.title {
+      text-align: center;
+      font-size: 2em;
+      margin-block-start: 0.67em;
+      margin-block-end: 0.67em;
+      line-height: 1;
+    }
+
+    #post .time {
+      text-align: center;
+      font-size: 14px;
+    }
+
+    #post .content {
+      margin-top: 8%;
+    }
+
+    #post .content blockquote {
+      padding-left: 20px;
+      margin: 0;
+    }
+
+    #post .content .gutter {
+      display: none;
+    }
+
+    code, kbd, pre, samp {
+      font-size: 16px !important;
+    }
+
+    .CodeMirror {
+      height: auto !important;
+      padding: 36px 24px 0;
+      border-radius: 6px;
+    }
+
+    #post .content figure {
+      padding: 0 1em;
+      margin: 0;
+      overflow: auto;
+    }
+
+    #post .content figure table {
+      width: 100%;
+    }
+
+    @media screen and (max-width: 1024px)  {
+      #content-outer {
+        margin: 2% 7%;
+        padding: 2% 4%;
+      }
+
+      .recent-post-item:first-child {
+        margin-top: 16px;
+      }
+    }
+
+    @media screen and (max-width: 480px) {
+      body{
+        -webkit-text-size-adjust: none;
+      }
+
+      #content-outer {
+        margin: 0;
+        padding: 2% 4%;
+        border-radius: 0;
+      }
+
+      .recent-post-item:first-child {
+        margin-top: 32px;
+      }
+
+      .recent-post-item:last-child {
+        border-bottom: none;
+      }
+    }
+  </style>
+  
+    <!-- styles list from theme config.yml -->
+    
+      <link rel="stylesheet" href="/css/theme.css">
+    
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/codemirror.min.css">
+    
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/theme/seti.min.css">
+    
+  
+<meta name="generator" content="Hexo 8.1.1"></head>
+<body class="cm-s-seti">
+
+<div id="content-outer">
+  <div id="content-inner">
+    
+<article id="post">
+  <h1 class="title">React Compiler and Beyond - Capability Boundaries of Compiler-Driven UI Frameworks</h1>
+  <p class="time">2026-03-05</span>
+  <div class="content">
+      <blockquote>
+<p>Bottom line first: React Compiler is a major step forward, but it optimizes React’s expression and render costs within React’s runtime contract.<br>Compiler-first fine-grained frameworks like Fict pursue a different objective: move more update routing to compile time, then execute updates through dependency propagation at runtime.<br>This is not a winner-takes-all debate. It is an engineering trade-off across different objective functions.</p>
+</blockquote>
+<p>Fict Repo: <a href="https://github.com/fictjs/fict">https://github.com/fictjs/fict</a></p>
+<hr>
+<h2 id="0-Scope-and-Rigor"><a href="#0-Scope-and-Rigor" class="headerlink" title="0. Scope and Rigor"></a>0. Scope and Rigor</h2><p>To avoid slogan-level comparisons, this article uses strict boundaries:</p>
+<ol>
+<li>It compares two technical routes:<ul>
+<li><code>React + React Compiler</code> (preserving React semantics)</li>
+<li><code>Compiler-first fine-grained</code> (using Fict as the concrete example)</li>
+</ul>
+</li>
+<li>It separates three layers:<ul>
+<li>Developer experience (mental overhead and ergonomics)</li>
+<li>Performance model (update path and cost structure)</li>
+<li>Semantic constraints (effects, lifecycle, error handling, consistency)</li>
+</ul>
+</li>
+<li>Claims about Fict are grounded in this repository’s implementation and docs, not idealized marketing descriptions.</li>
+</ol>
+<hr>
+<h2 id="1-What-React-Compiler-Actually-Solves"><a href="#1-What-React-Compiler-Actually-Solves" class="headerlink" title="1. What React Compiler Actually Solves"></a>1. What React Compiler Actually Solves</h2><p>React Compiler does not “replace React.” It improves React’s default performance posture by:</p>
+<ol>
+<li>Inferring dependency boundaries so developers write less manual <code>useMemo</code> and <code>useCallback</code>.</li>
+<li>Reusing expressions and JSX subtrees more aggressively.</li>
+<li>Raising performance floor while preserving the React programming model.</li>
+</ol>
+<p>A conceptual sketch:</p>
+<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">ProductList</span>(<span class="params">&#123; products, filter, onSelect &#125;</span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> cache = <span class="title function_">getCompilerCache</span>();</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> filtered = cache.<span class="title function_">memo</span>(<span class="string">&quot;filtered&quot;</span>, [products, filter], <span class="function">() =&gt;</span></span><br><span class="line">    products.<span class="title function_">filter</span>(<span class="function">(<span class="params">p</span>) =&gt;</span> p.<span class="property">category</span> === filter),</span><br><span class="line">  );</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> handleClick = cache.<span class="title function_">memo</span>(</span><br><span class="line">    <span class="string">&quot;handleClick&quot;</span>,</span><br><span class="line">    [onSelect],</span><br><span class="line">    <span class="function">() =&gt;</span> <span class="function">(<span class="params">id</span>) =&gt;</span> <span class="title function_">onSelect</span>(id),</span><br><span class="line">  );</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> cache.<span class="title function_">memo</span>(<span class="string">&quot;listJSX&quot;</span>, [filtered, handleClick], <span class="function">() =&gt;</span> (</span><br><span class="line">    <span class="language-xml"><span class="tag">&lt;<span class="name">ul</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">      &#123;filtered.map((p) =&gt; (</span></span><br><span class="line"><span class="language-xml">        <span class="tag">&lt;<span class="name">ProductItem</span> <span class="attr">key</span>=<span class="string">&#123;p.id&#125;</span> <span class="attr">product</span>=<span class="string">&#123;p&#125;</span> <span class="attr">onClick</span>=<span class="string">&#123;handleClick&#125;</span> /&gt;</span></span></span><br><span class="line"><span class="language-xml">      ))&#125;</span></span><br><span class="line"><span class="language-xml">    <span class="tag">&lt;/<span class="name">ul</span>&gt;</span></span></span><br><span class="line">  ));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Key point: this is stronger automatic memoization inside React semantics, not a replacement of Fiber&#x2F;Hook contracts.</p>
+<hr>
+<h2 id="2-What-React-Compiler-Does-Not-Redefine"><a href="#2-What-React-Compiler-Does-Not-Redefine" class="headerlink" title="2. What React Compiler Does Not Redefine"></a>2. What React Compiler Does Not Redefine</h2><p>A precise statement:</p>
+<ol>
+<li>React Compiler can remove substantial redundant compute and subtree work.</li>
+<li>It does not redefine React into a signal-driven DOM execution engine.</li>
+</ol>
+<p>Why:</p>
+<ol>
+<li>React’s core abstraction is still component-tree scheduling and commit semantics.</li>
+<li>Compiler optimizations must remain inside React boundaries: hook ordering, effect timing, concurrent scheduling, error boundary behavior.</li>
+<li>Therefore it optimizes “how much work React does,” not “what React fundamentally is.”</li>
+</ol>
+<p>Practical implications:</p>
+<ol>
+<li>React updates are not always full-tree reruns due to bailouts and memoized outputs.</li>
+<li>But the dominant scheduling unit remains component&#x2F;subtree semantics, not explicit signal graph nodes.</li>
+<li><code>React.memo</code> with <code>children</code> is not inherently useless:<ul>
+<li>It often fails if children are recreated each render.</li>
+<li>It can work when references are stabilized by caller patterns or compiler transforms.</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2 id="3-What-Fict-Changes-Based-on-Current-Repository"><a href="#3-What-Fict-Changes-Based-on-Current-Repository" class="headerlink" title="3. What Fict Changes (Based on Current Repository)"></a>3. What Fict Changes (Based on Current Repository)</h2><p>Fict’s route is compiler-first fine-grained reactivity: compile dependency relationships, then propagate updates through runtime graph nodes.</p>
+<p>This is visible in the current codebase:</p>
+<ol>
+<li>Macro contract:<ul>
+<li><code>$state</code> and <code>$effect</code> are compile-time macros and throw if executed at runtime (<code>packages/fict/src/index.ts</code>).</li>
+</ul>
+</li>
+<li>Compile-time placement constraints:<ul>
+<li>Macro placement is validated; loops&#x2F;conditionals&#x2F;nested contexts are restricted according to compiler rules (<code>packages/compiler/src/index.ts</code>, <code>docs/compiler-spec.md</code>).</li>
+</ul>
+</li>
+<li>IR and lowering pipeline:<ul>
+<li>HIR build, optimization, and lowering stages exist in <code>packages/compiler/src/ir/*</code>.</li>
+</ul>
+</li>
+<li>Runtime graph model:<ul>
+<li>Signal&#x2F;computed&#x2F;effect propagation is implemented in <code>packages/runtime/src/signal.ts</code>.</li>
+</ul>
+</li>
+<li>Local list reconciliation still exists:<ul>
+<li>Fict avoids whole-tree VDOM diffing, but keyed local reconciliation is implemented (<code>packages/runtime/src/reconcile.ts</code>, <code>packages/runtime/src/list-helpers.ts</code>).</li>
+</ul>
+</li>
+<li>Fail-closed guarantee mode is explicit:<ul>
+<li><code>FICT_STRICT_GUARANTEE=1</code> enforces strict diagnostics in CI (<code>docs/reactivity-guarantee-matrix.md</code>).</li>
+</ul>
+</li>
+</ol>
+<p>This corrects two frequent misconceptions:</p>
+<ol>
+<li>“Fict has no reconciliation at all.”<br>Not true. It avoids whole-tree VDOM diffing; it still reconciles local keyed list paths.</li>
+<li>“Fict is only syntax sugar over existing runtimes.”<br>Not true. It has a dedicated compile-time dataflow and lowering pipeline with a distinct runtime execution model.</li>
+</ol>
+<hr>
+<h2 id="4-Cost-Model-Same-Interaction-Different-Work-Units"><a href="#4-Cost-Model-Same-Interaction-Different-Work-Units" class="headerlink" title="4. Cost Model: Same Interaction, Different Work Units"></a>4. Cost Model: Same Interaction, Different Work Units</h2><p>Use a searchable list as an example:</p>
+<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// React + Compiler (conceptual)</span></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">SearchList</span>(<span class="params">&#123; items &#125;</span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> [query, setQuery] = <span class="title function_">useState</span>(<span class="string">&quot;&quot;</span>);</span><br><span class="line">  <span class="keyword">const</span> [sortBy, setSortBy] = <span class="title function_">useState</span>(<span class="string">&quot;name&quot;</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> filtered = items.<span class="title function_">filter</span>(<span class="function">(<span class="params">item</span>) =&gt;</span></span><br><span class="line">    item.<span class="property">name</span>.<span class="title function_">toLowerCase</span>().<span class="title function_">includes</span>(query.<span class="title function_">toLowerCase</span>()),</span><br><span class="line">  );</span><br><span class="line">  <span class="keyword">const</span> sorted = [...filtered].<span class="title function_">sort</span>(<span class="function">(<span class="params">a, b</span>) =&gt;</span></span><br><span class="line">    a[sortBy].<span class="title function_">localeCompare</span>(b[sortBy]),</span><br><span class="line">  );</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> (</span><br><span class="line">    <span class="language-xml"><span class="tag">&lt;<span class="name">div</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">      <span class="tag">&lt;<span class="name">input</span> <span class="attr">value</span>=<span class="string">&#123;query&#125;</span> <span class="attr">onChange</span>=<span class="string">&#123;(e)</span> =&gt;</span> setQuery(e.target.value)&#125; /&gt;</span></span><br><span class="line"><span class="language-xml">      <span class="tag">&lt;<span class="name">select</span> <span class="attr">value</span>=<span class="string">&#123;sortBy&#125;</span> <span class="attr">onChange</span>=<span class="string">&#123;(e)</span> =&gt;</span> setSortBy(e.target.value)&#125;&gt;</span></span><br><span class="line"><span class="language-xml">        <span class="tag">&lt;<span class="name">option</span> <span class="attr">value</span>=<span class="string">&quot;name&quot;</span>&gt;</span>Name<span class="tag">&lt;/<span class="name">option</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">        <span class="tag">&lt;<span class="name">option</span> <span class="attr">value</span>=<span class="string">&quot;date&quot;</span>&gt;</span>Date<span class="tag">&lt;/<span class="name">option</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">      <span class="tag">&lt;/<span class="name">select</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">      <span class="tag">&lt;<span class="name">p</span>&gt;</span>&#123;sorted.length&#125; results<span class="tag">&lt;/<span class="name">p</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">      <span class="tag">&lt;<span class="name">ul</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">        &#123;sorted.map((item) =&gt; (</span></span><br><span class="line"><span class="language-xml">          <span class="tag">&lt;<span class="name">li</span> <span class="attr">key</span>=<span class="string">&#123;item.id&#125;</span>&gt;</span>&#123;item.name&#125;<span class="tag">&lt;/<span class="name">li</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">        ))&#125;</span></span><br><span class="line"><span class="language-xml">      <span class="tag">&lt;/<span class="name">ul</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">    <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span></span><br><span class="line">  );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Fict (conceptual)</span></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">SearchList</span>(<span class="params">&#123; items &#125;</span>) &#123;</span><br><span class="line">  <span class="keyword">let</span> query = $state(<span class="string">&quot;&quot;</span>);</span><br><span class="line">  <span class="keyword">let</span> sortBy = $state(<span class="string">&quot;name&quot;</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> filtered = items.<span class="title function_">filter</span>(<span class="function">(<span class="params">item</span>) =&gt;</span></span><br><span class="line">    item.<span class="property">name</span>.<span class="title function_">toLowerCase</span>().<span class="title function_">includes</span>(query.<span class="title function_">toLowerCase</span>()),</span><br><span class="line">  );</span><br><span class="line">  <span class="keyword">const</span> sorted = [...filtered].<span class="title function_">sort</span>(<span class="function">(<span class="params">a, b</span>) =&gt;</span></span><br><span class="line">    a[sortBy].<span class="title function_">localeCompare</span>(b[sortBy]),</span><br><span class="line">  );</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> (</span><br><span class="line">    <span class="language-xml"><span class="tag">&lt;<span class="name">div</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">      <span class="tag">&lt;<span class="name">input</span> <span class="attr">value</span>=<span class="string">&#123;query&#125;</span> <span class="attr">onInput</span>=<span class="string">&#123;(e)</span> =&gt;</span> (query = e.target.value)&#125; /&gt;</span></span><br><span class="line"><span class="language-xml">      <span class="tag">&lt;<span class="name">select</span> <span class="attr">value</span>=<span class="string">&#123;sortBy&#125;</span> <span class="attr">onChange</span>=<span class="string">&#123;(e)</span> =&gt;</span> (sortBy = e.target.value)&#125;&gt;</span></span><br><span class="line"><span class="language-xml">        <span class="tag">&lt;<span class="name">option</span> <span class="attr">value</span>=<span class="string">&quot;name&quot;</span>&gt;</span>Name<span class="tag">&lt;/<span class="name">option</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">        <span class="tag">&lt;<span class="name">option</span> <span class="attr">value</span>=<span class="string">&quot;date&quot;</span>&gt;</span>Date<span class="tag">&lt;/<span class="name">option</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">      <span class="tag">&lt;/<span class="name">select</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">      <span class="tag">&lt;<span class="name">p</span>&gt;</span>&#123;sorted.length&#125; results<span class="tag">&lt;/<span class="name">p</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">      <span class="tag">&lt;<span class="name">ul</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">        &#123;sorted.map((item) =&gt; (</span></span><br><span class="line"><span class="language-xml">          <span class="tag">&lt;<span class="name">li</span> <span class="attr">key</span>=<span class="string">&#123;item.id&#125;</span>&gt;</span>&#123;item.name&#125;<span class="tag">&lt;/<span class="name">li</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">        ))&#125;</span></span><br><span class="line"><span class="language-xml">      <span class="tag">&lt;/<span class="name">ul</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">    <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span></span><br><span class="line">  );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Conceptual complexity comparison:</p>
+<ol>
+<li>React path:<ul>
+<li><code>O(rendered-subtree + diff-subtree + patch)</code>, reduced by compiler&#x2F;bailouts.</li>
+</ul>
+</li>
+<li>Fict path:<ul>
+<li><code>O(changed-sources + affected-computed/effects + affected-bindings + local-list-reconcile)</code>.</li>
+</ul>
+</li>
+</ol>
+<p>The correct conclusion is not “always faster&#x2F;slower”:</p>
+<ol>
+<li>Fine-grained tends to win when changes are local, dependency graph is sparse, and list size is large.</li>
+<li>React Compiler is often sufficient when bottlenecks are I&#x2F;O dominated or UI compute is moderate.</li>
+</ol>
+<hr>
+<h2 id="5-Semantic-Trade-offs-The-Part-People-Skip"><a href="#5-Semantic-Trade-offs-The-Part-People-Skip" class="headerlink" title="5. Semantic Trade-offs (The Part People Skip)"></a>5. Semantic Trade-offs (The Part People Skip)</h2><p>Performance-only comparisons are incomplete. Semantic behavior determines production risk.</p>
+<h3 id="5-1-Effects-Are-Not-Mechanical-One-to-One-Replacements"><a href="#5-1-Effects-Are-Not-Mechanical-One-to-One-Replacements" class="headerlink" title="5.1 Effects Are Not Mechanical One-to-One Replacements"></a>5.1 Effects Are Not Mechanical One-to-One Replacements</h3><p><code>useEffect</code> and <code>$effect</code> are not drop-in equivalents:</p>
+<ol>
+<li>Fict <code>$effect</code> is compiler-constrained and analyzed in a macro-based model.</li>
+<li>Dependency collection semantics differ from React dependency-array workflows.</li>
+<li>Less manual dependency bookkeeping reduces a class of developer mistakes, but correctness partially shifts toward compiler analyzability and guarantee coverage.</li>
+</ol>
+<h3 id="5-2-Control-Flow-and-Dynamic-Shapes-Need-Explicit-Validation"><a href="#5-2-Control-Flow-and-Dynamic-Shapes-Need-Explicit-Validation" class="headerlink" title="5.2 Control Flow and Dynamic Shapes Need Explicit Validation"></a>5.2 Control Flow and Dynamic Shapes Need Explicit Validation</h3><p>High-risk migration areas:</p>
+<ol>
+<li>Effect cleanup timing under control-flow branch switching.</li>
+<li>Closure reads in event chains and async callbacks.</li>
+<li>Cancellation&#x2F;race handling in async flows.</li>
+<li>List identity behavior under unstable key quality.</li>
+</ol>
+<h3 id="5-3-“No-Free-Ecosystem-Inheritance”"><a href="#5-3-“No-Free-Ecosystem-Inheritance”" class="headerlink" title="5.3 “No Free Ecosystem Inheritance”"></a>5.3 “No Free Ecosystem Inheritance”</h3><p>React’s long-lived advantages are structural:</p>
+<ol>
+<li>Ecosystem breadth and battle-tested framework integrations.</li>
+<li>Mature concurrent scheduling and tooling culture.</li>
+<li>Broad operational knowledge in teams.</li>
+</ol>
+<p>Compiler-first routes must independently harden:</p>
+<ol>
+<li>DevTools observability</li>
+<li>SSR&#x2F;Hydration&#x2F;Resume stability</li>
+<li>Error boundary and suspense consistency</li>
+<li>Third-party integration contracts</li>
+</ol>
+<hr>
+<h2 id="6-Side-by-Side-Decision-Matrix"><a href="#6-Side-by-Side-Decision-Matrix" class="headerlink" title="6. Side-by-Side Decision Matrix"></a>6. Side-by-Side Decision Matrix</h2><table>
+<thead>
+<tr>
+<th>Dimension</th>
+<th>React + Compiler</th>
+<th>Fict &#x2F; Compiler-First Fine-Grained</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Primary objective</td>
+<td>Reduce React performance tuning overhead</td>
+<td>Lower runtime update upper bound</td>
+</tr>
+<tr>
+<td>Core mechanism</td>
+<td>Automatic memoization + bailouts</td>
+<td>Compile-time dependency graph + runtime propagation</td>
+</tr>
+<tr>
+<td>Dominant update unit</td>
+<td>Component&#x2F;subtree scheduling</td>
+<td>Source&#x2F;computed&#x2F;binding-level propagation</td>
+</tr>
+<tr>
+<td>List behavior</td>
+<td>Reconciliation in React tree semantics</td>
+<td>Local keyed reconciliation</td>
+</tr>
+<tr>
+<td>Migration cost</td>
+<td>Low to medium (keep React mental model)</td>
+<td>Medium to high (compiler constraints + semantic verification)</td>
+</tr>
+<tr>
+<td>Main risk</td>
+<td>Performance predictability tied to component structure</td>
+<td>Semantic edge cases and compiler coverage boundaries</td>
+</tr>
+</tbody></table>
+<p>Important framing: this is objective-function selection, not a “modernity contest.”</p>
+<hr>
+<h2 id="7-What-a-Defensible-Technical-Article-Must-Include"><a href="#7-What-a-Defensible-Technical-Article-Must-Include" class="headerlink" title="7. What a Defensible Technical Article Must Include"></a>7. What a Defensible Technical Article Must Include</h2><p>If the goal is engineering evidence rather than opinion, include at least:</p>
+<ol>
+<li>Public benchmark method:<ul>
+<li>Dataset, warm&#x2F;cold separation, hardware&#x2F;software baselines.</li>
+</ul>
+</li>
+<li>Metric decomposition:<ul>
+<li>Render&#x2F;commit timing, DOM mutations, GC, memory peak.</li>
+</ul>
+</li>
+<li>Counterexample sets:<ul>
+<li>Cases where React is better; cases where fine-grained is better.</li>
+</ul>
+</li>
+<li>Semantic equivalence tests:<ul>
+<li>Cleanup, error boundaries, async races, fallback paths.</li>
+</ul>
+</li>
+<li>Migration cost quantification:<ul>
+<li>Changed LOC, defect categories, regression count, fix lead time.</li>
+</ul>
+</li>
+</ol>
+<p>Without this, conclusions remain high-quality perspective, not reproducible engineering claims.</p>
+<hr>
+<h2 id="8-Reproducible-Evaluation-Appendix"><a href="#8-Reproducible-Evaluation-Appendix" class="headerlink" title="8. Reproducible Evaluation Appendix"></a>8. Reproducible Evaluation Appendix</h2><p>Use repository-native commands only.</p>
+<ol>
+<li>Environment baseline:<ul>
+<li>Node <code>&gt;=20</code></li>
+<li>pnpm <code>&gt;=9</code></li>
+<li>OS&#x2F;CPU&#x2F;RAM</li>
+<li>Browser version (for benchmark runs)</li>
+</ul>
+</li>
+<li>Repository health:</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">pnpm install</span><br><span class="line">pnpm build</span><br><span class="line">pnpm <span class="built_in">test</span></span><br><span class="line">pnpm typecheck</span><br><span class="line">pnpm lint</span><br></pre></td></tr></table></figure>
+
+<ol start="3">
+<li>Strict guarantee gate:</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">FICT_STRICT_GUARANTEE=1 pnpm build</span><br></pre></td></tr></table></figure>
+
+<ol start="4">
+<li>Framework benchmark flow:</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">pnpm perf:data</span><br><span class="line">pnpm perf:results</span><br></pre></td></tr></table></figure>
+
+<ol start="5">
+<li>Runtime stress:</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">pnpm stress:runtime</span><br><span class="line">pnpm stress:runtime:long</span><br></pre></td></tr></table></figure>
+
+<ol start="6">
+<li>Compiler optimization regression guard:</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pnpm bench:optimizer:guard</span><br></pre></td></tr></table></figure>
+
+<ol start="7">
+<li>Reporting minimums:<ul>
+<li>Scenario and data scale (<code>N</code>, update rate, list size)</li>
+<li>Median + IQR from at least 5 runs</li>
+<li>Error logs and failure sample links</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2 id="9-Migration-Readiness-Checklist"><a href="#9-Migration-Readiness-Checklist" class="headerlink" title="9. Migration Readiness Checklist"></a>9. Migration Readiness Checklist</h2><p>Before adopting a compiler-first route, verify:</p>
+<ol>
+<li>You are solving a front-end CPU update bottleneck, not primarily network&#x2F;back-end latency.</li>
+<li>You can run strict guarantee mode in CI (<code>FICT_STRICT_GUARANTEE=1</code>).</li>
+<li>You have semantic regression coverage for effects, async races, and error boundaries.</li>
+<li>Team conventions can absorb macro constraints and compile-time diagnostics.</li>
+<li>You have a rollback strategy for fallback-path regressions.</li>
+</ol>
+<p>When to prefer React + Compiler first:</p>
+<ol>
+<li>Large existing React codebase with narrow migration window.</li>
+<li>Heavy dependency on mainstream React ecosystem&#x2F;runtime assumptions.</li>
+<li>Performance gains needed are incremental, not architectural.</li>
+</ol>
+<p>When Fict-like route is justified:</p>
+<ol>
+<li>CPU update path is a top product bottleneck.</li>
+<li>Large&#x2F;interactive local updates dominate user experience.</li>
+<li>Team is willing to trade some migration complexity for lower runtime update ceiling.</li>
+</ol>
+<hr>
+<h2 id="10-Final-Conclusion"><a href="#10-Final-Conclusion" class="headerlink" title="10. Final Conclusion"></a>10. Final Conclusion</h2><p>React Compiler matters because it turns performance tuning expertise into compiler defaults inside React semantics.</p>
+<p>Fict-like compiler-first systems matter because they can replace rerun-and-compare execution with dependency-driven propagation for many update paths.</p>
+<p>Both are valid. They optimize different costs:</p>
+<ol>
+<li>React Compiler answers:<ul>
+<li>How far can we push automatic performance within React’s existing contract?</li>
+</ul>
+</li>
+<li>Compiler-first fine-grained answers:<ul>
+<li>If dataflow is known at compile time, how much runtime tree-level comparison can we avoid?</li>
+</ul>
+</li>
+</ol>
+<p>A serious engineering decision should not declare a universal winner.<br>It should define boundaries, publish evidence, and make trade-offs explicit.</p>
+
+  </div>
+</article>
+
+  </div>
+</div>
+
+
+  <!-- scripts list from theme config.yml -->
+  
+    <script src="/js/attraction.js"></script>
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/codemirror.min.js"></script>
+  
+  <script>
+    var nodes = Array.from(document.querySelectorAll('pre code'));
+    var render = {};
+    var titleSvg = '<svg style="position: absolute;z-index: 1;margin: 12px 0 0 12px;" xmlns="http://www.w3.org/2000/svg" width="54" height="14" viewBox="0 0 54 14"><g fill="none" fill-rule="evenodd" transform="translate(1 1)"><circle cx="6" cy="6" r="6" fill="#FF5F56" stroke="#E0443E" stroke-width=".5"></circle><circle cx="26" cy="6" r="6" fill="#FFBD2E" stroke="#DEA123" stroke-width=".5"></circle><circle cx="46" cy="6" r="6" fill="#27C93F" stroke="#1AAB29" stroke-width=".5"></circle></g></svg>';
+    nodes.forEach((node, index) => {
+      var lang = node.getAttribute('class');
+      var code = node.innerText;
+      var mode = lang;
+      switch(lang) {
+        case 'jsx':
+          lang = 'javascript';
+          mode = 'text/jsx';
+          break;
+        case 'tsx':
+          lang = 'javascript';
+          mode = 'text/typescript-jsx';
+        case 'typescript':
+          lang = 'javascript';
+          mode = 'text/typescript';
+        default:
+          break;
+      }
+      var config = {
+        value: code,
+        mode,
+        theme: 'seti'
+      };
+      if (!lang) return;
+      var hasExisted = nodes.slice(0, index).find(function(node) { return node.getAttribute('class') === lang; });
+      if (hasExisted) {
+        render[lang].push(function() {
+          node.innerHTML = titleSvg;
+          CodeMirror(node, config);
+        });
+        return;
+      }
+      render[lang] = [];
+      var languagePackge = document.createElement('script');
+      languagePackge.src = `https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/mode/${lang}/${lang}.min.js`;
+      languagePackge.onload = () => {
+        setTimeout(() => {
+          node.innerHTML = titleSvg;
+          CodeMirror(node, config);
+          render[lang].forEach(function(callback) { callback(); })
+        }, 0);
+      }
+      document.body.appendChild(languagePackge);
+    });
+  </script>
+
+</body>
+</html>
