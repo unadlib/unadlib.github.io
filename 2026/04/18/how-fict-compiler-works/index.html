@@ -1,0 +1,620 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+  <title>How Fict&#39;s compiler worksunadlib&#39;s Notes</title>
+  <script>
+    (function() {
+      try {
+        var themeKey = 'attraction-theme';
+        var savedTheme = localStorage.getItem(themeKey);
+        var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        var theme = savedTheme || (prefersDark ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', theme);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+  <style type="text/css">
+    body, html {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+      font-size: 18px;
+      line-height: 1.8;
+      user-select: none;
+      box-sizing: border-box;
+      touch-action: manipulation;
+    }
+
+    a.title {
+      text-decoration: none;
+    }
+
+    #content-outer {
+      margin: 4% 14%;
+      padding: 4% 8%;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+
+    #content-inner {
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .recent-post-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+    }
+
+    .recent-post-item .title {
+      overflow: hidden;
+      text-overflow:ellipsis;
+      white-space: nowrap;
+    }
+
+    .recent-post-item .time {
+      font-size: 14px;
+      line-height: 32px;
+      min-width: 81px;
+      text-align: right;
+    }
+
+    #post img {
+      max-width: 100%;
+    }
+
+    #post h1.title {
+      text-align: center;
+      font-size: 2em;
+      margin-block-start: 0.67em;
+      margin-block-end: 0.67em;
+      line-height: 1;
+    }
+
+    #post .time {
+      text-align: center;
+      font-size: 14px;
+    }
+
+    #post .content {
+      margin-top: 8%;
+    }
+
+    #post .content blockquote {
+      padding-left: 20px;
+      margin: 0;
+    }
+
+    #post .content .gutter {
+      display: none;
+    }
+
+    code, kbd, pre, samp {
+      font-size: 16px !important;
+    }
+
+    .CodeMirror {
+      height: auto !important;
+      padding: 36px 24px 0;
+      border-radius: 6px;
+    }
+
+    #post .content figure {
+      padding: 0 1em;
+      margin: 0;
+      overflow: auto;
+    }
+
+    #post .content figure table {
+      width: 100%;
+    }
+
+    @media screen and (max-width: 1024px)  {
+      #content-outer {
+        margin: 2% 7%;
+        padding: 2% 4%;
+      }
+
+      .recent-post-item:first-child {
+        margin-top: 16px;
+      }
+    }
+
+    @media screen and (max-width: 480px) {
+      body{
+        -webkit-text-size-adjust: none;
+      }
+
+      #content-outer {
+        margin: 0;
+        padding: 2% 4%;
+        border-radius: 0;
+      }
+
+      .recent-post-item:first-child {
+        margin-top: 32px;
+      }
+
+      .recent-post-item:last-child {
+        border-bottom: none;
+      }
+    }
+  </style>
+  
+    <!-- styles list from theme config.yml -->
+    
+      <link rel="stylesheet" href="/css/theme.css">
+    
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/codemirror.min.css">
+    
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/theme/seti.min.css">
+    
+  
+<meta name="generator" content="Hexo 8.1.1"></head>
+<body class="cm-s-seti">
+
+<div id="content-outer">
+  <div id="content-inner">
+    
+<article id="post">
+  <h1 class="title">How Fict&#39;s compiler works</h1>
+  <p class="time">2026-04-18</span>
+  <div class="content">
+      <p>A source-accurate walkthrough of the compiler pipeline currently implemented in this repository.</p>
+<h2 id="What-This-Article-Is-and-Is-Not"><a href="#What-This-Article-Is-and-Is-Not" class="headerlink" title="What This Article Is and Is Not"></a>What This Article Is and Is Not</h2><p>This article describes the implementation under <code>packages/compiler/src</code> as it exists today. It is <strong>not</strong> a cleaned-up idealized pipeline, and it intentionally distinguishes:</p>
+<ul>
+<li>top-level stages that always run</li>
+<li>analysis helpers that only run on some paths</li>
+<li>representative IR snippets versus current emitted output</li>
+</ul>
+<p>Unless otherwise noted, examples assume the source module imports from <code>fict</code>, so compiler-generated runtime imports also target the <code>fict</code> package family (for example <code>fict/internal</code>), not <code>@fictjs/runtime/internal</code>.</p>
+<p>Compiler options materially affect behavior. In particular, <code>fineGrainedDom</code>, <code>optimize</code>, <code>lazyConditional</code>, <code>getterCache</code>, <code>inlineDerivedMemos</code>, <code>resumable</code>, <code>strictReactivity</code>, and <code>strictGuarantee</code> can change what gets emitted or whether compilation is allowed at all.</p>
+<h2 id="The-Real-Top-Level-Flow"><a href="#The-Real-Top-Level-Flow" class="headerlink" title="The Real Top-Level Flow"></a>The Real Top-Level Flow</h2><p>At the top level, the Babel plugin in <code>packages/compiler/src/index.ts</code> does this:</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line">+--------------+</span><br><span class="line">| Program.exit |</span><br><span class="line">+--------------+</span><br><span class="line">        |</span><br><span class="line">        v</span><br><span class="line">+---------------------------------------------------------------+</span><br><span class="line">| 1. Collect macro imports, reactive import metadata, and       |</span><br><span class="line">|    diagnostics context                                        |</span><br><span class="line">+---------------------------------------------------------------+</span><br><span class="line">        |</span><br><span class="line">        v</span><br><span class="line">+---------------------------------------------------------------+</span><br><span class="line">| 2. Validate placement and usage of $state / $effect /         |</span><br><span class="line">|    hook-like patterns                                         |</span><br><span class="line">+---------------------------------------------------------------+</span><br><span class="line">        |</span><br><span class="line">        v</span><br><span class="line">+---------------------------------------------------------------+</span><br><span class="line">| 3. Run warning passes                                         |</span><br><span class="line">|    (keys, spreads, dynamic access, control-flow guarantees,   |</span><br><span class="line">|    ...)                                                       |</span><br><span class="line">+---------------------------------------------------------------+</span><br><span class="line">        |</span><br><span class="line">        v</span><br><span class="line">+----------------+</span><br><span class="line">| 4. buildHIR()  |</span><br><span class="line">+----------------+</span><br><span class="line">        |</span><br><span class="line">        v</span><br><span class="line">+--------------------------------------------------+</span><br><span class="line">| 5. optimizeHIR(program)                          |</span><br><span class="line">|    optional, enabled by default                  |</span><br><span class="line">+--------------------------------------------------+</span><br><span class="line">        |</span><br><span class="line">        v</span><br><span class="line">+----------------------------------+</span><br><span class="line">| 6. lowerHIRWithRegions(program)  |</span><br><span class="line">+----------------------------------+</span><br><span class="line">        |</span><br><span class="line">        v</span><br><span class="line">+---------------------------------------------------------------+</span><br><span class="line">| 7. Strip macro imports and rebuild Babel scope state          |</span><br><span class="line">+---------------------------------------------------------------+</span><br></pre></td></tr></table></figure>
+
+<p>That means the <em>actual</em> top-level pipeline is:</p>
+<table>
+<thead>
+<tr>
+<th>Top-level stage</th>
+<th>Main module</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Front-end validation</td>
+<td><code>index.ts</code></td>
+<td>macro import checks, placement rules, warnings, strict-guarantee enforcement</td>
+</tr>
+<tr>
+<td>Build HIR</td>
+<td><code>ir/build-hir.ts</code></td>
+<td>Babel AST to HIR&#x2F;CFG</td>
+</tr>
+<tr>
+<td>Optional optimization</td>
+<td><code>ir/optimize.ts</code></td>
+<td>pure-function SSA optimization or reactive optimization</td>
+</tr>
+<tr>
+<td>Lowering</td>
+<td><code>ir/codegen.ts</code></td>
+<td>scopes, regions, structurization, helper imports, Babel AST emission</td>
+</tr>
+</tbody></table>
+<p><code>ssa.ts</code>, <code>scopes.ts</code>, <code>regions.ts</code>, and <code>structurize.ts</code> are important, but they are mostly invoked <em>inside</em> optimization or lowering rather than as separate top-level passes in <code>index.ts</code>.</p>
+<h2 id="Stage-0-Front-End-Validation-Before-HIR-Exists"><a href="#Stage-0-Front-End-Validation-Before-HIR-Exists" class="headerlink" title="Stage 0: Front-End Validation Before HIR Exists"></a>Stage 0: Front-End Validation Before HIR Exists</h2><p>Before the compiler builds HIR, <code>index.ts</code> performs a large amount of source-level validation and bookkeeping.</p>
+<h3 id="Macro-import-and-placement-checks"><a href="#Macro-import-and-placement-checks" class="headerlink" title="Macro import and placement checks"></a>Macro import and placement checks</h3><p>The plugin first discovers macro aliases imported from <code>fict</code>, <code>fict/slim</code>, and <code>fict/plus</code>, then enforces rules such as:</p>
+<ul>
+<li><code>$state()</code> must be imported from <code>fict</code></li>
+<li><code>$state()</code> must be assigned directly to an identifier</li>
+<li><code>$state()</code> cannot appear inside loops, conditionals, or nested non-reactive functions</li>
+<li><code>$effect()</code> must be imported from <code>fict</code></li>
+<li><code>$effect()</code> cannot appear inside loops, conditionals, or nested non-reactive functions</li>
+</ul>
+<p>This matters because many invalid programs are rejected <strong>before</strong> HIR construction.</p>
+<h3 id="Warning-and-fail-closed-behavior"><a href="#Warning-and-fail-closed-behavior" class="headerlink" title="Warning and fail-closed behavior"></a>Warning and fail-closed behavior</h3><p>Current defaults are intentionally strict. <code>createFictPlugin()</code> normalizes options so that:</p>
+<ul>
+<li><code>optimize</code> defaults to <code>true</code></li>
+<li><code>fineGrainedDom</code> defaults to <code>true</code></li>
+<li><code>lazyConditional</code> defaults to <code>true</code></li>
+<li><code>getterCache</code> defaults to <code>true</code></li>
+<li><code>inlineDerivedMemos</code> defaults to <code>true</code></li>
+<li><code>strictGuarantee</code> defaults to <code>true</code> unless explicitly disabled</li>
+</ul>
+<p>With <code>strictGuarantee: true</code>, non-guaranteed reactivity cases are escalated to hard errors rather than silently compiling with weaker behavior.</p>
+<h3 id="Cross-module-metadata-lookup-starts-here"><a href="#Cross-module-metadata-lookup-starts-here" class="headerlink" title="Cross-module metadata lookup starts here"></a>Cross-module metadata lookup starts here</h3><p><code>index.ts</code> also resolves previously-emitted module metadata for imports. That lets the compiler treat imported bindings as reactive when another module exported them as <code>signal</code>, <code>memo</code>, or <code>store</code>.</p>
+<h2 id="Stage-1-Build-HIR"><a href="#Stage-1-Build-HIR" class="headerlink" title="Stage 1: Build HIR"></a>Stage 1: Build HIR</h2><p>The first IR pass lives in <code>packages/compiler/src/ir/build-hir.ts</code>.</p>
+<h3 id="Why-HIR-exists"><a href="#Why-HIR-exists" class="headerlink" title="Why HIR exists"></a>Why HIR exists</h3><p>Fict does not try to reason directly on raw Babel AST after validation. Instead it builds a high-level IR that gives the compiler:</p>
+<ul>
+<li>explicit basic blocks and terminators</li>
+<li>a smaller, normalized expression set</li>
+<li>preserved high-level constructs such as JSX, conditional expressions, optional chains, and template literals</li>
+<li>a representation that both optimization and lowering can share</li>
+</ul>
+<h3 id="Destructuring-is-preprocessed-first"><a href="#Destructuring-is-preprocessed-first" class="headerlink" title="Destructuring is preprocessed first"></a>Destructuring is preprocessed first</h3><p>Before statement-to-HIR conversion, <code>build-hir.ts</code> runs <code>@babel/plugin-transform-destructuring</code> and then rewrites object-rest helpers to Fict-specific forms such as <code>__fictPropsRest</code>.</p>
+<p>That preprocessing is not an incidental detail. It is how the compiler preserves reactive props semantics while still operating on normalized assignments.</p>
+<h3 id="Core-HIR-types"><a href="#Core-HIR-types" class="headerlink" title="Core HIR types"></a>Core HIR types</h3><p>The exact HIR types live in <code>hir.ts</code>. At a high level:</p>
+<figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> <span class="title class_">Instruction</span> =</span><br><span class="line">  | &#123; <span class="attr">kind</span>: <span class="string">&#x27;Assign&#x27;</span>; <span class="attr">target</span>: <span class="title class_">Identifier</span>; <span class="attr">value</span>: <span class="title class_">Expression</span>; <span class="attr">declarationKind</span>?: <span class="string">&#x27;const&#x27;</span> | <span class="string">&#x27;let&#x27;</span> | <span class="string">&#x27;var&#x27;</span> | <span class="string">&#x27;function&#x27;</span> &#125;</span><br><span class="line">  | &#123; <span class="attr">kind</span>: <span class="string">&#x27;Expression&#x27;</span>; <span class="attr">value</span>: <span class="title class_">Expression</span> &#125;</span><br><span class="line">  | &#123; <span class="attr">kind</span>: <span class="string">&#x27;Phi&#x27;</span>; <span class="attr">variable</span>: <span class="built_in">string</span>; <span class="attr">target</span>: <span class="title class_">Identifier</span>; <span class="attr">sources</span>: &#123; <span class="attr">block</span>: <span class="title class_">BlockId</span>; <span class="attr">id</span>: <span class="title class_">Identifier</span> &#125;[] &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> <span class="title class_">Terminator</span> =</span><br><span class="line">  | &#123; <span class="attr">kind</span>: <span class="string">&#x27;Return&#x27;</span>; <span class="attr">argument</span>?: <span class="title class_">Expression</span> &#125;</span><br><span class="line">  | &#123; <span class="attr">kind</span>: <span class="string">&#x27;Throw&#x27;</span>; <span class="attr">argument</span>: <span class="title class_">Expression</span> &#125;</span><br><span class="line">  | &#123; <span class="attr">kind</span>: <span class="string">&#x27;Jump&#x27;</span>; <span class="attr">target</span>: <span class="title class_">BlockId</span> &#125;</span><br><span class="line">  | &#123; <span class="attr">kind</span>: <span class="string">&#x27;Branch&#x27;</span>; <span class="attr">test</span>: <span class="title class_">Expression</span>; <span class="attr">consequent</span>: <span class="title class_">BlockId</span>; <span class="attr">alternate</span>: <span class="title class_">BlockId</span> &#125;</span><br><span class="line">  | &#123; <span class="attr">kind</span>: <span class="string">&#x27;Switch&#x27;</span>; <span class="attr">discriminant</span>: <span class="title class_">Expression</span>; <span class="attr">cases</span>: &#123; <span class="attr">test</span>?: <span class="title class_">Expression</span>; <span class="attr">target</span>: <span class="title class_">BlockId</span> &#125;[] &#125;</span><br><span class="line">  | &#123; <span class="attr">kind</span>: <span class="string">&#x27;ForOf&#x27;</span>; ... &#125;</span><br><span class="line">  | &#123; <span class="attr">kind</span>: <span class="string">&#x27;ForIn&#x27;</span>; ... &#125;</span><br><span class="line">  | &#123; <span class="attr">kind</span>: <span class="string">&#x27;Try&#x27;</span>; ... &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> <span class="title class_">Expression</span> =</span><br><span class="line">  | <span class="title class_">Identifier</span></span><br><span class="line">  | <span class="title class_">Literal</span></span><br><span class="line">  | <span class="title class_">CallExpression</span></span><br><span class="line">  | <span class="title class_">MemberExpression</span></span><br><span class="line">  | <span class="title class_">OptionalMemberExpression</span></span><br><span class="line">  | <span class="title class_">BinaryExpression</span></span><br><span class="line">  | <span class="title class_">LogicalExpression</span></span><br><span class="line">  | <span class="title class_">ConditionalExpression</span></span><br><span class="line">  | <span class="title class_">TemplateLiteral</span></span><br><span class="line">  | <span class="title class_">JSXElementExpression</span></span><br><span class="line">  | <span class="title class_">ArrowFunctionExpression</span></span><br><span class="line">  | <span class="title class_">FunctionExpression</span></span><br><span class="line">  | ...</span><br></pre></td></tr></table></figure>
+
+<p><code>HIRProgram</code> also preserves:</p>
+<ul>
+<li><code>preamble</code></li>
+<li><code>postamble</code></li>
+<li><code>originalBody</code></li>
+</ul>
+<p>That preserved body is important later, because codegen tries to rebuild the final module while keeping original statement ordering stable.</p>
+<h3 id="Representative-HIR-for-a-simple-component"><a href="#Representative-HIR-for-a-simple-component" class="headerlink" title="Representative HIR for a simple component"></a>Representative HIR for a simple component</h3><p>Consider this source:</p>
+<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; $state &#125; <span class="keyword">from</span> <span class="string">&#x27;fict&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">PriceTag</span>(<span class="params">&#123; price, currency &#125;</span>) &#123;</span><br><span class="line">  <span class="keyword">let</span> discount = $state(<span class="number">0</span>)</span><br><span class="line">  <span class="keyword">const</span> finalPrice = price - discount</span><br><span class="line">  <span class="keyword">const</span> label = finalPrice &gt; <span class="number">100</span> ? <span class="string">&#x27;Premium&#x27;</span> : <span class="string">&#x27;Standard&#x27;</span></span><br><span class="line">  <span class="keyword">const</span> formatted = <span class="string">`<span class="subst">$&#123;currency&#125;</span> <span class="subst">$&#123;finalPrice.toFixed(<span class="number">2</span>)&#125;</span>`</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> (</span><br><span class="line">    <span class="language-xml"><span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">&#123;label</span> === <span class="string">&#x27;Premium&#x27;</span> ? &#x27;<span class="attr">gold</span>&#x27; <span class="attr">:</span> &#x27;<span class="attr">silver</span>&#x27;&#125;&gt;</span></span></span><br><span class="line"><span class="language-xml">      <span class="tag">&lt;<span class="name">h2</span>&gt;</span>&#123;label&#125;<span class="tag">&lt;/<span class="name">h2</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">      <span class="tag">&lt;<span class="name">span</span>&gt;</span>&#123;formatted&#125;<span class="tag">&lt;/<span class="name">span</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">      <span class="tag">&lt;<span class="name">button</span> <span class="attr">onClick</span>=<span class="string">&#123;()</span> =&gt;</span> discount++&#125;&gt;Apply Discount<span class="tag">&lt;/<span class="name">button</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">    <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span></span><br><span class="line">  )</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Its HIR is conceptually a single basic block, because the function body contains no statement-level branching:</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Block 0</span><br><span class="line">  Assign discount   = CallExpression($state, [0])</span><br><span class="line">  Assign finalPrice = BinaryExpression(price, &#x27;-&#x27;, discount)</span><br><span class="line">  Assign label      = ConditionalExpression(finalPrice &gt; 100, &#x27;Premium&#x27;, &#x27;Standard&#x27;)</span><br><span class="line">  Assign formatted  = TemplateLiteral(...)</span><br><span class="line">  Return JSXElement(...)</span><br></pre></td></tr></table></figure>
+
+<p>Important nuance: the ternary is still just an expression. It does <strong>not</strong> create CFG branching on its own.</p>
+<h2 id="Stage-2-SSA-and-CFG-Utilities"><a href="#Stage-2-SSA-and-CFG-Utilities" class="headerlink" title="Stage 2: SSA and CFG Utilities"></a>Stage 2: SSA and CFG Utilities</h2><p><code>packages/compiler/src/ir/ssa.ts</code> serves two related but distinct purposes:</p>
+<ol>
+<li><code>enterSSA(program)</code> performs full SSA conversion</li>
+<li><code>analyzeCFG(blocks)</code> computes reusable CFG facts</li>
+</ol>
+<p>Those are not the same thing, and the current compiler uses them differently.</p>
+<h3 id="Full-SSA-conversion-exists-but-it-is-not-a-universal-top-level-stage"><a href="#Full-SSA-conversion-exists-but-it-is-not-a-universal-top-level-stage" class="headerlink" title="Full SSA conversion exists, but it is not a universal top-level stage"></a>Full SSA conversion exists, but it is not a universal top-level stage</h3><p><code>enterSSA()</code> does the expected textbook work:</p>
+<ul>
+<li>compute predecessors and successors</li>
+<li>compute dominators and dominance frontiers</li>
+<li>insert phi nodes</li>
+<li>rename definitions and uses to SSA versions</li>
+<li>eliminate redundant phi nodes</li>
+</ul>
+<p>The naming scheme uses <code>$$ssa</code>:</p>
+<figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="title function_">makeSSAName</span>(<span class="string">&#x27;count&#x27;</span>, <span class="number">2</span>) <span class="comment">// count$$ssa2</span></span><br></pre></td></tr></table></figure>
+
+<p>One implementation detail matters here: <code>getSSABaseName()</code> is intentionally conservative. It strips suffixes from compiler-generated SSA names, but it does <strong>not</strong> blindly rewrite every user identifier that happens to end in <code>$$ssaN</code>.</p>
+<h3 id="CFG-analysis-is-used-more-broadly-than-SSA-renaming"><a href="#CFG-analysis-is-used-more-broadly-than-SSA-renaming" class="headerlink" title="CFG analysis is used more broadly than SSA renaming"></a>CFG analysis is used more broadly than SSA renaming</h3><p>Even when the whole function is not renamed into SSA form, <code>analyzeCFG()</code> is reused by:</p>
+<ul>
+<li><code>scopes.ts</code></li>
+<li><code>structurize.ts</code></li>
+<li>other control-flow-sensitive lowering decisions</li>
+</ul>
+<p>So the correct mental model is:</p>
+<ul>
+<li>SSA conversion is a targeted optimization tool</li>
+<li>CFG analysis is a shared compiler utility</li>
+</ul>
+<h3 id="Representative-phi-node-example"><a href="#Representative-phi-node-example" class="headerlink" title="Representative phi-node example"></a>Representative phi-node example</h3><p>If a function does enter SSA and contains statement-level branching, merge blocks can receive phi nodes:</p>
+<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">Example</span>(<span class="params"></span>) &#123;</span><br><span class="line">  <span class="keyword">let</span> x = $state(<span class="number">0</span>)</span><br><span class="line">  <span class="keyword">let</span> label</span><br><span class="line">  <span class="keyword">if</span> (x &gt; <span class="number">5</span>) &#123;</span><br><span class="line">    label = <span class="string">&#x27;high&#x27;</span></span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    label = <span class="string">&#x27;low&#x27;</span></span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> <span class="language-xml"><span class="tag">&lt;<span class="name">span</span>&gt;</span>&#123;label&#125;<span class="tag">&lt;/<span class="name">span</span>&gt;</span></span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Conceptually, the join block looks like:</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Block 3</span><br><span class="line">  Phi label$$ssa2 = φ(Block1: label$$ssa0, Block2: label$$ssa1)</span><br><span class="line">  Return ...</span><br></pre></td></tr></table></figure>
+
+<p>That example is valid as an SSA illustration. It is <strong>not</strong> evidence that every reactive component takes a mandatory global “Enter SSA” pass before lowering.</p>
+<h2 id="Stage-3-Optimization"><a href="#Stage-3-Optimization" class="headerlink" title="Stage 3: Optimization"></a>Stage 3: Optimization</h2><p>Optimization lives in <code>packages/compiler/src/ir/optimize.ts</code>, and the current compiler has <strong>two</strong> optimization paths.</p>
+<h3 id="Path-A-pure-function-optimization"><a href="#Path-A-pure-function-optimization" class="headerlink" title="Path A: pure-function optimization"></a>Path A: pure-function optimization</h3><p>If a function is considered a pure optimization candidate, the compiler explicitly enters SSA and runs a classic SSA-style pipeline:</p>
+<figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">ssaFn = <span class="title function_">enterSSA</span>(...)</span><br><span class="line">ssaFn = <span class="title function_">propagateConstants</span>(ssaFn)</span><br><span class="line">ssaFn = <span class="title function_">eliminateCommonSubexpressions</span>(ssaFn)</span><br><span class="line">ssaFn = <span class="title function_">inlineSingleUse</span>(ssaFn)</span><br><span class="line">ssaFn = <span class="title function_">eliminateDeadCode</span>(ssaFn)</span><br><span class="line">ssaFn = <span class="title function_">eliminatePhiNodes</span>(ssaFn)</span><br></pre></td></tr></table></figure>
+
+<p>This is where the article-worthy “full SSA optimization pipeline” really exists today.</p>
+<h3 id="Path-B-reactive-optimization"><a href="#Path-B-reactive-optimization" class="headerlink" title="Path B: reactive optimization"></a>Path B: reactive optimization</h3><p>Non-pure functions take the reactive path instead. This path currently:</p>
+<ul>
+<li>analyzes reactive scopes with CFG-aware metadata</li>
+<li>builds reactive and purity contexts</li>
+<li>optimizes blocks locally</li>
+<li>optionally propagates constants across blocks</li>
+<li>performs cross-block common-subexpression elimination</li>
+<li>inlines single-use derived memos when allowed</li>
+<li>builds a reactive dependency graph</li>
+<li>runs reactive dead-code elimination from observable roots</li>
+</ul>
+<p>Crucially, this path is <strong>not</strong> “enter SSA, then do everything else.” It works on the existing HIR plus CFG&#x2F;scope information.</p>
+<h3 id="Reactive-graph-not-just-local-algebra"><a href="#Reactive-graph-not-just-local-algebra" class="headerlink" title="Reactive graph, not just local algebra"></a>Reactive graph, not just local algebra</h3><p>For reactive code, the optimizer cares about observability, not only local expression simplification.</p>
+<p>Observable roots include things such as:</p>
+<ul>
+<li>returned values</li>
+<li>bindings</li>
+<li>effects</li>
+<li>explicit memos</li>
+<li>exported reactive values</li>
+</ul>
+<p>That is why reactive DCE is graph-based rather than just “remove unused assignments.”</p>
+<h2 id="Stage-4-Reactive-Scope-Analysis"><a href="#Stage-4-Reactive-Scope-Analysis" class="headerlink" title="Stage 4: Reactive Scope Analysis"></a>Stage 4: Reactive Scope Analysis</h2><p>Reactive scope analysis lives in <code>packages/compiler/src/ir/scopes.ts</code>.</p>
+<p>The base pass, <code>analyzeReactiveScopes(fn)</code>, does this:</p>
+<ol>
+<li>collect writes and reads for each definition-like scope</li>
+<li>compute dependencies between scopes</li>
+<li>find escaping variables from return values</li>
+<li>mark scopes with external effects</li>
+<li>compute a memoization heuristic</li>
+<li>merge overlapping scopes</li>
+<li>prune scopes that do not contribute to escaping or memoized results</li>
+</ol>
+<h3 id="The-current-scope-model"><a href="#The-current-scope-model" class="headerlink" title="The current scope model"></a>The current scope model</h3><p>The core shape is:</p>
+<figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">interface</span> <span class="title class_">ReactiveScope</span> &#123;</span><br><span class="line">  <span class="attr">id</span>: <span class="built_in">number</span></span><br><span class="line">  <span class="attr">declarations</span>: <span class="title class_">Set</span>&lt;<span class="built_in">string</span>&gt;</span><br><span class="line">  <span class="attr">writes</span>: <span class="title class_">Set</span>&lt;<span class="built_in">string</span>&gt;</span><br><span class="line">  <span class="attr">reads</span>: <span class="title class_">Set</span>&lt;<span class="built_in">string</span>&gt;</span><br><span class="line">  <span class="attr">blocks</span>: <span class="title class_">Set</span>&lt;<span class="built_in">number</span>&gt;</span><br><span class="line">  <span class="attr">dependencies</span>: <span class="title class_">Set</span>&lt;<span class="built_in">string</span>&gt;</span><br><span class="line">  <span class="attr">dependencyPaths</span>: <span class="title class_">Map</span>&lt;<span class="built_in">string</span>, <span class="title class_">DependencyPath</span>[]&gt;</span><br><span class="line">  <span class="attr">hasExternalEffect</span>: <span class="built_in">boolean</span></span><br><span class="line">  <span class="attr">shouldMemoize</span>: <span class="built_in">boolean</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Optional-chain-dependency-paths"><a href="#Optional-chain-dependency-paths" class="headerlink" title="Optional-chain dependency paths"></a>Optional-chain dependency paths</h3><p><code>scopes.ts</code> tracks dependency paths such as <code>user?.profile?.name</code>, not just base names. That feeds later subscription decisions.</p>
+<p>The important guarantee is limited but useful:</p>
+<ul>
+<li>the compiler can distinguish base-object dependency from property-path dependency</li>
+<li>later passes can choose between whole-object and property-level subscriptions more precisely</li>
+</ul>
+<h3 id="SSA-enhanced-scope-analysis"><a href="#SSA-enhanced-scope-analysis" class="headerlink" title="SSA-enhanced scope analysis"></a>SSA-enhanced scope analysis</h3><p>The higher-level API used by lowering is <code>analyzeReactiveScopesWithSSA(fn)</code>. Despite the name, it does <strong>not</strong> first run <code>enterSSA()</code>.</p>
+<p>Instead it returns:</p>
+<ul>
+<li>the base scope analysis result</li>
+<li>CFG analysis (<code>loopHeaders</code>, <code>backEdges</code>, dominator tree)</li>
+<li>control-flow read analysis</li>
+<li>loop-dependent scope metadata</li>
+</ul>
+<p>That enhancement is enough for codegen decisions such as:</p>
+<ul>
+<li>whether a dependency requires re-execution because it affects control flow</li>
+<li>whether a scope is loop-dependent</li>
+</ul>
+<h3 id="Memoization-heuristic-is-intentionally-simple"><a href="#Memoization-heuristic-is-intentionally-simple" class="headerlink" title="Memoization heuristic is intentionally simple"></a>Memoization heuristic is intentionally simple</h3><p>Current <code>shouldMemoizeScope()</code> is heuristic, not an exact cost model. It mainly looks at:</p>
+<ul>
+<li>whether the scope has dependencies</li>
+<li>whether those dependencies come from other active scopes</li>
+<li>whether the scope touches the entry block</li>
+<li>whether it spans multiple blocks</li>
+<li>whether it contributes to escaping values</li>
+</ul>
+<p>It does <strong>not</strong> currently implement a rich “cheap expression” cost model.</p>
+<h2 id="Stage-5-Regions"><a href="#Stage-5-Regions" class="headerlink" title="Stage 5: Regions"></a>Stage 5: Regions</h2><p>Regions live in <code>packages/compiler/src/ir/regions.ts</code>.</p>
+<p>Regions are the bridge between abstract scopes and concrete emitted code:</p>
+<figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">interface</span> <span class="title class_">Region</span> &#123;</span><br><span class="line">  <span class="attr">id</span>: <span class="built_in">number</span></span><br><span class="line">  <span class="attr">scopeId</span>: <span class="built_in">number</span></span><br><span class="line">  <span class="attr">blocks</span>: <span class="title class_">Set</span>&lt;<span class="title class_">BlockId</span>&gt;</span><br><span class="line">  <span class="attr">instructions</span>: <span class="title class_">Instruction</span>[]</span><br><span class="line">  <span class="attr">dependencies</span>: <span class="title class_">Set</span>&lt;<span class="built_in">string</span>&gt;</span><br><span class="line">  <span class="attr">declarations</span>: <span class="title class_">Set</span>&lt;<span class="built_in">string</span>&gt;</span><br><span class="line">  <span class="attr">hasControlFlow</span>: <span class="built_in">boolean</span></span><br><span class="line">  <span class="attr">hasJSX</span>: <span class="built_in">boolean</span></span><br><span class="line">  <span class="attr">shouldMemoize</span>: <span class="built_in">boolean</span></span><br><span class="line">  <span class="attr">children</span>: <span class="title class_">Region</span>[]</span><br><span class="line">  <span class="attr">parentId</span>?: <span class="built_in">number</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="How-regions-are-actually-created"><a href="#How-regions-are-actually-created" class="headerlink" title="How regions are actually created"></a>How regions are actually created</h3><p><code>generateRegions(fn, scopeResult, shapeResult)</code> creates regions only for scopes that are relevant to emitted reactivity:</p>
+<ul>
+<li>scopes with <code>hasExternalEffect</code></li>
+<li>scopes with <code>shouldMemoize</code></li>
+</ul>
+<p>For each such scope, the compiler:</p>
+<ul>
+<li>collects owned instructions</li>
+<li>records whether the covered blocks contain control flow</li>
+<li>records whether any owned expression contains JSX</li>
+<li>computes dependencies</li>
+<li>refines subscriptions using shape analysis from <code>shapes.ts</code></li>
+</ul>
+<h3 id="Shape-analysis-matters-here"><a href="#Shape-analysis-matters-here" class="headerlink" title="Shape analysis matters here"></a>Shape analysis matters here</h3><p><code>regions.ts</code> uses <code>analyzeObjectShapes()</code> plus helpers such as:</p>
+<ul>
+<li><code>getPropertySubscription()</code></li>
+<li><code>shouldUseWholeObjectSubscription()</code></li>
+</ul>
+<p>So a region can subscribe to a narrower set like <code>user.name</code> or <code>user.email</code> when the shape analysis says that is safe, instead of always subscribing to all of <code>user</code>.</p>
+<h3 id="A-key-current-implementation-detail-internal-region-memos"><a href="#A-key-current-implementation-detail-internal-region-memos" class="headerlink" title="A key current implementation detail: internal region memos"></a>A key current implementation detail: internal region memos</h3><p>Older conceptual descriptions often say “a derived variable becomes one memo.”</p>
+<p>Current Fict output is a little more structured than that. Regions with outputs often compile into an <strong>internal memo that returns an object of outputs</strong>, for example:</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> __region_0 = <span class="title function_">__fictUseMemo</span>(</span><br><span class="line">  __fictCtx,</span><br><span class="line">  <span class="function">() =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">const</span> finalPrice = <span class="title function_">__fictUseMemo</span>(</span><br><span class="line">      __fictCtx,</span><br><span class="line">      <span class="function">() =&gt;</span> <span class="title function_">price</span>() - <span class="title function_">discount</span>(),</span><br><span class="line">      &#123; <span class="attr">name</span>: <span class="string">&#x27;finalPrice&#x27;</span> &#125;,</span><br><span class="line">      <span class="number">1000</span>,</span><br><span class="line">    )</span><br><span class="line">    <span class="keyword">return</span> &#123; finalPrice &#125;</span><br><span class="line">  &#125;,</span><br><span class="line">  &#123; <span class="attr">internal</span>: <span class="literal">true</span> &#125;,</span><br><span class="line">  <span class="number">1001</span>,</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<p>That is a more accurate description of current output than the older “just one <code>const finalPrice = useMemo(...)</code>“ story.</p>
+<h2 id="Stage-6-Structurization"><a href="#Stage-6-Structurization" class="headerlink" title="Stage 6: Structurization"></a>Stage 6: Structurization</h2><p>Structurization lives in <code>packages/compiler/src/ir/structurize.ts</code>.</p>
+<p>Its job is to turn CFG-style blocks back into structured nodes such as:</p>
+<ul>
+<li><code>if</code></li>
+<li><code>while</code></li>
+<li><code>for</code></li>
+<li><code>forOf</code></li>
+<li><code>forIn</code></li>
+<li><code>switch</code></li>
+<li><code>try</code></li>
+<li><code>return</code></li>
+<li><code>throw</code></li>
+</ul>
+<p>It also has a fallback:</p>
+<figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123; <span class="attr">kind</span>: <span class="string">&#x27;stateMachine&#x27;</span>, <span class="attr">blocks</span>: ..., <span class="attr">entryBlock</span>: ... &#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Important-nuance-structurization-is-a-utility-not-always-a-separate-top-level-phase"><a href="#Important-nuance-structurization-is-a-utility-not-always-a-separate-top-level-phase" class="headerlink" title="Important nuance: structurization is a utility, not always a separate top-level phase"></a>Important nuance: structurization is a utility, not always a separate top-level phase</h3><p>The current compiler does <strong>not</strong> always run a clean standalone:</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">regions -&gt; structurize -&gt; codegen</span><br></pre></td></tr></table></figure>
+
+<p>Instead, structurization is used where lowering needs structured control flow:</p>
+<ul>
+<li>region-based lowering</li>
+<li>some pure-function lowering paths</li>
+<li>fallback handling when CFG shape is awkward</li>
+</ul>
+<h3 id="Safety-behavior"><a href="#Safety-behavior" class="headerlink" title="Safety behavior"></a>Safety behavior</h3><p><code>structurizeCFG()</code> tracks:</p>
+<ul>
+<li>depth limits</li>
+<li>emitted blocks</li>
+<li>problematic blocks</li>
+<li>shared side-effect blocks</li>
+<li>unreachable&#x2F;unemitted reachable blocks</li>
+</ul>
+<p>If needed, it can throw <code>StructurizationError</code>, or it can fall back to a state-machine node.</p>
+<p>That fallback is real in the current implementation, so any rigorous description of Fict’s compiler should mention it.</p>
+<h2 id="Stage-7-Lowering-and-Code-Generation"><a href="#Stage-7-Lowering-and-Code-Generation" class="headerlink" title="Stage 7: Lowering and Code Generation"></a>Stage 7: Lowering and Code Generation</h2><p>The main lowering entry point is <code>lowerHIRWithRegions()</code> in <code>packages/compiler/src/ir/codegen.ts</code>.</p>
+<p>This is where several previously-separate concepts come together:</p>
+<ul>
+<li>runtime import-family detection</li>
+<li>imported reactive metadata</li>
+<li>hook-return metadata</li>
+<li>top-level statement segmentation</li>
+<li>function lowering</li>
+<li>scope analysis</li>
+<li>region generation</li>
+<li>structurization where needed</li>
+<li>final Babel AST emission</li>
+</ul>
+<h3 id="The-runtime-import-family-follows-the-source-module"><a href="#The-runtime-import-family-follows-the-source-module" class="headerlink" title="The runtime import family follows the source module"></a>The runtime import family follows the source module</h3><p>If a module already imports from <code>fict</code>, generated helpers target <code>fict/internal</code>.</p>
+<p>If a module instead lives in a lower-level runtime-only integration, generated helpers can target <code>@fictjs/runtime/internal</code>.</p>
+<p>That choice is made by <code>detectRuntimeImportFamily()</code> in <code>constants.ts</code>.</p>
+<h3 id="Props-are-not-lowered-as-raw-props-foo-reads"><a href="#Props-are-not-lowered-as-raw-props-foo-reads" class="headerlink" title="Props are not lowered as raw props.foo reads"></a>Props are not lowered as raw <code>props.foo</code> reads</h3><p>For component props, codegen often emits reactive accessors such as:</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> price = <span class="title function_">prop</span>(<span class="function">() =&gt;</span> __props.<span class="property">price</span>)</span><br><span class="line"><span class="keyword">const</span> currency = <span class="title function_">prop</span>(<span class="function">() =&gt;</span> __props.<span class="property">currency</span>)</span><br></pre></td></tr></table></figure>
+
+<p>So a precise article should talk about <strong>prop accessors</strong>, not just “props become getters somehow.”</p>
+<h3 id="Signals-memos-and-effects-depend-on-context"><a href="#Signals-memos-and-effects-depend-on-context" class="headerlink" title="Signals, memos, and effects depend on context"></a>Signals, memos, and effects depend on context</h3><p>In component-like context, the compiler emits hook-aware helpers such as:</p>
+<ul>
+<li><code>__fictUseContext</code></li>
+<li><code>__fictUseSignal</code></li>
+<li><code>__fictUseMemo</code></li>
+<li><code>__fictUseEffect</code></li>
+</ul>
+<p>At module level it can emit non-hook helpers such as:</p>
+<ul>
+<li><code>createSignal</code></li>
+<li><code>createMemo</code></li>
+<li><code>createEffect</code></li>
+</ul>
+<p>Hook slot numbering is explicit in the current implementation and starts from <code>1000</code>.</p>
+<h2 id="Current-Output-Shape-for-PriceTag"><a href="#Current-Output-Shape-for-PriceTag" class="headerlink" title="Current Output Shape for PriceTag"></a>Current Output Shape for <code>PriceTag</code></h2><p>Here is a representative excerpt from the <strong>current</strong> compiler output for the <code>PriceTag</code> example above:</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123;</span><br><span class="line">  __fictUseSignal,</span><br><span class="line">  __fictUseMemo,</span><br><span class="line">  template,</span><br><span class="line">  resolvePath,</span><br><span class="line">  getSlotEnd,</span><br><span class="line">  insertBetween,</span><br><span class="line">  createElement,</span><br><span class="line">  addEventListener,</span><br><span class="line">  bindClass,</span><br><span class="line">  __fictUseContext,</span><br><span class="line">  prop</span><br><span class="line">&#125; <span class="keyword">from</span> <span class="string">&quot;fict/internal&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">PriceTag</span>(<span class="params">__props</span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> price = <span class="title function_">prop</span>(<span class="function">() =&gt;</span> __props.<span class="property">price</span>);</span><br><span class="line">  <span class="keyword">const</span> currency = <span class="title function_">prop</span>(<span class="function">() =&gt;</span> __props.<span class="property">currency</span>);</span><br><span class="line">  <span class="keyword">const</span> __fictCtx = <span class="title function_">__fictUseContext</span>();</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> discount = <span class="title function_">__fictUseSignal</span>(__fictCtx, <span class="number">0</span>, &#123; <span class="attr">name</span>: <span class="string">&quot;discount&quot;</span> &#125;);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> __region_0 = <span class="title function_">__fictUseMemo</span>(__fictCtx, <span class="function">() =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">const</span> finalPrice = <span class="title function_">__fictUseMemo</span>(</span><br><span class="line">      __fictCtx,</span><br><span class="line">      <span class="function">() =&gt;</span> <span class="title function_">price</span>() - <span class="title function_">discount</span>(),</span><br><span class="line">      &#123; <span class="attr">name</span>: <span class="string">&quot;finalPrice&quot;</span> &#125;,</span><br><span class="line">      <span class="number">1000</span></span><br><span class="line">    );</span><br><span class="line">    <span class="keyword">return</span> &#123; finalPrice &#125;;</span><br><span class="line">  &#125;, &#123; <span class="attr">internal</span>: <span class="literal">true</span> &#125;, <span class="number">1001</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> &#123; finalPrice &#125; = <span class="title function_">__region_0</span>();</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> __region_1 = <span class="title function_">__fictUseMemo</span>(__fictCtx, <span class="function">() =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">const</span> label = <span class="title function_">__fictUseMemo</span>(</span><br><span class="line">      __fictCtx,</span><br><span class="line">      <span class="function">() =&gt;</span> <span class="title function_">finalPrice</span>() &gt; <span class="number">100</span> ? <span class="string">&quot;Premium&quot;</span> : <span class="string">&quot;Standard&quot;</span>,</span><br><span class="line">      &#123; <span class="attr">name</span>: <span class="string">&quot;label&quot;</span> &#125;,</span><br><span class="line">      <span class="number">1002</span></span><br><span class="line">    );</span><br><span class="line">    <span class="keyword">return</span> &#123; label &#125;;</span><br><span class="line">  &#125;, &#123; <span class="attr">internal</span>: <span class="literal">true</span> &#125;, <span class="number">1003</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> &#123; label &#125; = <span class="title function_">__region_1</span>();</span><br><span class="line">  <span class="keyword">const</span> formatted = <span class="title function_">__fictUseMemo</span>(</span><br><span class="line">    __fictCtx,</span><br><span class="line">    <span class="function">() =&gt;</span> <span class="string">`<span class="subst">$&#123;currency()&#125;</span> <span class="subst">$&#123;finalPrice().toFixed(<span class="number">2</span>)&#125;</span>`</span>,</span><br><span class="line">    &#123; <span class="attr">name</span>: <span class="string">&quot;formatted&quot;</span> &#125;</span><br><span class="line">  );</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="title function_">__fictUseMemo</span>(__fictCtx, <span class="function">() =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">const</span> __tmpl_1 = <span class="title function_">template</span>(<span class="string">&quot;&lt;div&gt;&lt;h2&gt;&lt;!--fict:slot:start--&gt;&lt;!--fict:slot:end--&gt;&lt;/h2&gt;&lt;span&gt;&lt;!--fict:slot:start--&gt;&lt;!--fict:slot:end--&gt;&lt;/span&gt;&lt;button&gt;Apply Discount&lt;/button&gt;&lt;/div&gt;&quot;</span>);</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    <span class="title function_">insertBetween</span>(__el_2, __end_5, <span class="function">() =&gt;</span> <span class="title function_">label</span>(), createElement);</span><br><span class="line">    <span class="title function_">insertBetween</span>(__el_3, __end_6, <span class="function">() =&gt;</span> <span class="title function_">formatted</span>(), createElement);</span><br><span class="line">    <span class="title function_">addEventListener</span>(__el_4, <span class="string">&quot;click&quot;</span>, <span class="comment">/* handler */</span>, <span class="literal">true</span>);</span><br><span class="line">    <span class="title function_">bindClass</span>(__root_0, <span class="function">() =&gt;</span> <span class="title function_">label</span>() === <span class="string">&quot;Premium&quot;</span> ? <span class="string">&quot;gold&quot;</span> : <span class="string">&quot;silver&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> __root_0;</span><br><span class="line">  &#125;, <span class="number">1004</span>)();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Several details here are important because they correct older, less accurate explanations:</p>
+<ul>
+<li>current output frequently introduces internal <code>__region_*</code> memos</li>
+<li>child slots are often updated through <code>insertBetween(...)</code>, not always <code>bindText(...)</code></li>
+<li>delegated events can compile to <code>addEventListener(node, name, handler, true)</code></li>
+<li>the DOM tree is located with <code>resolvePath(...)</code> and slot markers, not hand-written <code>firstChild/nextSibling</code> chains</li>
+</ul>
+<h2 id="JSX-Lowering-in-the-Current-Compiler"><a href="#JSX-Lowering-in-the-Current-Compiler" class="headerlink" title="JSX Lowering in the Current Compiler"></a>JSX Lowering in the Current Compiler</h2><p>The current compiler does not have one universal “JSX becomes bindText everywhere” rule. It chooses helpers based on the kind of child or binding.</p>
+<h3 id="Static-template-extraction"><a href="#Static-template-extraction" class="headerlink" title="Static template extraction"></a>Static template extraction</h3><p>For fine-grained DOM output, the compiler builds HTML strings for static structure via <code>template(...)</code>.</p>
+<p>Template hoisting is <strong>opportunistic</strong>, not universal. In the current implementation it is especially used for list-render contexts to avoid repeated template parsing.</p>
+<h3 id="Dynamic-child-insertion"><a href="#Dynamic-child-insertion" class="headerlink" title="Dynamic child insertion"></a>Dynamic child insertion</h3><p>Dynamic child expressions often become:</p>
+<ul>
+<li><code>resolvePath(...)</code> to find the slot marker</li>
+<li><code>getSlotEnd(...)</code> to locate the slot boundary</li>
+<li><code>insertBetween(...)</code> to insert dynamic child content</li>
+</ul>
+<p>That is why a child like <code>{label}</code> in an element body may not compile to a direct <code>bindText</code> call.</p>
+<h3 id="Direct-text-bindings-still-exist"><a href="#Direct-text-bindings-still-exist" class="headerlink" title="Direct text bindings still exist"></a>Direct text bindings still exist</h3><p>When codegen has a direct text target, it may choose:</p>
+<ul>
+<li><code>setText(...)</code> for static or fused patch cases</li>
+<li><code>bindText(...)</code> for reactive text bindings</li>
+</ul>
+<p>But that is only one lowering pattern among several.</p>
+<h3 id="Conditional-children-are-specialized"><a href="#Conditional-children-are-specialized" class="headerlink" title="Conditional children are specialized"></a>Conditional children are specialized</h3><p>Reactive conditional child expressions can lower to <code>createConditional(...)</code> plus <code>onDestroy(...)</code>, rather than to a generic “re-run this block in <code>useEffect</code>“ wrapper.</p>
+<h3 id="Lists-are-specialized-too"><a href="#Lists-are-specialized-too" class="headerlink" title="Lists are specialized too"></a>Lists are specialized too</h3><p>Recognized <code>.map(...)</code> JSX children can lower through the list helpers path (<code>createKeyedList</code> and related support). In the current tree, that logic lives primarily in <code>codegen-list-child.ts</code>, <code>codegen-list-keys.ts</code>, and the runtime list helpers.</p>
+<h2 id="Event-Handling-and-Delegation"><a href="#Event-Handling-and-Delegation" class="headerlink" title="Event Handling and Delegation"></a>Event Handling and Delegation</h2><p>The event story in the current compiler is more precise than “it always emits <code>bindEvent</code>.”</p>
+<ul>
+<li>Delegated events are recognized via the compiler’s <code>DelegatedEvents</code> set.</li>
+<li>For delegated cases without special options, the compiler commonly emits <code>addEventListener(node, name, handler, true)</code>.</li>
+<li>In the runtime, that delegated form lazily ensures document-level delegation via <code>delegateEvents(...)</code>.</li>
+<li>For non-delegated events or events with options such as <code>capture</code>, <code>once</code>, or <code>passive</code>, the compiler falls back to <code>bindEvent(...)</code>.</li>
+</ul>
+<p>So a rigorous description must distinguish:</p>
+<ul>
+<li>compile-time delegated emission</li>
+<li>runtime delegated installation</li>
+<li>non-delegated per-node listeners</li>
+</ul>
+<h2 id="Getter-Caching"><a href="#Getter-Caching" class="headerlink" title="Getter Caching"></a>Getter Caching</h2><p>When enabled, getter caching allows repeated synchronous reads of the same accessor to be reused rather than re-invoked.</p>
+<p>This is a lowering detail, not a semantic phase of the IR pipeline, but it meaningfully affects emitted code quality. It is controlled by the <code>getterCache</code> option and implemented through <code>codegen-cache.ts</code>.</p>
+<h2 id="Cross-Module-Reactive-Metadata"><a href="#Cross-Module-Reactive-Metadata" class="headerlink" title="Cross-Module Reactive Metadata"></a>Cross-Module Reactive Metadata</h2><p>Cross-module reactive metadata is represented by:</p>
+<figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">interface</span> <span class="title class_">ModuleReactiveMetadata</span> &#123;</span><br><span class="line">  <span class="attr">exports</span>: <span class="title class_">Record</span>&lt;<span class="built_in">string</span>, <span class="string">&#x27;signal&#x27;</span> | <span class="string">&#x27;memo&#x27;</span> | <span class="string">&#x27;store&#x27;</span>&gt;</span><br><span class="line">  <span class="attr">hooks</span>?: <span class="title class_">Record</span>&lt;<span class="built_in">string</span>, <span class="title class_">HookReturnInfoSerializable</span>&gt;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>That means the current JSON shape is:</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;exports&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;count&quot;</span><span class="punctuation">:</span> <span class="string">&quot;signal&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;doubled&quot;</span><span class="punctuation">:</span> <span class="string">&quot;memo&quot;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>not:</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;exports&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;count&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span> <span class="attr">&quot;kind&quot;</span><span class="punctuation">:</span> <span class="string">&quot;signal&quot;</span> <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>Metadata emission modes are also more nuanced than “write a sidecar next to the file”:</p>
+<ul>
+<li><code>true</code>: emit adjacent sidecars</li>
+<li><code>false</code>: emit nothing</li>
+<li><code>&#39;auto&#39;</code>: emit to the metadata cache directory when no external metadata store or resolver is supplied</li>
+</ul>
+<p>The default cache directory is <code>.fict-cache/metadata</code>.</p>
+<h2 id="The-Best-Mental-Model-for-the-Current-Compiler"><a href="#The-Best-Mental-Model-for-the-Current-Compiler" class="headerlink" title="The Best Mental Model for the Current Compiler"></a>The Best Mental Model for the Current Compiler</h2><p>If you want a model that matches the source tree well, use this one:</p>
+<ol>
+<li><code>index.ts</code> validates source-level rules and builds compiler context.</li>
+<li><code>build-hir.ts</code> converts Babel AST into HIR + CFG.</li>
+<li><code>optimize.ts</code> runs either:<ul>
+<li>a true SSA pipeline for pure functions, or</li>
+<li>a reactive optimization pipeline for non-pure functions.</li>
+</ul>
+</li>
+<li><code>codegen.ts</code> performs the heavy lowering work.</li>
+<li>Inside lowering, the compiler invokes:<ul>
+<li>scope analysis</li>
+<li>region generation</li>
+<li>structurization when structured control flow is needed</li>
+<li>final Babel AST emission</li>
+</ul>
+</li>
+</ol>
+<p>That is more accurate than treating SSA, scopes, regions, structurization, and codegen as seven always-separate top-level compiler stages.</p>
+<h2 id="Summary"><a href="#Summary" class="headerlink" title="Summary"></a>Summary</h2><p>The current Fict compiler is best understood as:</p>
+<ul>
+<li>a strict source validator first</li>
+<li>a HIR&#x2F;CFG compiler second</li>
+<li>a dual-path optimizer</li>
+<li>a lowering engine that uses scopes, regions, and structurization as internal tools</li>
+</ul>
+<p>HIR is central. CFG analysis is central. SSA is real, but targeted. Regions are real, but they are a lowering construct, not the public pipeline boundary. Structurization is real, but it is a utility the lowering path calls when needed, with a state-machine fallback when necessary.</p>
+<p>That combination is what lets the compiler accept plain component code, enforce Fict’s reactivity guarantees, and emit fine-grained runtime code without pretending that the implementation is simpler or more linear than it actually is.</p>
+
+  </div>
+</article>
+
+  </div>
+</div>
+
+
+  <!-- scripts list from theme config.yml -->
+  
+    <script src="/js/attraction.js"></script>
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/codemirror.min.js"></script>
+  
+  <script>
+    var nodes = Array.from(document.querySelectorAll('pre code'));
+    var render = {};
+    var titleSvg = '<svg style="position: absolute;z-index: 1;margin: 12px 0 0 12px;" xmlns="http://www.w3.org/2000/svg" width="54" height="14" viewBox="0 0 54 14"><g fill="none" fill-rule="evenodd" transform="translate(1 1)"><circle cx="6" cy="6" r="6" fill="#FF5F56" stroke="#E0443E" stroke-width=".5"></circle><circle cx="26" cy="6" r="6" fill="#FFBD2E" stroke="#DEA123" stroke-width=".5"></circle><circle cx="46" cy="6" r="6" fill="#27C93F" stroke="#1AAB29" stroke-width=".5"></circle></g></svg>';
+    nodes.forEach((node, index) => {
+      var lang = node.getAttribute('class');
+      var code = node.innerText;
+      var mode = lang;
+      switch(lang) {
+        case 'jsx':
+          lang = 'javascript';
+          mode = 'text/jsx';
+          break;
+        case 'tsx':
+          lang = 'javascript';
+          mode = 'text/typescript-jsx';
+        case 'typescript':
+          lang = 'javascript';
+          mode = 'text/typescript';
+        default:
+          break;
+      }
+      var config = {
+        value: code,
+        mode,
+        theme: 'seti'
+      };
+      if (!lang) return;
+      var hasExisted = nodes.slice(0, index).find(function(node) { return node.getAttribute('class') === lang; });
+      if (hasExisted) {
+        render[lang].push(function() {
+          node.innerHTML = titleSvg;
+          CodeMirror(node, config);
+        });
+        return;
+      }
+      render[lang] = [];
+      var languagePackge = document.createElement('script');
+      languagePackge.src = `https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/mode/${lang}/${lang}.min.js`;
+      languagePackge.onload = () => {
+        setTimeout(() => {
+          node.innerHTML = titleSvg;
+          CodeMirror(node, config);
+          render[lang].forEach(function(callback) { callback(); })
+        }, 0);
+      }
+      document.body.appendChild(languagePackge);
+    });
+  </script>
+
+</body>
+</html>
