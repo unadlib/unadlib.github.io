@@ -6,7 +6,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="initial-scale=1, maximum-scale=1">
-  <title>React compiler and beyond - capability boundaries of compiler-driven UI frameworksunadlib&#39;s Notes</title>
+  <title>React Compiler and beyond - capability boundaries of compiler-driven UI frameworksunadlib&#39;s Notes</title>
   <script>
     (function() {
       try {
@@ -169,7 +169,7 @@
   <div id="content-inner">
     
 <article id="post">
-  <h1 class="title">React compiler and beyond - capability boundaries of compiler-driven UI frameworks</h1>
+  <h1 class="title">React Compiler and beyond - capability boundaries of compiler-driven UI frameworks</h1>
   <p class="time">2026-03-05</span>
   <div class="content">
       <blockquote>
@@ -217,7 +217,7 @@
 </ol>
 <p>Practical implications:</p>
 <ol>
-<li>React updates are not always full-tree reruns due to bailouts and memoized outputs.</li>
+<li>React updates are not always full-tree re-runs due to bailouts and memoized outputs.</li>
 <li>But the dominant scheduling unit remains component&#x2F;subtree semantics, not explicit signal graph nodes.</li>
 <li><code>React.memo</code> with <code>children</code> is not inherently useless:<ul>
 <li>It often fails if children are recreated each render.</li>
@@ -440,7 +440,7 @@
 </ol>
 <hr>
 <h2 id="10-Final-Conclusion"><a href="#10-Final-Conclusion" class="headerlink" title="10. Final Conclusion"></a>10. Final Conclusion</h2><p>React Compiler matters because it turns performance tuning expertise into compiler defaults inside React semantics.</p>
-<p>Fict-like compiler-first systems matter because they can replace rerun-and-compare execution with dependency-driven propagation for many update paths.</p>
+<p>Fict-like compiler-first systems matter because they can replace “re-run component code and compare output” execution with dependency-driven propagation for many update paths.</p>
 <p>Both are valid. They optimize different costs:</p>
 <ol>
 <li>React Compiler answers:<ul>

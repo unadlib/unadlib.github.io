@@ -204,14 +204,15 @@
 <p>The above is an overview of Fict’s core design philosophy and technical route. Subsequent chapters will detail the specific implementation methods.</p>
 </blockquote>
 <hr>
-<h2 id="Part-2-Comparison-with-Other-Frameworks"><a href="#Part-2-Comparison-with-Other-Frameworks" class="headerlink" title="Part 2: Comparison with Other Frameworks"></a>Part 2: Comparison with Other Frameworks</h2><h3 id="2-1-Syntax-Comparison"><a href="#2-1-Syntax-Comparison" class="headerlink" title="2.1 Syntax Comparison"></a>2.1 Syntax Comparison</h3><p>Let’s look at how different frameworks handle the same problem:</p>
+<h2 id="Part-2-Comparison-with-Other-Frameworks"><a href="#Part-2-Comparison-with-Other-Frameworks" class="headerlink" title="Part 2: Comparison with Other Frameworks"></a>Part 2: Comparison with Other Frameworks</h2><p>This comparison is based on public framework documentation and behavior at the time this article was written. The goal is to clarify execution models, not to rank frameworks.</p>
+<h3 id="2-1-Syntax-Comparison"><a href="#2-1-Syntax-Comparison" class="headerlink" title="2.1 Syntax Comparison"></a>2.1 Syntax Comparison</h3><p>Let’s look at how different frameworks handle the same problem:</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">┌─────────────────────────────────────────────────────────────┐</span><br><span class="line">│ React                                                       │</span><br><span class="line">├─────────────────────────────────────────────────────────────┤</span><br><span class="line">│ const [count, setCount] = useState(0)                       │</span><br><span class="line">│ const doubled = useMemo(() =&gt; count * 2, [count])           │</span><br><span class="line">│ // Problem: Manual dependency arrays are error-prone;       │</span><br><span class="line">│ // React Compiler automates memoization.                    │</span><br><span class="line">└─────────────────────────────────────────────────────────────┘</span><br><span class="line"></span><br><span class="line">┌─────────────────────────────────────────────────────────────┐</span><br><span class="line">│ Solid                                                       │</span><br><span class="line">├─────────────────────────────────────────────────────────────┤</span><br><span class="line">│ const [count, setCount] = createSignal(0)                   │</span><br><span class="line">│ const doubled = createMemo(() =&gt; count() * 2)               │</span><br><span class="line">│ // Mental model: count vs count();                          │</span><br><span class="line">│ // Destructuring props might lose reactivity (use splitProps)│</span><br><span class="line">└─────────────────────────────────────────────────────────────┘</span><br><span class="line"></span><br><span class="line">┌─────────────────────────────────────────────────────────────┐</span><br><span class="line">│ Svelte 5                                                    │</span><br><span class="line">├─────────────────────────────────────────────────────────────┤</span><br><span class="line">│ let count = $state(0)                                       │</span><br><span class="line">│ let doubled = $derived(count * 2)                           │</span><br><span class="line">│ // Better, but derived intent still needs explicit $derived │</span><br><span class="line">└─────────────────────────────────────────────────────────────┘</span><br><span class="line"></span><br><span class="line">┌─────────────────────────────────────────────────────────────┐</span><br><span class="line">│ Fict                                                        │</span><br><span class="line">├─────────────────────────────────────────────────────────────┤</span><br><span class="line">│ let count = $state(0)                                       │</span><br><span class="line">│ const doubled = count * 2                                   │</span><br><span class="line">│ // No $derived: Compiler automatically infers within static │</span><br><span class="line">│ // analysis scope.                                          │</span><br><span class="line">└─────────────────────────────────────────────────────────────┘</span><br></pre></td></tr></table></figure>
 
 <hr>
 <h3 id="2-2-Compiler-Comparison"><a href="#2-2-Compiler-Comparison" class="headerlink" title="2.2 Compiler Comparison"></a>2.2 Compiler Comparison</h3><p>Syntax is just the surface difference. A more essential distinction lies in: <strong>What responsibilities do the compilers (or runtimes) of each framework assume?</strong></p>
 <hr>
 <h4 id="React-Compiler-Automatic-Memoization-Does-not-change-React-Model"><a href="#React-Compiler-Automatic-Memoization-Does-not-change-React-Model" class="headerlink" title="React Compiler: Automatic Memoization (Does not change React Model)"></a>React Compiler: Automatic Memoization (Does not change React Model)</h4><p>The goal of React Compiler is clear: <strong>Automatic memoization</strong>.</p>
-<p>Its output often “looks like” it automatically added <code>React.memo / useMemo / useCallback</code> for you, but implementation-wise, it doesn’t necessarily generate these Hook calls; in public discussions, React Compiler explicitly stated it directly inlines dependency checks and caches values, avoiding the overhead of closures and dependency arrays associated with handwritten <code>useMemo/useCallback</code>.</p>
+<p>Its output often “looks like” it automatically added <code>React.memo / useMemo / useCallback</code> for you, but implementation-wise, it does not necessarily generate these Hook calls. Public explanations of React Compiler describe direct dependency checks and cached values, avoiding some overhead associated with handwritten <code>useMemo/useCallback</code>.</p>
 <figure class="highlight jsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Input</span></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">Component</span>(<span class="params">&#123; items &#125;</span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> sorted = items.<span class="title function_">toSorted</span>();</span><br><span class="line">  <span class="keyword">return</span> <span class="language-xml"><span class="tag">&lt;<span class="name">List</span> <span class="attr">data</span>=<span class="string">&#123;sorted&#125;</span> /&gt;</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>You can understand the compiler’s “conceptual” output as:</p>
@@ -252,16 +253,14 @@
 
 <p><strong>What it does:</strong></p>
 <ul>
-<li><p>✅ JSX → DOM templates&#x2F;bindings (static optimization at compile time)</p>
-</li>
-<li><p>✅ Runtime fine-grained dependency tracking: Whoever uses the signal subscribes to it; only updates relevant DOM bindings when changed (no VDOM).</p>
-</li>
-<li><p>✅ Provides tools (like <code>splitProps</code>) to safely handle props (avoiding loss of reactivity on destructuring).<br><strong>What it doesn’t do:</strong></p>
-</li>
-<li><p>❌ No “automatic derivation inference”: Derived values usually need explicit <code>createMemo</code>.</p>
-</li>
-<li><p>❌ Runtime model is “signals driven”, not “compiler globally infers everything”.</p>
-</li>
+<li>✅ JSX → DOM templates&#x2F;bindings (static optimization at compile time)</li>
+<li>✅ Runtime fine-grained dependency tracking: Whoever uses the signal subscribes to it; only updates relevant DOM bindings when changed (no VDOM).</li>
+<li>✅ Provides tools (like <code>splitProps</code>) to safely handle props (avoiding loss of reactivity on destructuring).</li>
+</ul>
+<p><strong>What it doesn’t do:</strong></p>
+<ul>
+<li>❌ No “automatic derivation inference”: Derived values usually need explicit <code>createMemo</code>.</li>
+<li>❌ Runtime model is “signals driven”, not “compiler globally infers everything”.</li>
 </ul>
 <hr>
 <h4 id="Vue-Vapor-A-“No-VDOM”-Exploration-Direction-Still-Evolving"><a href="#Vue-Vapor-A-“No-VDOM”-Exploration-Direction-Still-Evolving" class="headerlink" title="Vue Vapor: A “No VDOM” Exploration Direction (Still Evolving)"></a>Vue Vapor: A “No VDOM” Exploration Direction (Still Evolving)</h4><p>In Vue’s official documentation, Vapor Mode is described as <strong>a new compilation strategy being explored</strong>: inspired by Solid, <strong>not relying on Virtual DOM</strong>, and making stricter use of Vue’s built-in reactivity system.<br>Meanwhile, the <code>vue-vapor</code> repository itself is in an archived (read-only) state, so it should be treated as experimental &#x2F; in flux.</p>
@@ -302,7 +301,7 @@
 <td align="left">✅ <code>$derived/$effect</code> explicit; dependencies are captured from synchronous reads during evaluation.</td>
 <td align="left">✅ Explicit memo&#x2F;effect; dependency tracking at runtime.</td>
 <td align="left">✅ (Vue default: computed&#x2F;watch etc.; Vapor’s commitment to not changing intent expression is not set in stone)</td>
-<td align="left">✅</td>
+<td align="left">Partial: <code>$state</code>&#x2F;<code>$effect</code> explicit; derived values inferred</td>
 </tr>
 <tr>
 <td align="left">DX Form</td>
@@ -350,7 +349,7 @@
 </tr>
 <tr>
 <td align="left">Fict</td>
-<td align="left">On-demand (Mixed)</td>
+<td align="left">Mixed&#x2F;on-demand</td>
 <td align="left">Fine-grained DOM update</td>
 <td align="left">Native JS (if&#x2F;for)</td>
 </tr>
@@ -362,10 +361,10 @@
 <li>DOM will not be recreated: Signal slot reuse + binding updates ensure the button node, events, and refs remain in place, only the text node updates.</li>
 </ul>
 <hr>
-<h2 id="Part-3-Fict’s-“Full-Link-Analysis”-Design-Goal"><a href="#Part-3-Fict’s-“Full-Link-Analysis”-Design-Goal" class="headerlink" title="Part 3: Fict’s “Full-Link Analysis” (Design Goal)"></a>Part 3: Fict’s “Full-Link Analysis” (Design Goal)</h2><p>One thing Fict attempts to do is: <strong>Analyze the entire JS function, not just the template part.</strong></p>
+<h2 id="Part-3-Fict’s-Whole-Function-Dataflow-Analysis-Design-Goal"><a href="#Part-3-Fict’s-Whole-Function-Dataflow-Analysis-Design-Goal" class="headerlink" title="Part 3: Fict’s Whole-Function Dataflow Analysis (Design Goal)"></a>Part 3: Fict’s Whole-Function Dataflow Analysis (Design Goal)</h2><p>One thing Fict attempts to do is: <strong>analyze the entire JavaScript function, not just the template part.</strong></p>
 <figure class="highlight jsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">Counter</span>(<span class="params"></span>) &#123;</span><br><span class="line">  <span class="keyword">let</span> count = $state(<span class="number">0</span>);</span><br><span class="line">  <span class="keyword">const</span> doubled = count * <span class="number">2</span>;</span><br><span class="line">  <span class="keyword">const</span> message = <span class="string">`Value: <span class="subst">$&#123;doubled&#125;</span>`</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (count &gt; <span class="number">10</span>) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="language-xml"><span class="tag">&lt;<span class="name">Special</span> <span class="attr">value</span>=<span class="string">&#123;message&#125;</span> /&gt;</span></span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> <span class="language-xml"><span class="tag">&lt;<span class="name">button</span> <span class="attr">onClick</span>=<span class="string">&#123;()</span> =&gt;</span> count++&#125;&gt;&#123;message&#125;<span class="tag">&lt;/<span class="name">button</span>&gt;</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<p>Main processing stages of the Fict compiler:</p>
+<p>At a high level, the main processing stages of the Fict compiler are:</p>
 <ol>
 <li><strong>Build HIR (High-Level Intermediate Representation)</strong>: Function body → Basic Blocks + CFG (including if&#x2F;for&#x2F;while&#x2F;switch)</li>
 <li><strong>Convert to SSA</strong>: Make assignment versions unique, facilitating explicit dependency edges</li>
@@ -401,7 +400,7 @@
 <p>The characteristics of this compilation output are:</p>
 <ul>
 <li>No VDOM</li>
-<li>No diffing</li>
+<li>No whole-tree VDOM diffing</li>
 <li>Only precise DOM operations</li>
 <li><code>doubled</code> automatically memoized</li>
 </ul>
@@ -412,9 +411,9 @@
 <h3 id="Reactivity-of-Props"><a href="#Reactivity-of-Props" class="headerlink" title="Reactivity of Props"></a>Reactivity of Props</h3><p>Fict automatically maintains the reactivity of props, even after destructuring:</p>
 <figure class="highlight jsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Input</span></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">Child</span>(<span class="params">&#123; count, update &#125;</span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> doubled = count * <span class="number">2</span>;</span><br><span class="line">  <span class="keyword">return</span> <span class="language-xml"><span class="tag">&lt;<span class="name">div</span>&gt;</span>&#123;doubled&#125;<span class="tag">&lt;/<span class="name">div</span>&gt;</span></span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Output (Simplified)</span></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">Child</span>(<span class="params">__props</span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> __ctx = <span class="title function_">__fictUseContext</span>();</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Destructured props automatically wrapped as getters</span></span><br><span class="line">  <span class="keyword">const</span> count = <span class="title function_">useProp</span>(<span class="function">() =&gt;</span> __props.<span class="property">count</span>);</span><br><span class="line">  <span class="keyword">const</span> update = __props.<span class="property">update</span>; <span class="comment">// Function type not wrapped</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// Derived values automatically become memos</span></span><br><span class="line">  <span class="keyword">const</span> doubled = <span class="title function_">__fictUseMemo</span>(__ctx, <span class="function">() =&gt;</span> <span class="title function_">count</span>() * <span class="number">2</span>, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<p>This solves a common pain point in Solid: Destructuring props breaks reactivity. In Fict, you can destructure freely.</p>
+<p>This addresses a common pain point in Solid: destructuring props can break reactivity. In Fict, the compiler aims to preserve reactivity for supported destructuring patterns.</p>
 <hr>
-<h2 id="Part-7-Compiler-Safety-Rails"><a href="#Part-7-Compiler-Safety-Rails" class="headerlink" title="Part 7: Compiler Safety Rails"></a>Part 7: Compiler Safety Rails</h2><h3 id="DX-Protection-Mechanisms"><a href="#DX-Protection-Mechanisms" class="headerlink" title="DX Protection Mechanisms"></a>DX Protection Mechanisms</h3><p>The Fict compiler detects common error patterns and issues warnings:</p>
+<h2 id="Part-7-Compiler-Safety-Rails"><a href="#Part-7-Compiler-Safety-Rails" class="headerlink" title="Part 7: Compiler Safety Rails"></a>Part 7: Compiler Safety Rails</h2><h3 id="DX-Protection-Mechanisms"><a href="#DX-Protection-Mechanisms" class="headerlink" title="DX Protection Mechanisms"></a>DX Protection Mechanisms</h3><p>The Fict compiler is designed to detect common error patterns and issue warnings:</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">┌─────────────────────────────────────────────────────────────┐</span><br><span class="line">│ Code       │ Issue                   │ Severity             │</span><br><span class="line">├─────────────────────────────────────────────────────────────┤</span><br><span class="line">│ FICT-C003  │ Nested Component Def    │ Warning              │</span><br><span class="line">│ FICT-M003  │ Memo with Side Effects  │ Warning              │</span><br><span class="line">│ FICT-S002  │ State passed as arg     │ Warning              │</span><br><span class="line">│ FICT-J002  │ List missing key        │ Warning              │</span><br><span class="line">│ FICT-E001  │ Effect no deps          │ Warning              │</span><br><span class="line">│ FICT-C004  │ Component no return     │ Warning              │</span><br><span class="line">├─────────────────────────────────────────────────────────────┤</span><br><span class="line">│ $state inside condition | Not Allowed | Compile Error       │</span><br><span class="line">│ $state inside loop      | Not Allowed | Compile Error       │</span><br><span class="line">│ Destructuring $state    | Not Allowed | Compile Error       │</span><br><span class="line">└─────────────────────────────────────────────────────────────┘</span><br></pre></td></tr></table></figure>
 
 <p>For example, defining nested components is a common anti-pattern:</p>
@@ -422,7 +421,7 @@
 
 <p>The compiler will warn you to move <code>Child</code> to module scope.</p>
 <hr>
-<h2 id="Part-8-Trade-offs"><a href="#Part-8-Trade-offs" class="headerlink" title="Part 8: Trade-offs"></a>Part 8: Trade-offs</h2><h3 id="What-Fict-can’t-do-yet"><a href="#What-Fict-can’t-do-yet" class="headerlink" title="What Fict can’t do (yet)"></a>What Fict can’t do (yet)</h3><p>I want to be honest about Fict’s limitations:</p>
+<h2 id="Part-8-Trade-offs"><a href="#Part-8-Trade-offs" class="headerlink" title="Part 8: Trade-offs"></a>Part 8: Trade-offs</h2><h3 id="What-Fict-cannot-do-yet"><a href="#What-Fict-cannot-do-yet" class="headerlink" title="What Fict cannot do yet"></a>What Fict cannot do yet</h3><p>I want to be honest about Fict’s limitations:</p>
 <p><strong>1. Dependency tracking inside black-box functions may be incomplete</strong></p>
 <figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> result = someExternalLib.<span class="title function_">compute</span>(<span class="function">() =&gt;</span> count);</span><br><span class="line"><span class="comment">// Compiler cannot see inside compute callback, dependency tracking might be incomplete</span></span><br></pre></td></tr></table></figure>
 
@@ -431,9 +430,9 @@
 <figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> key = <span class="title function_">getDynamicKey</span>();</span><br><span class="line"><span class="keyword">const</span> value = obj[key]; <span class="comment">// Compiler doesn&#x27;t know what key is</span></span><br></pre></td></tr></table></figure>
 
 <p>Solution: Degrade to object-level subscription + warning.</p>
-<p><strong>3. No Ecosystem</strong></p>
+<p><strong>3. Immature ecosystem</strong></p>
 <p>This is common for new frameworks. No UI library, no complete SSR framework, no mature router. If you need to go to production today, Fict might not be the right choice.</p>
-<p><strong>4. Execution Model needs learning</strong></p>
+<p><strong>4. The execution model has a learning curve</strong></p>
 <p>Fict’s execution model differs from React (see Section 2.3):</p>
 <figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&quot;A&quot;</span>); <span class="comment">// Executes once</span></span><br><span class="line"><span class="keyword">let</span> count = $state(<span class="number">0</span>);</span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&quot;B&quot;</span>, count); <span class="comment">// Executes every time count changes</span></span><br></pre></td></tr></table></figure>
 
@@ -441,16 +440,16 @@
 <p>We will provide Fict DevTools to visualize these regions to aid debugging.</p>
 <p><strong>5. Compiler Complexity</strong></p>
 <p>Fict’s compiler is much more complex than Solid’s. More code means more potential bugs.</p>
-<h3 id="Known-Escape-Hatches-Mitigation"><a href="#Known-Escape-Hatches-Mitigation" class="headerlink" title="Known Escape Hatches &#x2F; Mitigation"></a>Known Escape Hatches &#x2F; Mitigation</h3><ul>
+<h3 id="Known-escape-hatches-mitigation"><a href="#Known-escape-hatches-mitigation" class="headerlink" title="Known escape hatches &#x2F; mitigation"></a>Known escape hatches &#x2F; mitigation</h3><ul>
 <li>Explicit <code>$memo</code> &#x2F; <code>$effect</code>: When automatic inference doesn’t meet expectations, manually declare derivation or side-effect boundaries.</li>
 <li><code>useProp/mergeProps</code> helpers: Manually maintain reactivity when props access patterns are special.</li>
-<li>Control Flow Degradation: Scenarios that cannot be statically analyzed are handed over to the re-execution model, prioritizing correctness.</li>
+<li>Control-flow degradation: Scenarios that cannot be statically analyzed are handed over to the re-execution model, prioritizing correctness.</li>
 </ul>
 <h3 id="Why-I-still-think-it’s-worth-it"><a href="#Why-I-still-think-it’s-worth-it" class="headerlink" title="Why I still think it’s worth it"></a>Why I still think it’s worth it</h3><p>Despite all these trade-offs, I believe what we get in return is worth it:</p>
 <ul>
 <li>The amount of code developers write every day is reduced.</li>
 <li>Mental burden is reduced.</li>
-<li>Beginners don’t need to understand “why do I have to write useMemo”.</li>
+<li>Newcomers do not need to start by understanding “why do I have to write useMemo?”</li>
 </ul>
 <p>React Compiler proved that “letting the compiler take more responsibility” is the right direction. Fict just pushes this idea a bit further.</p>
 <hr>
@@ -477,16 +476,16 @@
 <p>Fict does not attempt to replace these excellent frameworks, but is a technical exploration: If we start from scratch based on these excellent frameworks, taking “compiler automatic dependency inference” as the core design principle, how far can we go?</p>
 </blockquote>
 <hr>
-<h2 id="Conclusion-Welcome-to-Try"><a href="#Conclusion-Welcome-to-Try" class="headerlink" title="Conclusion: Welcome to Try"></a>Conclusion: Welcome to Try</h2><p>Fict is currently under active development.</p>
+<h2 id="Conclusion-Try-Fict"><a href="#Conclusion-Try-Fict" class="headerlink" title="Conclusion: Try Fict"></a>Conclusion: Try Fict</h2><p>Fict is currently under active development.</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install fict</span><br></pre></td></tr></table></figure>
 
-<p>The core compiler and runtime functions are basically stable, but the ecosystem is still under construction. If you are interested in trying it out, we look forward to your feedback:</p>
+<p>The core compiler and runtime functions are largely stable, but the ecosystem is still under construction. If you are interested in trying it out, feedback is welcome:</p>
 <ul>
 <li>Bug reports (edge cases are especially valuable)</li>
 <li>Suggestions for improving compiler output</li>
 <li>Usage patterns you think should be supported but are not yet</li>
 </ul>
-<p>Thank you for reading, and looking forward to communicating with you.</p>
+<p>Thank you for reading. Feedback and technical discussion are welcome.</p>
 
   </div>
 </article>

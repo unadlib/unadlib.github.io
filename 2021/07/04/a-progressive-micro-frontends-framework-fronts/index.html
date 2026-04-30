@@ -175,97 +175,97 @@
       <h2 id="Micro-Frontends"><a href="#Micro-Frontends" class="headerlink" title="Micro Frontends"></a>Micro Frontends</h2><blockquote>
 <p>An architectural style where independently deliverable frontend applications are composed into a greater whole.</p>
 </blockquote>
-<p>As front-end development becomes increasingly complex, traditional large front-end projects should likely end up being difficult to maintain due to over-coupling, and therefore Micro Frontends is also gaining attention in front-end architectures.</p>
-<p>Front-end application modules dynamic will become one of the new trends in front-end development, and it will be possible to solve the problem of code base maintainability and delivery efficiency more thoroughly.</p>
+<p>As front-end development becomes increasingly complex, traditional large front-end projects often become difficult to maintain because of tight coupling. This is why micro frontends have gained attention in front-end architecture.</p>
+<p>Dynamic front-end application modules may become an important trend, helping teams improve codebase maintainability and delivery efficiency.</p>
 <h2 id="Benefits-and-Value-of-Micro-Frontends"><a href="#Benefits-and-Value-of-Micro-Frontends" class="headerlink" title="Benefits and Value of Micro Frontends"></a>Benefits and Value of Micro Frontends</h2><ul>
 <li>Independence and Autonomy</li>
 </ul>
-<p>Only if the overall process of application development can be developed, deployed and managed independently of the code base, etc., then the front-end project can have true independence guaranteed. And this possibility of team autonomy is also in line with Conway’s Law, which states that “Any organization that designs a system (defined broadly) will produce a design whose structure is a copy of the organization’s communication structure”, thus bringing about a possible new form of organizational management.</p>
+<p>Only when each part of the application can be developed, deployed, and managed independently can a front-end project achieve real independence. This team autonomy also aligns with Conway’s Law: “Any organization that designs a system (defined broadly) will produce a design whose structure is a copy of the organization’s communication structure.” In practice, micro frontends can enable a new organizational model for large front-end teams.</p>
 <ul>
 <li>Technology Agnostic</li>
 </ul>
-<p>Technology agnostic facilitates the collaboration of multiple teams with different technology stacks. The smooth migration of technology stacks also brings greater convenience to the continuous iteration and technology upgrade of the older business system.</p>
+<p>Technology-agnostic architecture makes it easier for teams with different technology stacks to collaborate. It also makes gradual migration and technology upgrades easier for older business systems.</p>
 <ul>
 <li>Runtime Integration</li>
 </ul>
-<p>In modern front-end development processes, we most often see build-time integration. Whereas before, runtime integration happened to separate modules more independently. Micro frontends also happen to integrate well with such micro module concepts and keep such modules independent and dependency sharing.</p>
+<p>Modern front-end development often relies on build-time integration. Runtime integration can separate modules more independently. Micro frontends fit this model well by keeping modules independently delivered while still allowing dependency sharing.</p>
 <ul>
 <li>Decoupled Modularity &amp; Composable</li>
 </ul>
-<p>In large front-end projects, we have high requirements for modular decoupling, often based on different types of divisions, such as business type modularity, technical service type modularity, and so on. The composable of individual micro frontends particles in turn allows for good module consistency and overall customization differentiation across multiple deliverable families, and can greatly reduce business duplication.</p>
-<p>In general, the proper practice of micro frontends architecture will bring far-reaching value to the long-term maintenance of some large front-end projects.</p>
-<h2 id="Motivation"><a href="#Motivation" class="headerlink" title="Motivation"></a>Motivation</h2><p>Among the many micro frontends solutions, single-spa and Module Federation are the best of them.</p>
-<p>single-spa is a micro frontends framework based on router configuration. The centralization of configuration brings some limitations, such as it is difficult to granulate nestable micro frontends, module granularity control, module sharing, and so on.</p>
-<p>In 2019, Zack Jackson proposed and implemented Module Federation. Module Federation is a completely different concept from single-spa, and allows a JavaScript application to dynamically load code from another application. It completely solves the problem of code dependency sharing and runtime modularity. The idea is true - A game-changer in JavaScript architecture as mentioned in Zack Jackson’s article. And it’s currently supported by Webpack, Next.js, and Rollup.</p>
-<p>Although the Module Federation concept is so amazing, it has not yet gone further to provide a more complete and fully targeted micro frontends framework implementation, and this is what Fronts is trying to do.</p>
-<h2 id="Hotspots-of-Micro-Frontends-Framework"><a href="#Hotspots-of-Micro-Frontends-Framework" class="headerlink" title="Hotspots of Micro Frontends Framework"></a>Hotspots of Micro Frontends Framework</h2><p>Based on the current mainstream micro frontends frameworks or concepts, the following is a compilation of the main hotspots involved.</p>
+<p>Large front-end projects require strong modular decoupling, often split by business domains, technical services, or product capabilities. Composable micro frontend units can preserve consistency while allowing customization across product families, reducing duplicated business code.</p>
+<p>In general, a well-designed micro frontend architecture can bring long-term maintainability benefits to large front-end projects.</p>
+<h2 id="Motivation"><a href="#Motivation" class="headerlink" title="Motivation"></a>Motivation</h2><p>Among many micro frontend solutions, single-spa and Module Federation are two of the most influential.</p>
+<p>single-spa is a micro frontend framework based on router configuration. Centralized configuration brings some limitations: nested micro frontends are harder to model, module granularity is harder to control, and module sharing still needs additional solutions.</p>
+<p>In 2019, Zack Jackson proposed and implemented Module Federation. Module Federation is different from single-spa: it allows one JavaScript application to dynamically load code from another application. It directly addresses dependency sharing and runtime modularity. As Zack Jackson described, it is a game changer in JavaScript architecture, and it is supported by Webpack, Next.js, and Rollup.</p>
+<p>Although Module Federation is powerful, it is not by itself a complete micro frontend framework. Fronts tries to build a more targeted framework on top of this concept.</p>
+<h2 id="Hotspots-of-Micro-Frontends-Framework"><a href="#Hotspots-of-Micro-Frontends-Framework" class="headerlink" title="Hotspots of Micro Frontends Framework"></a>Hotspots of Micro Frontends Framework</h2><p>Based on current mainstream micro frontend frameworks and concepts, the following are the main design questions involved.</p>
 <ul>
-<li>Should the granularity level be application level or module level</li>
+<li>Should the granularity be application-level or module-level?</li>
 </ul>
-<p>Module level is obviously more advantageous in terms of flexibility and granularity, but there is clearly an advantage to supporting application level in order to be compatible with some not so modern front-end projects, so we need a framework that supports both. If application-level runtime integration is required, it is clear that just using Module Federation’s Webpack is not enough, we also need a runtime application-level granular entry point loader.</p>
+<p>Module-level integration is more flexible and fine-grained, but application-level integration is still important for compatibility with older front-end projects. A practical framework should support both. If application-level runtime integration is required, Module Federation alone is not enough; we also need a runtime loader for application-level entry points.</p>
 <ul>
-<li>Whether the entry point file is HTML or JavaScript</li>
+<li>Should the entry point be HTML or JavaScript?</li>
 </ul>
-<p>From a modern engineering perspective, most front-end application entry points are JS-based, and some previous front-end projects have used HTML alone as the entry point. The trade-off is that building a micro frontends system for applications where HTML is the main entry point is bound to be a longer and more complex of processes. Such a library would be better suited as a standalone sub-package, while the overall framework should take JS files as the entry point.</p>
+<p>From a modern engineering perspective, most front-end application entry points are JavaScript-based, while some older projects use HTML as the entry point. Supporting HTML entry points can be useful, but it makes the micro frontend system more complex. This capability is better suited to a standalone sub-package, while the core framework should use JavaScript entry points.</p>
 <ul>
-<li>Is it necessary to support perfect module sharing</li>
+<li>Is full module sharing necessary?</li>
 </ul>
-<p>Module sharing is a problem that must be solved by micro frontends frameworks, otherwise the duplication of resources at runtime will make micro frontends less valuable. Currently, only Webpack with Module Federation allows such module sharing to be handled at build time, with dynamic dependency sharing at runtime. No better solution than Module Federation has yet emerged.</p>
+<p>Module sharing is a problem that micro frontend frameworks must solve; otherwise, duplicated runtime resources reduce the value of the architecture. Module Federation provides a strong solution by handling shared dependencies at build time and resolving them dynamically at runtime.</p>
 <ul>
 <li>CSS&#x2F;JS isolation trade-off</li>
 </ul>
 <p>Isolation of CSS is almost required and is supported by many micro frontends frameworks. We may have to do all kinds of hijacking to ensure the security, performance and stability, and also consider the compatibility of different browsers. However, JS isolation is relatively expensive to implement, and the fact that such isolation is required for modern front-end engineering depends on the actual situation of each micro frontend.</p>
 <ul>
-<li>Generic micro frontend and support multiple containers with multiple modes (Or SSR, etc.)</li>
+<li>Generic micro frontends and support for multiple containers or modes</li>
 </ul>
-<p>In large front-end projects, it is often not just about building a single web application, but possibly multiple web applications, or even more front-end application types, such as Electron applications, browser extensions, native applications, etc. So a good micro frontends framework should be able to run more kinds of containers and build a variety of application types, but also preferably compatible with building traditional SPA and micro frontends applications. Module Federation also initially implemented in the next.js implementation of SSR support.</p>
+<p>Large front-end projects often include more than one web application. They may also include Electron applications, browser extensions, native applications, and other containers. A good micro frontend framework should support multiple containers and application types while still being compatible with traditional SPA development. Module Federation has also been used in Next.js SSR scenarios.</p>
 <ul>
 <li>Version control and dependency management</li>
 </ul>
 <p>With rapid iteration and business growth, various module management becomes very important, so when a large front-end project practices micro frontends architecture at a later stage, version control and dependency management will become especially important, which will determine the delivery efficiency and maintainability.</p>
 <p>To solve these problems, Fronts was created.</p>
-<h2 id="What’s-Fronts"><a href="#What’s-Fronts" class="headerlink" title="What’s Fronts"></a>What’s Fronts</h2><p>Fronts is a progressive micro frontends framework for building Web applications, and it’s based on the module federation of Webpack.</p>
+<h2 id="What’s-Fronts"><a href="#What’s-Fronts" class="headerlink" title="What’s Fronts"></a>What’s Fronts</h2><p>Fronts is a progressive micro frontend framework for building web applications. It is based on Webpack Module Federation, while also supporting non-module-federation mode.</p>
 <p>Repo: <a href="https://github.com/unadlib/fronts">https://github.com/unadlib/fronts</a></p>
 <ul>
-<li><strong>Non-module-federation</strong> - Although Fronts is based on the concept of module federation, it also supports <code>non-module-federation</code> mode.</li>
-<li><strong>Decentralized configuration</strong> - Configure <code>site.json</code> for dependency management in each Fronts app, support for nested micro frontends.</li>
-<li><strong>Cross frameworks</strong> - No framework or technology stack is restricted.</li>
-<li><strong>Code splitting &amp; lazy loading</strong> - Support code splitting within the Fronts app as a module, it can be lazy loaded by other Fronts app as a dependent module.</li>
+<li><strong>Non-module-federation mode</strong> - Although Fronts is based on Module Federation concepts, it also supports <code>non-module-federation</code> mode.</li>
+<li><strong>Decentralized configuration</strong> - Each Fronts app uses <code>site.json</code> for dependency management and nested micro frontend support.</li>
+<li><strong>Cross-framework support</strong> - No framework or technology stack is required.</li>
+<li><strong>Code splitting &amp; lazy loading</strong> - A Fronts app can be split as a module and lazy-loaded by another Fronts app as a dependency.</li>
 <li><strong>CSS isolation</strong> - Optional CSS isolation solution.</li>
-<li><strong>Lifecycle</strong> - Fronts provide concise lifecycle for Fronts app entry.</li>
+<li><strong>Lifecycle</strong> - Fronts provides a concise lifecycle for Fronts app entries.</li>
 <li><strong>Web Components &amp; iFrame</strong> - Support for multiple frontend containers.</li>
-<li><strong>Multiple patterns</strong> - Support for building <code>micro-frontends</code> app and <code>non-micro-frontends</code> app.</li>
-<li><strong>Monorepo &amp; TypeScript</strong> - Friendly support for Monorepo and TypeScript, which are mutually appropriate technology stack.</li>
-<li><strong>Version control</strong> - It’s used for efficient and dynamic delivery apps such as canary release.</li>
-<li><strong>Zero hijacking</strong> - Fronts didn’t do any hijacking, maintaining originality and possible loss of performance and security.</li>
-<li><strong>Generic Communication</strong> - Fronts provides concise and generic communication APIs, which supports almost all frontend environments.</li>
+<li><strong>Multiple patterns</strong> - Supports both <code>micro-frontends</code> apps and <code>non-micro-frontends</code> apps.</li>
+<li><strong>Monorepo &amp; TypeScript</strong> - Provides friendly support for Monorepo and TypeScript workflows.</li>
+<li><strong>Version control</strong> - Supports dynamic delivery patterns such as canary releases.</li>
+<li><strong>Zero hijacking</strong> - Fronts avoids runtime hijacking, preserving native behavior and reducing performance and security risks.</li>
+<li><strong>Generic communication</strong> - Fronts provides concise communication APIs that support most front-end environments.</li>
 </ul>
-<h2 id="Benefits-of-Fronts"><a href="#Benefits-of-Fronts" class="headerlink" title="Benefits of Fronts"></a>Benefits of Fronts</h2><p><strong>Fronts is a concise and easy to understand micro frontends framework.</strong></p>
+<h2 id="Benefits-of-Fronts"><a href="#Benefits-of-Fronts" class="headerlink" title="Benefits of Fronts"></a>Benefits of Fronts</h2><p><strong>Fronts is a concise and easy-to-understand micro frontend framework.</strong></p>
 <p>Set <code>site.json</code> to define a micro frontend, similar to a <code>package.json</code> in Node.js.</p>
 <figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="string">&quot;name&quot;</span>: <span class="string">&quot;app1&quot;</span>,</span><br><span class="line">  <span class="string">&quot;exports&quot;</span>: [<span class="string">&quot;./src/bootstrap&quot;</span>],</span><br><span class="line">  <span class="string">&quot;dependencies&quot;</span>: &#123;</span><br><span class="line">    <span class="comment">// If version control is enabled,</span></span><br><span class="line">    <span class="comment">// here it looks like: `&quot;app2&quot;: &quot;1.0.0&quot;`</span></span><br><span class="line">    <span class="string">&quot;app2&quot;</span>: <span class="string">&quot;http://localhost:3002/remoteEntry.js&quot;</span></span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="string">&quot;shared&quot;</span>: &#123;</span><br><span class="line">    <span class="string">&quot;react&quot;</span>: &#123; <span class="string">&quot;singleton&quot;</span>: <span class="literal">true</span> &#125;,</span><br><span class="line">    <span class="string">&quot;react-dom&quot;</span>: &#123; <span class="string">&quot;singleton&quot;</span>: <span class="literal">true</span> &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p><strong>Fronts is progressive.</strong></p>
-<p>If every front-end application does not support Module Federation, it will still work well as a micro frontend, with on-demand runtime modes, and as projects are upgraded, they can gradually be made to support Module Federation and eventually version control can be enabled. With support for multiple granularity levels, build types, module types, shared types, runtime types, and communication types, Fronts can almost meet all kinds of micro frontends architectures.</p>
+<p>If some front-end applications do not support Module Federation, they can still run as micro frontends through on-demand runtime modes. As projects are upgraded, they can gradually adopt Module Federation and eventually enable version control. By supporting multiple granularity levels, build types, module types, shared dependency types, runtime types, and communication types, Fronts can cover many micro frontend architectures.</p>
 <p><strong>Fronts APIs are clean and simple.</strong></p>
-<p>Fronts provides three sets of loaders <code>useApp()</code>, <code>useWebComponents()</code> and <code>useIframe()</code>. It also provides an micro frontend launcher <code>boot()</code> and a Webpack configuration generator <code>createWebpackConfig()</code>. With these APIs, you will be able to do micro frontends development quickly and efficiently.</p>
-<h2 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h2><p>We will build a micro frontends project based on Fronts, where <code>app1</code> is the main entry point and it will depend on <code>app2</code>.</p>
+<p>Fronts provides three loaders: <code>useApp()</code>, <code>useWebComponents()</code>, and <code>useIframe()</code>. It also provides a micro frontend launcher, <code>boot()</code>, and a Webpack configuration generator, <code>createWebpackConfig()</code>. These APIs make micro frontend development faster and more consistent.</p>
+<h2 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h2><p>We will build a micro frontend project based on Fronts, where <code>app1</code> is the main entry point and depends on <code>app2</code>.</p>
 <blockquote>
 <p>You can follow this article(<a href="https://dev.to/rogeliosamuel621/react-without-create-react-app-webpack-5-1b1o">React without create-react-app Webpack 5</a>) to quickly create <code>app1</code> and <code>app2</code> React projects.</p>
 </blockquote>
-<p>Assuming you’ve completed these steps, let’s get started with a quick taste of the wonderful micro frontends development of Fronts.</p>
+<p>Assuming you have completed these steps, let’s get a quick taste of Fronts development.</p>
 <ul>
 <li>Install <code>fronts-react</code> and <code>fronts-bundler</code> in the projects.</li>
 </ul>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">with NPM</span></span><br><span class="line">npm install fronts-react fronts-bundler</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">or with Yarn</span></span><br><span class="line">yarn add fronts-react fronts-bundler</span><br></pre></td></tr></table></figure>
 
 <ul>
-<li>Set up <code>site.json</code> and <code>webpack.config.js</code> in the projects</li>
+<li>Set up <code>site.json</code> and <code>webpack.config.js</code> in the projects.</li>
 </ul>
 <p>We define <code>app1</code> as a parent micro frontend and it depends on <code>app2</code>.</p>
 <p><code>app1/site.json</code>:</p>
 <figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="string">&quot;name&quot;</span>: <span class="string">&quot;app1&quot;</span>,</span><br><span class="line">  <span class="string">&quot;exports&quot;</span>: [],</span><br><span class="line">  <span class="string">&quot;dependencies&quot;</span>: &#123;</span><br><span class="line">    <span class="string">&quot;app2&quot;</span>: <span class="string">&quot;http://localhost:3002/remoteEntry.js&quot;</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<p><code>app2</code> doesn’t have any dependencies, it acts as a micro frontend and we define it to export <code>./src/bootstrap</code> as a micro frontends entry, this entry of <code>app2</code> end will be used by <code>app1</code>.</p>
+<p><code>app2</code> does not have any dependencies. It acts as a micro frontend, and we define <code>./src/bootstrap</code> as its micro frontend entry. This entry will be used by <code>app1</code>.</p>
 <p><code>app2/site.json</code>:</p>
 <figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="string">&quot;name&quot;</span>: <span class="string">&quot;app2&quot;</span>,</span><br><span class="line">  <span class="string">&quot;exports&quot;</span>: [<span class="string">&quot;./src/bootstrap&quot;</span>],</span><br><span class="line">  <span class="string">&quot;dependencies&quot;</span>: &#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
@@ -273,37 +273,37 @@
 <figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> &#123; createWebpackConfig &#125; = <span class="built_in">require</span>(<span class="string">&#x27;fronts-bundler&#x27;</span>);</span><br><span class="line"></span><br><span class="line"><span class="variable language_">module</span>.<span class="property">exports</span> = <span class="title function_">createWebpackConfig</span>(originalWebpackConfig);</span><br></pre></td></tr></table></figure>
 
 <ul>
-<li>Define the default exported bootstrap function in <code>app2/src/bootstrap.jsx</code> and use <code>boot()</code> to get it booted.</li>
+<li>Define the default exported bootstrap function in <code>app2/src/bootstrap.jsx</code> and use <code>boot()</code> to start it.</li>
 </ul>
 <figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> <span class="title class_">React</span> <span class="keyword">from</span> <span class="string">&#x27;react&#x27;</span>;</span><br><span class="line"><span class="keyword">import</span> <span class="title class_">ReactDOM</span> <span class="keyword">from</span> <span class="string">&#x27;react-dom&#x27;</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; boot &#125; <span class="keyword">from</span> <span class="string">&#x27;fronts-react&#x27;</span>;</span><br><span class="line"><span class="keyword">import</span> <span class="title class_">App</span> <span class="keyword">from</span> <span class="string">&#x27;./App&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> <span class="keyword">function</span> <span class="title function_">render</span>(<span class="params">element</span>) &#123;</span><br><span class="line">  <span class="title class_">ReactDOM</span>.<span class="title function_">render</span>(<span class="language-xml"><span class="tag">&lt;<span class="name">App</span> /&gt;</span></span>, element);</span><br><span class="line">  <span class="keyword">return</span> <span class="function">() =&gt;</span> &#123;</span><br><span class="line">    <span class="title class_">ReactDOM</span>.<span class="title function_">unmountComponentAtNode</span>(element);</span><br><span class="line">  &#125;;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="title function_">boot</span>(render, <span class="variable language_">document</span>.<span class="title function_">getElementById</span>(<span class="string">&#x27;root&#x27;</span>));</span><br></pre></td></tr></table></figure>
 
 <ul>
-<li>Load <code>app1/src/App.jsx</code> with <code>useApp()</code> to import <code>app2</code>.</li>
+<li>In <code>app1/src/App.jsx</code>, use <code>useApp()</code> to load <code>app2</code>.</li>
 </ul>
 <figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> <span class="title class_">React</span> <span class="keyword">from</span> <span class="string">&#x27;react&#x27;</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; useApp &#125; <span class="keyword">from</span> <span class="string">&#x27;fronts-react&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">const</span> <span class="title function_">App</span> = (<span class="params"></span>) =&gt; &#123;</span><br><span class="line">  <span class="keyword">const</span> <span class="title class_">App2</span> = <span class="title function_">useApp</span>(&#123;</span><br><span class="line">    <span class="attr">name</span>: <span class="string">&#x27;app2&#x27;</span>,</span><br><span class="line">    <span class="attr">loader</span>: <span class="function">() =&gt;</span> <span class="keyword">import</span>(<span class="string">&#x27;app2/src/bootstrap&#x27;</span>),</span><br><span class="line">  &#125;);</span><br><span class="line">  <span class="keyword">return</span> <span class="language-xml"><span class="tag">&lt;<span class="name">App2</span> /&gt;</span></span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
 
-<p>Run <code>yarn start</code>, and <code>app2</code> is rendered as a micro frontend on <code>app1</code>.</p>
+<p>Run <code>yarn start</code>, and <code>app2</code> will be rendered as a micro frontend inside <code>app1</code>.</p>
 <p>Example repo：<a href="https://github.com/unadlib/fronts-example">https://github.com/unadlib/fronts-example</a></p>
 <h2 id="Notes"><a href="#Notes" class="headerlink" title="Notes"></a>Notes</h2><ul>
 <li>Built-in packages</li>
 </ul>
-<p>The mainstream front-end frameworks are still React, Vue and Angular. When a micro frontend uses one of them, it is recommended to use Fronts’ built-in packages, such as <code>fronts-react</code>, <code>fronts-vue</code> and <code>fronts-ng</code>, and when it comes to other frameworks not supported by the built-in packages or no framework, then please use <code>fronts</code>.</p>
+<p>The mainstream front-end frameworks are still React, Vue, and Angular. When a micro frontend uses one of them, it is recommended to use Fronts’ built-in packages, such as <code>fronts-react</code>, <code>fronts-vue</code>, and <code>fronts-ng</code>. For other frameworks, or no framework, use <code>fronts</code>.</p>
 <ul>
 <li>Built-in Package API</li>
 </ul>
-<p>Each built-in package contains three sets of loaders <code>useApp()</code>, <code>useWebComponents()</code>, <code>useIframe()</code>. <code>useApp()</code> provides loose CSS isolation, <code>useWebComponents()</code> provides strict CSS isolation, and <code>useIframe()</code> provides native strict CSS isolation and JS isolation.</p>
+<p>Each built-in package contains three loaders: <code>useApp()</code>, <code>useWebComponents()</code>, and <code>useIframe()</code>. <code>useApp()</code> provides loose CSS isolation, <code>useWebComponents()</code> provides strict CSS isolation, and <code>useIframe()</code> provides native CSS and JavaScript isolation.</p>
 <ul>
 <li>Version Control</li>
 </ul>
-<p>Fronts does not have full version control suite support and currently only supports self-built registry server.</p>
+<p>Fronts does not yet provide a full version-control suite and currently only supports a self-hosted registry server.</p>
 <ul>
 <li>Monorepo &amp; TypeScript</li>
 </ul>
-<p>Large front-end projects often mean a high level of complexity, so Fronts are well suited for use in a combination of technology stacks like Monorepo and TypeScript. You get a great development experience in type safety, code management and runtime integration. when each micro frontend is used as a Monorepo sub-package, you just run <code>SPA=true yarn start</code> and switch the micro frontends development mode to the traditional SPA development mode.</p>
-<h2 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h2><p>The front-end architecture based on Fronts, Monorepo, and TypeScript will significantly improve codebase management, type safety, business development and delivery efficiency, and enable multiple combination of product business capabilities, high reuse and consistency of business code, and diversity of application types.</p>
-<p>Every large front-end project that tries to implement micro frontends architecture has different or similar requirements, so by analyzing the demands and needs of their own large front-end projects and using them to build or choose their own micro front-end architecture, they can really solve their own main engineering problems.</p>
-<p>With a general module concept based on Module Federation, Fronts tries to solve the main problems of micro frontends in a more targeted and systematic way, such as cross-framework, dependency sharing, dependency management, version control, compatibility with multiple runtime containers and patterns, etc.</p>
-<p>Fronts wants to evolve from more micro frontends architecture requirements to an efficient micro frontends framework.</p>
+<p>Large front-end projects often involve high complexity, so Fronts is well suited to technology stacks such as Monorepo and TypeScript. You get a strong development experience for type safety, code management, and runtime integration. When each micro frontend is used as a Monorepo sub-package, you can run <code>SPA=true yarn start</code> to switch the micro frontend into traditional SPA development mode.</p>
+<h2 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h2><p>An architecture based on Fronts, Monorepo, and TypeScript can improve codebase management, type safety, business development, and delivery efficiency. It can also enable multiple combinations of product capabilities, higher business-code reuse, stronger consistency, and more diverse application types.</p>
+<p>Every large front-end project has its own micro frontend requirements. Teams should analyze their own constraints and choose or build an architecture that solves their main engineering problems.</p>
+<p>With a general module concept based on Module Federation, Fronts tries to solve micro frontend problems in a targeted and systematic way: cross-framework integration, dependency sharing, dependency management, version control, and compatibility with multiple runtime containers and patterns.</p>
+<p>Fronts will continue evolving from real micro frontend architecture requirements into a more efficient framework.</p>
 <p>Repo: <a href="https://github.com/unadlib/fronts">https://github.com/unadlib/fronts</a></p>
 
   </div>

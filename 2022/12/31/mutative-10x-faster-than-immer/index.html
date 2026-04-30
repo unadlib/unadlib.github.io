@@ -172,16 +172,16 @@
   <h1 class="title">Mutative - 10x faster than Immer</h1>
   <p class="time">2022-12-31</span>
   <div class="content">
-      <p><strong>Mutative</strong> - A JavaScript library for efficient immutable updates, faster than naive handcrafted reducer, and more than 10x faster than Immer.</p>
+      <p><strong>Mutative</strong> - A JavaScript library for efficient immutable updates. In the benchmark below, it is faster than a naive handcrafted reducer and more than 10x faster than Immer.</p>
 <h2 id="Motivation"><a href="#Motivation" class="headerlink" title="Motivation"></a>Motivation</h2><p>Writing immutable updates by hand is usually difficult, prone to errors, and cumbersome. Immer helps us write simpler immutable updates with “mutative” logic.</p>
-<p>But its performance issue causes a runtime performance overhead. Immer must have auto-freeze enabled by default(Performance will be worse if auto-freeze is disabled), such immutable state with Immer is not common. In scenarios such as cross-processing, remote data transfer, etc., we have to constantly freeze these immutable data.</p>
-<p>There are more parts that could be improved, such as better type inference, non-intrusive markup, support for more types of immutability, Safer immutability, <a href="test/immer-non-support.test.ts">more edge cases</a>, and so on.</p>
+<p>However, Immer can introduce runtime overhead. In the benchmark below, Immer performs much worse when auto-freeze is disabled, while Mutative disables auto-freeze by default. In scenarios such as cross-process communication or remote data transfer, repeatedly freezing immutable data can also become expensive.</p>
+<p>There are also other areas to improve, such as better type inference, non-intrusive marking, support for more immutable data types, safer immutable updates, and <a href="test/immer-non-support.test.ts">additional edge cases</a>.</p>
 <p>This is why Mutative was created.</p>
 <p>Repo: <a href="https://github.com/unadlib/mutative">https://github.com/unadlib/mutative</a></p>
 <h2 id="Mutative-vs-Immer-Performance"><a href="#Mutative-vs-Immer-Performance" class="headerlink" title="Mutative vs Immer Performance"></a>Mutative vs Immer Performance</h2><blockquote>
 <p>Mutative passed all of Immer’s test cases.</p>
 </blockquote>
-<p>Measure(ops&#x2F;sec) to update 50K arrays and 1K objects, bigger is better(<a href="https://github.com/unadlib/mutative/blob/main/test/performance/benchmark.ts">view source</a>). [Mutative v0.5.0 vs Immer v10.0.1]</p>
+<p>Measured in ops&#x2F;sec while updating 50K arrays and 1K objects. Higher is better (<a href="https://github.com/unadlib/mutative/blob/main/test/performance/benchmark.ts">view source</a>). [Mutative v0.5.0 vs Immer v10.0.1]</p>
 <p><img src="/assets/2022-12-31-mutative-10x-faster-than-immer/benchmark.jpg" alt="Benchmark"></p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">Naive handcrafted reducer - No Freeze x 3,692 ops/sec ±1.28% (95 runs sampled)</span><br><span class="line">Mutative - No Freeze x 5,425 ops/sec ±1.70% (93 runs sampled)</span><br><span class="line">Immer - No Freeze x 5.08 ops/sec ±0.58% (17 runs sampled)</span><br><span class="line"></span><br><span class="line">Mutative - Freeze x 818 ops/sec ±1.49% (96 runs sampled)</span><br><span class="line">Immer - Freeze x 357 ops/sec ±0.79% (92 runs sampled)</span><br><span class="line"></span><br><span class="line">Mutative - Patches and No Freeze x 746 ops/sec ±0.83% (96 runs sampled)</span><br><span class="line">Immer - Patches and No Freeze x 5.08 ops/sec ±0.25% (17 runs sampled)</span><br><span class="line"></span><br><span class="line">Mutative - Patches and Freeze x 408 ops/sec ±0.28% (96 runs sampled)</span><br><span class="line">Immer - Patches and Freeze x 264 ops/sec ±0.59% (91 runs sampled)</span><br><span class="line"></span><br><span class="line">The fastest method is Mutative - No Freeze</span><br></pre></td></tr></table></figure>
 
@@ -189,24 +189,17 @@
 <blockquote>
 <p>OS: macOS 12.6, CPU: Apple M1 Max, Node.js: 16.14.2</p>
 </blockquote>
-<p>Immer relies on auto-freeze to be enabled, if auto-freeze is disabled, Immer will have a huge performance drop and Mutative will have a huge performance lead, especially with large data structures it will have a performance lead of more than 50x.</p>
-<p>So if you are using Immer, you will have to enable auto-freeze for performance. Mutative is disabled auto-freeze by default. With the default configuration of both, we can see the 17x performance gap between Mutative (<code>6,421 ops/sec</code>) and Immer (<code>365 ops/sec</code>).</p>
-<p>Overall, Mutative has a huge performance lead over Immer in <a href="https://github.com/unadlib/mutative/tree/main/test/performance">more performance testing scenarios</a>. Run <code>yarn performance</code> to get all the performance results locally.</p>
-<blockquote>
-<p>OS: macOS 12.6, CPU: Apple M1 Max, Node.js: 16.14.2</p>
-</blockquote>
-<p>Immer relies on auto-freeze to be enabled, if auto-freeze is disabled, Immer will have a huge performance drop and Mutative will have a huge performance lead, especially with large data structures it will have a performance lead of more than 50x.</p>
-<p>So if you are using Immer, you will have to enable auto-freeze for performance. Mutative is disabled auto-freeze by default. With the default configuration of both, we can see the performance gap between Mutative (<code>5,323 ops/sec</code>) and Immer (<code>320 ops/sec</code>).</p>
+<p>In this benchmark, Immer performs best with auto-freeze enabled. When auto-freeze is disabled for this workload, Mutative has a much larger lead, especially with large data structures.</p>
 <p>Overall, Mutative has a huge performance lead over Immer in <a href="https://github.com/unadlib/mutative/tree/main/test/performance">more performance testing scenarios</a>. Run <code>yarn performance</code> to get all the performance results locally.</p>
 <h2 id="Features-and-Benefits"><a href="#Features-and-Benefits" class="headerlink" title="Features and Benefits"></a>Features and Benefits</h2><ul>
-<li><strong>Mutation makes immutable updates</strong> - Immutable data structures supporting objects, arrays, Sets and Maps.</li>
-<li><strong>High performance</strong> - 10x faster than immer by default, even faster than naive handcrafted reducer.</li>
-<li><strong>Optional freezing state</strong> - No freezing of immutable data by default.</li>
-<li><strong>Support for JSON Patch</strong> - Full compliance with JSON Patch specification.</li>
-<li><strong>Custom shallow copy</strong> - Support for more types of immutable data.</li>
-<li><strong>Support mark for immutable and mutable data</strong> - Allows for non-invasive marking.</li>
-<li><strong>Safer mutable data access in strict mode</strong> - It brings more secure immutable updates.</li>
-<li><strong>Support for reducer</strong> - Support reducer function and any other immutable state library.</li>
+<li><strong>Mutation makes immutable updates</strong> - Immutable data structures for objects, arrays, Sets, and Maps.</li>
+<li><strong>High performance</strong> - More than 10x faster than Immer by default in the benchmark above, and even faster than a naive handcrafted reducer.</li>
+<li><strong>Optional state freezing</strong> - Immutable data is not frozen by default.</li>
+<li><strong>JSON Patch-compatible patches</strong> - Can emit RFC 6902-compatible patches when configured.</li>
+<li><strong>Custom shallow copy</strong> - Supports more immutable data types.</li>
+<li><strong>Immutable and mutable data markers</strong> - Allows non-invasive marking.</li>
+<li><strong>Safer mutable data access in strict mode</strong> - Makes immutable updates safer.</li>
+<li><strong>Reducer support</strong> - Works with reducer functions and other immutable state libraries.</li>
 </ul>
 <h2 id="Difference-between-Mutative-and-Immer"><a href="#Difference-between-Mutative-and-Immer" class="headerlink" title="Difference between Mutative and Immer"></a>Difference between Mutative and Immer</h2><table>
 <thead>
@@ -252,7 +245,7 @@
 <td align="center">❌</td>
 </tr>
 <tr>
-<td align="left">Fully compatible with JSON Patch spec</td>
+<td align="left">RFC 6902-compatible patch output (configurable)</td>
 <td align="right">✅</td>
 <td align="center">❌</td>
 </tr>
@@ -264,47 +257,47 @@
 <figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; create &#125; <span class="keyword">from</span> <span class="string">&#x27;mutative&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> baseState = &#123;</span><br><span class="line">  <span class="attr">foo</span>: <span class="string">&#x27;bar&#x27;</span>,</span><br><span class="line">  <span class="attr">list</span>: [&#123; <span class="attr">text</span>: <span class="string">&#x27;todo&#x27;</span> &#125;],</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> state = <span class="title function_">create</span>(baseState, <span class="function">(<span class="params">draft</span>) =&gt;</span> &#123;</span><br><span class="line">  draft.<span class="property">foo</span> = <span class="string">&#x27;foobar&#x27;</span>;</span><br><span class="line">  draft.<span class="property">list</span>.<span class="title function_">push</span>(&#123; <span class="attr">text</span>: <span class="string">&#x27;learning&#x27;</span> &#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
 
 <p>In this basic example, the changes to the draft are ‘mutative’ within the draft callback, and <code>create()</code> is finally executed with a new immutable state.</p>
-<h4 id="create-state-fn-options-Then-options-is-optional"><a href="#create-state-fn-options-Then-options-is-optional" class="headerlink" title="create(state, fn, options) - Then options is optional."></a><code>create(state, fn, options)</code> - Then options is optional.</h4><ul>
+<h4 id="create-state-fn-options-The-options-argument-is-optional"><a href="#create-state-fn-options-The-options-argument-is-optional" class="headerlink" title="create(state, fn, options) - The options argument is optional."></a><code>create(state, fn, options)</code> - The options argument is optional.</h4><ul>
 <li><p>strict - <code>boolean</code>, the default is false.</p>
 <blockquote>
-<p>Forbid accessing non-draftable values in strict mode(unless using <a href="#unsafe">unsafe()</a>).</p>
+<p>Forbid accessing non-draftable values in strict mode (unless using <a href="#unsafe">unsafe()</a>).</p>
 </blockquote>
 <blockquote>
-<p><strong>It is recommended to enable <code>strict</code> in development mode and disable <code>strict</code> in production mode.</strong> This will ensure safe explicit returns and also keep good performance in the production build. If the value that does not mix any current draft or is <code>undefined</code> is returned, then use <a href="#rawreturn">rawReturn()</a>.</p>
+<p><strong>It is recommended to enable <code>strict</code> in development mode and disable <code>strict</code> in production mode.</strong> This keeps explicit returns safer during development while preserving production performance. If you need to return a value that does not contain any current draft, or if you need to return <code>undefined</code>, use <a href="#rawreturn">rawReturn()</a>.</p>
 </blockquote>
 </li>
 <li><p>enablePatches - <code>boolean | { pathAsArray?: boolean; arrayLengthAssignment?: boolean; }</code>, the default is false.</p>
 <blockquote>
-<p>Enable patch, and return the patches&#x2F;inversePatches.</p>
+<p>Enable patches and return <code>patches</code>&#x2F;<code>inversePatches</code>.</p>
 </blockquote>
 <blockquote>
-<p>If you need to set the shape of the generated patch in more detail, then you can set <code>pathAsArray</code> and <code>arrayLengthAssignment</code>。<code>pathAsArray</code> default value is <code>true</code>, if it’s <code>true</code>, the path will be an array, otherwise it is a string; <code>arrayLengthAssignment</code> default value is <code>true</code>, if it’s <code>true</code>, the array length will be included in the patches, otherwise no include array length(<strong>NOTE</strong>: If <code>arrayLengthAssignment</code> is <code>false</code>, it is fully compatible with JSON Patch spec, but it may have additional performance loss), <a href="https://github.com/unadlib/mutative/issues/6">view related discussions</a>.</p>
+<p>To control the generated patch shape, configure <code>pathAsArray</code> and <code>arrayLengthAssignment</code>. <code>pathAsArray</code> defaults to <code>true</code>; when enabled, paths are arrays. Set it to <code>false</code> to emit JSON Pointer strings. <code>arrayLengthAssignment</code> defaults to <code>true</code>; when enabled, array length changes are included in patches. For RFC 6902-compatible JSON Patch output, use JSON Pointer paths and disable array length assignment. This may have additional performance cost. <a href="https://github.com/unadlib/mutative/issues/6">View related discussions</a>.</p>
 </blockquote>
 </li>
 <li><p>enableAutoFreeze - <code>boolean</code>, the default is false.</p>
 <blockquote>
-<p>Enable autoFreeze, and return frozen state, and enable circular reference checking only in <code>development</code> mode.</p>
+<p>Enable <code>autoFreeze</code>, return a frozen state, and enable circular reference checking only in <code>development</code> mode.</p>
 </blockquote>
 </li>
 <li><p>mark - <code>(target) =&gt; (&#39;mutable&#39;|&#39;immutable&#39;|function)</code></p>
 <blockquote>
-<p>Set a mark to determine if the value is mutable or if an instance is an immutable, and it can also return a shallow copy function(AutoFreeze and Patches should both be disabled).</p>
+<p>Set a marker to determine whether a value is mutable or immutable. It can also return a shallow copy function. <code>autoFreeze</code> and patches should both be disabled when using this option.</p>
 </blockquote>
 </li>
 </ul>
 <h2 id="FAQs"><a href="#FAQs" class="headerlink" title="FAQs"></a>FAQs</h2><ul>
 <li>Why does Mutative have such good performance?</li>
 </ul>
-<p>Mutative optimization focus is on shallow copy optimization, more complete lazy drafts, finalization process optimization, and more.</p>
+<p>Mutative focuses its optimizations on shallow copies, lazy drafts, the finalization process, and related internal paths.</p>
 <ul>
 <li>I’m already using Immer, can I migrate smoothly to Mutative?</li>
 </ul>
-<p>Yes. Unless you have to be compatible with Internet Explorer, Mutative supports almost all of Immer features, and you can easily migrate from Immer to Mutative.</p>
+<p>Yes. Unless you must support Internet Explorer, Mutative supports almost all Immer features, and you can usually migrate from Immer to Mutative smoothly.</p>
 <blockquote>
-<p>Migration is also not possible for React Native that does not support Proxy.</p>
+<p>Migration is also not possible in React Native environments that do not support Proxy.</p>
 </blockquote>
 <h2 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h2><p>Mutative is inspired by Immer.</p>
-<p>Mutative aims at efficient immutable updates, focusing on performance improvements and better APIs to bring better development experience. If you think Mutative is good, feel free to give it a star!</p>
+<p>Mutative focuses on efficient immutable updates, performance improvements, and better APIs for a stronger development experience. If you think Mutative is useful, feel free to give it a star.</p>
 <p>Repo: <a href="https://github.com/unadlib/mutative">https://github.com/unadlib/mutative</a></p>
 
   </div>
