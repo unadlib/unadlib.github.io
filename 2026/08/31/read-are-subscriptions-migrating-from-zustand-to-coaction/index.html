@@ -1,0 +1,761 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+  <title>Reads Are Subscriptions - Migrating from Zustand to Coactionunadlib&#39;s Notes</title>
+  <script>
+    (function() {
+      try {
+        var themeKey = 'attraction-theme';
+        var savedTheme = localStorage.getItem(themeKey);
+        var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        var theme = savedTheme || (prefersDark ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', theme);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+  <style type="text/css">
+    body, html {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+      font-size: 18px;
+      line-height: 1.8;
+      user-select: none;
+      box-sizing: border-box;
+      touch-action: manipulation;
+    }
+
+    a.title {
+      text-decoration: none;
+    }
+
+    #content-outer {
+      margin: 4% 14%;
+      padding: 4% 8%;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+
+    #content-inner {
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .recent-post-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+    }
+
+    .recent-post-item .title {
+      overflow: hidden;
+      text-overflow:ellipsis;
+      white-space: nowrap;
+    }
+
+    .recent-post-item .time {
+      font-size: 14px;
+      line-height: 32px;
+      min-width: 81px;
+      text-align: right;
+    }
+
+    #post img {
+      max-width: 100%;
+    }
+
+    #post h1.title {
+      text-align: center;
+      font-size: 2em;
+      margin-block-start: 0.67em;
+      margin-block-end: 0.67em;
+      line-height: 1;
+    }
+
+    #post .time {
+      text-align: center;
+      font-size: 14px;
+    }
+
+    #post .content {
+      margin-top: 8%;
+    }
+
+    #post .content blockquote {
+      padding-left: 20px;
+      margin: 0;
+    }
+
+    #post .content .gutter {
+      display: none;
+    }
+
+    code, kbd, pre, samp {
+      font-size: 16px !important;
+    }
+
+    .CodeMirror {
+      height: auto !important;
+      padding: 36px 24px 0;
+      border-radius: 6px;
+    }
+
+    #post .content figure {
+      padding: 0 1em;
+      margin: 0;
+      overflow: auto;
+    }
+
+    #post .content figure table {
+      width: 100%;
+    }
+
+    @media screen and (max-width: 1024px)  {
+      #content-outer {
+        margin: 2% 7%;
+        padding: 2% 4%;
+      }
+
+      .recent-post-item:first-child {
+        margin-top: 16px;
+      }
+    }
+
+    @media screen and (max-width: 480px) {
+      body{
+        -webkit-text-size-adjust: none;
+      }
+
+      #content-outer {
+        margin: 0;
+        padding: 2% 4%;
+        border-radius: 0;
+      }
+
+      .recent-post-item:first-child {
+        margin-top: 32px;
+      }
+
+      .recent-post-item:last-child {
+        border-bottom: none;
+      }
+    }
+  </style>
+  
+    <!-- styles list from theme config.yml -->
+    
+      <link rel="stylesheet" href="/css/theme.css">
+    
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/codemirror.min.css">
+    
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/theme/seti.min.css">
+    
+  
+<meta name="generator" content="Hexo 8.1.1"></head>
+<body class="cm-s-seti">
+
+<div id="content-outer">
+  <div id="content-inner">
+    
+<article id="post">
+  <h1 class="title">Reads Are Subscriptions - Migrating from Zustand to Coaction</h1>
+  <p class="time">2026-08-31</span>
+  <div class="content">
+      <p>I used Zustand for a long time.</p>
+<p>It is small, fast, and refreshingly restrained. To this day, if a project needs a handful of simple hook stores, Zustand is still what I recommend.</p>
+<p>But as a codebase grows, the same chores keep coming back:</p>
+<ul>
+<li>designing a selector for each component;</li>
+<li>keeping composed selectors referentially stable;</li>
+<li>caching derived values that several components need;</li>
+<li>keeping “the fields a component reads” and “the fields a component subscribes to” in sync;</li>
+<li>updating selectors and dependency arrays every time the domain model shifts.</li>
+</ul>
+<p>None of these is hard on its own.</p>
+<p>The problem is that once selectors, caches, and derived relationships are spread across a codebase, they quietly become infrastructure you have to maintain.</p>
+<h3 id="First-let’s-put-a-number-on-“large”"><a href="#First-let’s-put-a-number-on-“large”" class="headerlink" title="First, let’s put a number on “large”"></a>First, let’s put a number on “large”</h3><p>“It stops scaling once the project gets big” is empty unless you say how big. Here is the typical shape of a ~100k-line frontend application, which anchors every trade-off discussed below:</p>
+<table>
+<thead>
+<tr>
+<th align="left">Dimension</th>
+<th align="left">Plausible range</th>
+<th align="right">Midpoint</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">Application source</td>
+<td align="left">—</td>
+<td align="right">~100,000 LOC</td>
+</tr>
+<tr>
+<td align="left">Components</td>
+<td align="left">280 – 450</td>
+<td align="right">~350</td>
+</tr>
+<tr>
+<td align="left">Zustand stores</td>
+<td align="left">8 – 25</td>
+<td align="right">~15</td>
+</tr>
+<tr>
+<td align="left">Components reading store state</td>
+<td align="left">120 – 220</td>
+<td align="right">~160</td>
+</tr>
+<tr>
+<td align="left"><strong>Selector call sites</strong></td>
+<td align="left">250 – 550</td>
+<td align="right"><strong>~380</strong></td>
+</tr>
+<tr>
+<td align="left"><strong><code>useShallow</code> uses</strong></td>
+<td align="left">30 – 80</td>
+<td align="right"><strong>~55</strong></td>
+</tr>
+<tr>
+<td align="left"><code>useMemo</code> uses (total)</td>
+<td align="left">200 – 330</td>
+<td align="right">~260</td>
+</tr>
+<tr>
+<td align="left"><strong>…of which purely store-derived</strong></td>
+<td align="left">60 – 120</td>
+<td align="right"><strong>~85</strong></td>
+</tr>
+</tbody></table>
+<blockquote>
+<p><strong>This table is an order-of-magnitude estimate, not a measurement from any one migration.</strong> It is derived from 150–250 LOC per file, components at 55–70% of files, 35–50% of components reading store state, and 1.5–3 selector call sites per consuming component. Its purpose is to give you something to compare your own counts against. Every performance number later in this article is measured, not estimated, and every one of them is reproducible from a script.</p>
+</blockquote>
+<p>You can count your own project directly:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">grep -rEc <span class="string">&quot;use[A-Z][A-Za-z]*\((state|s)\s*=&gt;&quot;</span> src | awk -F: <span class="string">&#x27;&#123;n+=$2&#125; END &#123;print &quot;selector call sites:&quot;, n+0&#125;&#x27;</span></span><br><span class="line">grep -rc <span class="string">&quot;useShallow&quot;</span> src | awk -F: <span class="string">&#x27;&#123;n+=$2&#125; END &#123;print &quot;useShallow:&quot;, n+0&#125;&#x27;</span></span><br><span class="line">grep -rc <span class="string">&quot;useMemo(&quot;</span> src   | awk -F: <span class="string">&#x27;&#123;n+=$2&#125; END &#123;print &quot;useMemo:&quot;, n+0&#125;&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>If you count a few dozen selectors, the premise of this article does not hold for you — stay on Zustand. The codebases that get crushed by this complexity are the ones with selector counts in the hundreds and derived relationships reused across many components.</p>
+<p>At that scale, <a href="https://github.com/coactionjs/coaction">Coaction</a>‘s trade-offs start to make sense. It keeps a Zustand-like <code>create</code> API but moves three things into the runtime:</p>
+<ol>
+<li><strong>Render tracking</strong> — automatically tracks the state a component reads while rendering;</li>
+<li><strong>Cached computed state</strong> — automatically memoizes values derived from store state;</li>
+<li><strong>Draft updates</strong> — mutable syntax, immutable results.</li>
+</ol>
+<p>The migration payoff concentrates in three kinds of code: most selectors, nearly all <code>useShallow</code> calls, and the <code>useMemo</code> calls that exist purely to derive store state.</p>
+<p>Note “most” and “nearly all”, not “everything” — the boundaries are spelled out below.</p>
+<hr>
+<h2 id="Being-fair-first-for-simple-cases-Zustand-is-already-good-enough"><a href="#Being-fair-first-for-simple-cases-Zustand-is-already-good-enough" class="headerlink" title="Being fair first: for simple cases, Zustand is already good enough"></a>Being fair first: for simple cases, Zustand is already good enough</h2><p>Start with an ordinary counter:</p>
+<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; create &#125; <span class="keyword">from</span> <span class="string">&quot;zustand&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> <span class="title class_">CounterStore</span> = &#123;</span><br><span class="line">  <span class="attr">count</span>: <span class="built_in">number</span>;</span><br><span class="line">  <span class="attr">step</span>: <span class="built_in">number</span>;</span><br><span class="line">  <span class="attr">increment</span>: <span class="function">() =&gt;</span> <span class="built_in">void</span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> useCounter = create&lt;<span class="title class_">CounterStore</span>&gt;(<span class="function">(<span class="params">set</span>) =&gt;</span> (&#123;</span><br><span class="line">  <span class="attr">count</span>: <span class="number">0</span>,</span><br><span class="line">  <span class="attr">step</span>: <span class="number">1</span>,</span><br><span class="line">  <span class="attr">increment</span>: <span class="function">() =&gt;</span></span><br><span class="line">    <span class="title function_">set</span>(<span class="function">(<span class="params">state</span>) =&gt;</span> (&#123;</span><br><span class="line">      <span class="attr">count</span>: state.<span class="property">count</span> + state.<span class="property">step</span>,</span><br><span class="line">    &#125;)),</span><br><span class="line">&#125;));</span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">Counter</span>(<span class="params"></span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> count = <span class="title function_">useCounter</span>(<span class="function">(<span class="params">state</span>) =&gt;</span> state.<span class="property">count</span>);</span><br><span class="line">  <span class="keyword">const</span> step = <span class="title function_">useCounter</span>(<span class="function">(<span class="params">state</span>) =&gt;</span> state.<span class="property">step</span>);</span><br><span class="line">  <span class="keyword">const</span> increment = <span class="title function_">useCounter</span>(<span class="function">(<span class="params">state</span>) =&gt;</span> state.<span class="property">increment</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> doubled = count * <span class="number">2</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> (</span><br><span class="line">    <span class="language-xml"><span class="tag">&lt;<span class="name">button</span> <span class="attr">onClick</span>=<span class="string">&#123;increment&#125;</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">      &#123;count&#125; (step &#123;step&#125;) → &#123;doubled&#125;</span></span><br><span class="line"><span class="language-xml">    <span class="tag">&lt;/<span class="name">button</span>&gt;</span></span></span><br><span class="line">  );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>No <code>useShallow</code> here, no <code>useMemo</code>, and no need to reach for <code>useCounter.getState().increment()</code> to call an action.</p>
+<p>Selecting <code>count</code>, <code>step</code>, and <code>increment</code> separately is idiomatic Zustand. And a computation as cheap as <code>count * 2</code> has no business being wrapped in <code>useMemo</code>.</p>
+<p>So if your store is small and components read only a few fields, Zustand imposes no meaningful “subscription tax”. In that situation, adopting a fuller automatic-tracking runtime may not be worth it.</p>
+<hr>
+<h2 id="The-difference-isn’t-fewer-lines-—-it’s-that-reads-are-subscriptions"><a href="#The-difference-isn’t-fewer-lines-—-it’s-that-reads-are-subscriptions" class="headerlink" title="The difference isn’t fewer lines — it’s that reads are subscriptions"></a>The difference isn’t fewer lines — it’s that reads are subscriptions</h2><p>The same counter in Coaction:</p>
+<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; create, observer &#125; <span class="keyword">from</span> <span class="string">&quot;@coaction/react&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> useCounter = <span class="title function_">create</span>(<span class="function">(<span class="params">set</span>) =&gt;</span> (&#123;</span><br><span class="line">  <span class="attr">count</span>: <span class="number">0</span>,</span><br><span class="line">  <span class="attr">step</span>: <span class="number">1</span>,</span><br><span class="line"></span><br><span class="line">  <span class="keyword">get</span> <span class="title function_">doubled</span>() &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="variable language_">this</span>.<span class="property">count</span> * <span class="number">2</span>;</span><br><span class="line">  &#125;,</span><br><span class="line"></span><br><span class="line">  <span class="title function_">increment</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="title function_">set</span>(<span class="function">() =&gt;</span> &#123;</span><br><span class="line">      <span class="variable language_">this</span>.<span class="property">count</span> += <span class="variable language_">this</span>.<span class="property">step</span>;</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;,</span><br><span class="line">&#125;));</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> <span class="title class_">Counter</span> = <span class="title function_">observer</span>(<span class="function">() =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">const</span> store = <span class="title function_">useCounter</span>();</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> (</span><br><span class="line">    <span class="comment">// increment is already bound to the store; pass it directly, no arrow wrapper</span></span><br><span class="line">    <span class="language-xml"><span class="tag">&lt;<span class="name">button</span> <span class="attr">onClick</span>=<span class="string">&#123;store.increment&#125;</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">      &#123;store.count&#125; (step &#123;store.step&#125;) → &#123;store.doubled&#125;</span></span><br><span class="line"><span class="language-xml">    <span class="tag">&lt;/<span class="name">button</span>&gt;</span></span></span><br><span class="line">  );</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>For an example this small, saving a few lines is not a decisive advantage.</p>
+<p>The real difference is this:</p>
+<blockquote>
+<p>In Zustand, “which fields you read” and “which fields you subscribe to” are matched up by hand through a selector. In Coaction, the fields a component reads while rendering <em>are</em> the fields it subscribes to.</p>
+</blockquote>
+<p>In short: <strong>reads are subscriptions.</strong></p>
+<p>When a component reads one or two fields, the distinction barely matters. It starts to matter when read relationships change often and shared derived state accumulates.</p>
+<hr>
+<h2 id="Where-the-gap-actually-opens-complex-derived-state"><a href="#Where-the-gap-actually-opens-complex-derived-state" class="headerlink" title="Where the gap actually opens: complex derived state"></a>Where the gap actually opens: complex derived state</h2><p>Consider a shopping cart with an item list, a filter, a discount rate, the filtered items, and the discounted total.</p>
+<p>In Zustand you might organize it like this:</p>
+<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; useMemo &#125; <span class="keyword">from</span> <span class="string">&quot;react&quot;</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; create &#125; <span class="keyword">from</span> <span class="string">&quot;zustand&quot;</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; useShallow &#125; <span class="keyword">from</span> <span class="string">&quot;zustand/react/shallow&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> <span class="title class_">CartItem</span> = &#123;</span><br><span class="line">  <span class="attr">id</span>: <span class="built_in">string</span>;</span><br><span class="line">  <span class="attr">price</span>: <span class="built_in">number</span>;</span><br><span class="line">  <span class="attr">quantity</span>: <span class="built_in">number</span>;</span><br><span class="line">  <span class="attr">selected</span>: <span class="built_in">boolean</span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> <span class="title class_">CartStore</span> = &#123;</span><br><span class="line">  <span class="attr">items</span>: <span class="title class_">CartItem</span>[];</span><br><span class="line">  <span class="attr">filter</span>: <span class="string">&quot;all&quot;</span> | <span class="string">&quot;selected&quot;</span>;</span><br><span class="line">  <span class="attr">discountRate</span>: <span class="built_in">number</span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> useCart = create&lt;<span class="title class_">CartStore</span>&gt;(<span class="function">() =&gt;</span> (&#123;</span><br><span class="line">  <span class="attr">items</span>: [],</span><br><span class="line">  <span class="attr">filter</span>: <span class="string">&quot;all&quot;</span>,</span><br><span class="line">  <span class="attr">discountRate</span>: <span class="number">0</span>,</span><br><span class="line">&#125;));</span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">CartSummary</span>(<span class="params"></span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> &#123; items, filter, discountRate &#125; = <span class="title function_">useCart</span>(</span><br><span class="line">    <span class="title function_">useShallow</span>(<span class="function">(<span class="params">state</span>) =&gt;</span> (&#123;</span><br><span class="line">      <span class="attr">items</span>: state.<span class="property">items</span>,</span><br><span class="line">      <span class="attr">filter</span>: state.<span class="property">filter</span>,</span><br><span class="line">      <span class="attr">discountRate</span>: state.<span class="property">discountRate</span>,</span><br><span class="line">    &#125;)),</span><br><span class="line">  );</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> visibleItems = <span class="title function_">useMemo</span>(<span class="function">() =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> filter === <span class="string">&quot;selected&quot;</span></span><br><span class="line">      ? items.<span class="title function_">filter</span>(<span class="function">(<span class="params">item</span>) =&gt;</span> item.<span class="property">selected</span>)</span><br><span class="line">      : items;</span><br><span class="line">  &#125;, [items, filter]);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> total = <span class="title function_">useMemo</span>(<span class="function">() =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">const</span> subtotal = visibleItems.<span class="title function_">reduce</span>(</span><br><span class="line">      <span class="function">(<span class="params">sum, item</span>) =&gt;</span> sum + item.<span class="property">price</span> * item.<span class="property">quantity</span>,</span><br><span class="line">      <span class="number">0</span>,</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> subtotal * (<span class="number">1</span> - discountRate);</span><br><span class="line">  &#125;, [visibleItems, discountRate]);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> (</span><br><span class="line">    <span class="language-xml"><span class="tag">&lt;<span class="name">section</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">      <span class="tag">&lt;<span class="name">p</span>&gt;</span>Items: &#123;visibleItems.length&#125;<span class="tag">&lt;/<span class="name">p</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">      <span class="tag">&lt;<span class="name">p</span>&gt;</span>Total: &#123;total&#125;<span class="tag">&lt;/<span class="name">p</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">    <span class="tag">&lt;/<span class="name">section</span>&gt;</span></span></span><br><span class="line">  );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>The composed selector here is one common style, not Zustand’s only option. You could select the three fields separately, or lift the derived logic into a shared memoized selector.</p>
+<p>The component-level version above is meant to illustrate a single point: when derived logic lives at the consumer, the application has to maintain the subscriptions, dependencies, and caches itself.</p>
+<p>The issue was never that Zustand cannot do this. It is that these policies are the application’s job:</p>
+<ul>
+<li>where derived values should live;</li>
+<li>whether they need caching;</li>
+<li>how several components reuse the same derived logic;</li>
+<li>which equality function to use when a selector returns an object;</li>
+<li>which selectors and dependency arrays must change when the state dependencies change.</li>
+</ul>
+<p>Zustand’s model is explicit and flexible. But explicit means your team designs and maintains those policies.</p>
+<hr>
+<h2 id="Coaction-putting-derived-relationships-back-into-the-state-model"><a href="#Coaction-putting-derived-relationships-back-into-the-state-model" class="headerlink" title="Coaction: putting derived relationships back into the state model"></a>Coaction: putting derived relationships back into the state model</h2><p>The same cart:</p>
+<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; create, observer &#125; <span class="keyword">from</span> <span class="string">&quot;@coaction/react&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> <span class="title class_">CartItem</span> = &#123;</span><br><span class="line">  <span class="attr">id</span>: <span class="built_in">string</span>;</span><br><span class="line">  <span class="attr">price</span>: <span class="built_in">number</span>;</span><br><span class="line">  <span class="attr">quantity</span>: <span class="built_in">number</span>;</span><br><span class="line">  <span class="attr">selected</span>: <span class="built_in">boolean</span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> <span class="title class_">CartFilter</span> = <span class="string">&quot;all&quot;</span> | <span class="string">&quot;selected&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> useCart = <span class="title function_">create</span>(<span class="function">(<span class="params">set</span>) =&gt;</span> (&#123;</span><br><span class="line">  <span class="attr">items</span>: [] <span class="keyword">as</span> <span class="title class_">CartItem</span>[],</span><br><span class="line">  <span class="attr">filter</span>: <span class="string">&quot;all&quot;</span> <span class="keyword">as</span> <span class="title class_">CartFilter</span>,</span><br><span class="line">  <span class="attr">discountRate</span>: <span class="number">0</span>,</span><br><span class="line"></span><br><span class="line">  <span class="keyword">get</span> <span class="title function_">visibleItems</span>() &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="variable language_">this</span>.<span class="property">filter</span> === <span class="string">&quot;selected&quot;</span></span><br><span class="line">      ? <span class="variable language_">this</span>.<span class="property">items</span>.<span class="title function_">filter</span>(<span class="function">(<span class="params">item</span>) =&gt;</span> item.<span class="property">selected</span>)</span><br><span class="line">      : <span class="variable language_">this</span>.<span class="property">items</span>;</span><br><span class="line">  &#125;,</span><br><span class="line"></span><br><span class="line">  <span class="keyword">get</span> <span class="title function_">total</span>() &#123;</span><br><span class="line">    <span class="keyword">const</span> subtotal = <span class="variable language_">this</span>.<span class="property">visibleItems</span>.<span class="title function_">reduce</span>(</span><br><span class="line">      <span class="function">(<span class="params">sum, item</span>) =&gt;</span> sum + item.<span class="property">price</span> * item.<span class="property">quantity</span>,</span><br><span class="line">      <span class="number">0</span>,</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> subtotal * (<span class="number">1</span> - <span class="variable language_">this</span>.<span class="property">discountRate</span>);</span><br><span class="line">  &#125;,</span><br><span class="line"></span><br><span class="line">  <span class="title function_">addItem</span>(<span class="params"><span class="attr">item</span>: <span class="title class_">CartItem</span></span>) &#123;</span><br><span class="line">    <span class="title function_">set</span>(<span class="function">() =&gt;</span> &#123;</span><br><span class="line">      <span class="variable language_">this</span>.<span class="property">items</span>.<span class="title function_">push</span>(item);</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;,</span><br><span class="line">&#125;));</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> <span class="title class_">CartSummary</span> = <span class="title function_">observer</span>(<span class="function">() =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">const</span> store = <span class="title function_">useCart</span>();</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> (</span><br><span class="line">    <span class="language-xml"><span class="tag">&lt;<span class="name">section</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">      <span class="tag">&lt;<span class="name">p</span>&gt;</span>Items: &#123;store.visibleItems.length&#125;<span class="tag">&lt;/<span class="name">p</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">      <span class="tag">&lt;<span class="name">p</span>&gt;</span>Total: &#123;store.total&#125;<span class="tag">&lt;/<span class="name">p</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">    <span class="tag">&lt;/<span class="name">section</span>&gt;</span></span></span><br><span class="line">  );</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>The derived relationships are declared in the store itself:</p>
+<ul>
+<li><code>visibleItems</code> depends on <code>items</code> and <code>filter</code>;</li>
+<li><code>total</code> depends on <code>visibleItems</code> and <code>discountRate</code> — <strong>a getter may read another getter, and the cache chain links up automatically</strong>;</li>
+<li>the derived logic is defined once and reused by any number of consumers.</li>
+</ul>
+<p>It is closer to a built-in, store-level computed system.</p>
+<p>Coaction does not suddenly make possible something Zustand could not do. What it does is push the subscription, caching, and derivation policies — the ones your application used to organize by hand — down into the runtime.</p>
+<hr>
+<h2 id="What-the-migration-deletes"><a href="#What-the-migration-deletes" class="headerlink" title="What the migration deletes"></a>What the migration deletes</h2><h3 id="1-Most-selectors-and-useShallow"><a href="#1-Most-selectors-and-useShallow" class="headerlink" title="1. Most selectors and useShallow"></a>1. Most selectors and <code>useShallow</code></h3><p>Inside a component wrapped in <code>observer()</code>, the fields read during render subscribe automatically:</p>
+<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> <span class="title class_">UserName</span> = <span class="title function_">observer</span>(<span class="function">() =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">const</span> store = <span class="title function_">useUser</span>();</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="language-xml"><span class="tag">&lt;<span class="name">span</span>&gt;</span>&#123;store.name&#125;<span class="tag">&lt;/<span class="name">span</span>&gt;</span></span>;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>A component reads exactly what it needs. The render code <em>is</em> the subscription declaration.</p>
+<p>So there is no longer a need to maintain:</p>
+<figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> name = <span class="title function_">useUser</span>(<span class="function">(<span class="params">state</span>) =&gt;</span> state.<span class="property">name</span>);</span><br></pre></td></tr></table></figure>
+
+<p>or:</p>
+<figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="title function_">useShallow</span>(<span class="function">(<span class="params">state</span>) =&gt;</span> (&#123;</span><br><span class="line">  <span class="attr">name</span>: state.<span class="property">name</span>,</span><br><span class="line">  <span class="attr">avatar</span>: state.<span class="property">avatar</span>,</span><br><span class="line">  <span class="attr">status</span>: state.<span class="property">status</span>,</span><br><span class="line">&#125;));</span><br></pre></td></tr></table></figure>
+
+<p>But automatic tracking is <strong>not</strong> unbounded property-level tracking. The pitfalls section below demonstrates this with measurements — it is the part of a migration that requires the most code changes.</p>
+<p>When you want explicit control, the selector-style API is still there. Automatic tracking is the default, not a cage.</p>
+<h3 id="2-useMemo-that-only-derives-store-state"><a href="#2-useMemo-that-only-derives-store-state" class="headerlink" title="2. useMemo that only derives store state"></a>2. <code>useMemo</code> that only derives store state</h3><p>Coaction’s getters do not replace every <code>useMemo</code>. They replace this specific kind of computation:</p>
+<ul>
+<li>depends only on store state;</li>
+<li>is reused across several components;</li>
+<li>expresses a relationship that belongs to the state model;</li>
+<li>is expensive enough, or needs a stable result.</li>
+</ul>
+<figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">get</span> <span class="title function_">sortedItems</span>() &#123;</span><br><span class="line">  <span class="keyword">return</span> [...<span class="variable language_">this</span>.<span class="property">items</span>].<span class="title function_">sort</span>(<span class="function">(<span class="params">a, b</span>) =&gt;</span> b.<span class="property">score</span> - a.<span class="property">score</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Two things distinguish it from a <code>useMemo</code> in a component: the derived logic lives in the store rather than scattered across component instances, and the dependencies come from the state reads that happen while the getter runs, so there is no second dependency array to keep in sync.</p>
+<p>But if a computation depends on props, local state, or transient input, it does not belong in the store:</p>
+<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">ProductList</span>(<span class="params">&#123; minimumPrice &#125;: &#123; minimumPrice: <span class="built_in">number</span> &#125;</span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> items = <span class="title function_">useCart</span>(<span class="function">(<span class="params">state</span>) =&gt;</span> state.<span class="property">items</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> visibleItems = <span class="title function_">useMemo</span>(</span><br><span class="line">    <span class="function">() =&gt;</span> items.<span class="title function_">filter</span>(<span class="function">(<span class="params">item</span>) =&gt;</span> item.<span class="property">price</span> &gt;= minimumPrice),</span><br><span class="line">    [items, minimumPrice],</span><br><span class="line">  );</span><br><span class="line"></span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>minimumPrice</code> is component input; it should not necessarily become global state.</p>
+<p>So what you can delete is not every <code>useMemo</code>, but:</p>
+<blockquote>
+<p><strong>the ones that are really re-implementing a store computed inside a component.</strong></p>
+</blockquote>
+<h3 id="3-Object-spreads-and-Immer-boilerplate"><a href="#3-Object-spreads-and-Immer-boilerplate" class="headerlink" title="3. Object spreads and Immer boilerplate"></a>3. Object spreads and Immer boilerplate</h3><p>The draft update form lets you describe an update with mutable syntax:</p>
+<figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="title function_">set</span>(<span class="function">() =&gt;</span> &#123;</span><br><span class="line">  <span class="variable language_">this</span>.<span class="property">count</span> += <span class="number">1</span>;</span><br><span class="line">  <span class="variable language_">this</span>.<span class="property">items</span>.<span class="title function_">push</span>(item);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>That path produces an immutable result through Mutative.</p>
+<p>But Coaction does not let you mutate state anywhere you like. Writes must happen inside <code>set()</code>:</p>
+<figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> useCounter = <span class="title function_">create</span>(<span class="function">(<span class="params">set</span>) =&gt;</span> (&#123;</span><br><span class="line">  <span class="attr">count</span>: <span class="number">0</span>,</span><br><span class="line"></span><br><span class="line">  <span class="title function_">incrementWrong</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">count</span> += <span class="number">1</span>; <span class="comment">// throws</span></span><br><span class="line">  &#125;,</span><br><span class="line"></span><br><span class="line">  <span class="title function_">increment</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="title function_">set</span>(<span class="function">() =&gt;</span> &#123;</span><br><span class="line">      <span class="variable language_">this</span>.<span class="property">count</span> += <span class="number">1</span>;</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;,</span><br><span class="line">&#125;));</span><br></pre></td></tr></table></figure>
+
+<p>The error is explicit:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Direct state mutation is not allowed in immutable Coaction stores.</span><br><span class="line">Wrap mutations in set(() =&gt; &#123; ... &#125;).</span><br></pre></td></tr></table></figure>
+
+<p>State updates therefore keep a clear boundary. <code>set()</code> is the single entry point that produces the next state and notifies subscribers. Compared to “a reactive object you can mutate from anywhere”, that constraint makes update sources easier to locate and easier to debug.</p>
+<h3 id="4-Manually-preserving-this-and-manually-selecting-actions"><a href="#4-Manually-preserving-this-and-manually-selecting-actions" class="headerlink" title="4. Manually preserving this, and manually selecting actions"></a>4. Manually preserving <code>this</code>, and manually selecting actions</h3><p>In Zustand, actions are ordinary fields on the store. To use one in a component you normally select it:</p>
+<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> increment = <span class="title function_">useCounter</span>(<span class="function">(<span class="params">state</span>) =&gt;</span> state.<span class="property">increment</span>);</span><br></pre></td></tr></table></figure>
+
+<p>or grab the latest one inside an event handler:</p>
+<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">onClick=&#123;<span class="function">() =&gt;</span> useCounter.<span class="title function_">getState</span>().<span class="title function_">increment</span>()&#125;</span><br></pre></td></tr></table></figure>
+
+<p>In Coaction, methods are bound to the store or slice they belong to, so you can pass them directly:</p>
+<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;button onClick=&#123;store.<span class="property">increment</span>&#125;&gt;+<span class="number">1</span>&lt;/button&gt;</span><br></pre></td></tr></table></figure>
+
+<p>Even destructured out of <code>getState()</code>, <code>this</code> survives:</p>
+<figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> &#123; increment &#125; = useStore.<span class="title function_">getState</span>().<span class="property">counter</span>;</span><br><span class="line"><span class="title function_">increment</span>(); <span class="comment">// still correct; this still points at that slice</span></span><br></pre></td></tr></table></figure>
+
+<p>For a single counter this is barely visible. But as the number of actions grows and cross-slice calls multiply, “never hand-preserving <code>this</code>, never writing a selection for each action” steadily removes one class of boilerplate and one class of bug.</p>
+<hr>
+<h2 id="“Isn’t-this-just-MobX-”"><a href="#“Isn’t-this-just-MobX-”" class="headerlink" title="“Isn’t this just MobX?”"></a>“Isn’t this just MobX?”</h2><p>This is the question I expect most, so let me answer it directly.</p>
+<p>Getters, <code>this</code>, automatic tracking, cached computeds — none of this is new. MobX has shipped it for a decade, and Pinia gives Vue the same shape. I am not going to pretend this is an invention.</p>
+<p>The difference is the <strong>substrate</strong>. Both points below were measured against <code>mobx@6.15</code>:</p>
+<p><strong>First, MobX computeds are cached only while observed.</strong></p>
+<p>MobX memoizes a <code>computed</code> only while a reaction observes it. Read the same getter four times outside <code>observer()</code> &#x2F; <code>autorun()</code> — in an event handler, a test, during SSR — and it evaluates four times. Coaction’s getters are backed by <code>alien-signals</code> computeds and cache unconditionally; the same four reads evaluate once.</p>
+<p><strong>Second, MobX is a mutable observable; Coaction is an immutable snapshot.</strong></p>
+<p>MobX mutates in place, so a reference you captured earlier changes underneath you. Coaction’s public state is frozen and structurally shared.</p>
+<p>The second point is the important one. Because every update produces an immutable result, Coaction has a <strong>patch stream</strong> — and undo&#x2F;redo, persistence, cross-thread transport, and CRDT collaboration are all built on it. <code>mobx-state-tree</code> buys snapshots and patches back, at the cost of a second type system.</p>
+<table>
+<thead>
+<tr>
+<th align="left"></th>
+<th align="left">Coaction</th>
+<th align="left">Zustand</th>
+<th align="left">MobX</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">Function-style <code>create()</code>, no decorators</td>
+<td align="left">yes</td>
+<td align="left">yes</td>
+<td align="left"><code>makeAutoObservable</code></td>
+</tr>
+<tr>
+<td align="left">Render tracking without selectors</td>
+<td align="left"><code>observer()</code></td>
+<td align="left">no</td>
+<td align="left"><code>observer()</code></td>
+</tr>
+<tr>
+<td align="left"><code>get value()</code> + <code>this</code></td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+</tr>
+<tr>
+<td align="left">Derived values memoized</td>
+<td align="left">always</td>
+<td align="left">no</td>
+<td align="left">only while observed</td>
+</tr>
+<tr>
+<td align="left">Frozen snapshots, structural sharing</td>
+<td align="left">yes</td>
+<td align="left">via Immer&#x2F;Mutative</td>
+<td align="left">no — mutable observables</td>
+</tr>
+<tr>
+<td align="left">Patch stream (undo &#x2F; persist &#x2F; sync &#x2F; CRDT)</td>
+<td align="left">built in</td>
+<td align="left">no</td>
+<td align="left"><code>mobx-state-tree</code></td>
+</tr>
+<tr>
+<td align="left">Entry size (gzip, deps excluded)</td>
+<td align="left">11.1 KB <code>coaction/local</code></td>
+<td align="left">0.6 KB vanilla+react</td>
+<td align="left">16.4 KB</td>
+</tr>
+</tbody></table>
+<p>Read that last row carefully: <strong>Zustand really is an order of magnitude smaller</strong>, and that is the trade being made. Coaction’s 11.1 KB excludes <code>mutative</code> (~6.7 KB) and <code>alien-signals</code>; MobX’s 16.4 KB is self-contained.</p>
+<p>If what you want is a mature, battle-tested reactive graph and mutable observables suit you, <strong>MobX is the safer choice</strong> — its ecosystem and track record are far deeper than Coaction’s.</p>
+<hr>
+<h2 id="Performance-one-set-of-numbers-supports-me-two-do-not"><a href="#Performance-one-set-of-numbers-supports-me-two-do-not" class="headerlink" title="Performance: one set of numbers supports me, two do not"></a>Performance: one set of numbers supports me, two do not</h2><p>All of these are reproducible from the repository. Regenerate before quoting them — microbenchmarks move with CPU, runtime, and package versions. The numbers below come from a single run on an Apple M1 Max, Node 24.16, <code>zustand@5.0.11</code>.</p>
+<h3 id="Reading-derived-state-—-pnpm-benchmark-zustand-positioning"><a href="#Reading-derived-state-—-pnpm-benchmark-zustand-positioning" class="headerlink" title="Reading derived state — pnpm benchmark:zustand-positioning"></a>Reading derived state — <code>pnpm benchmark:zustand-positioning</code></h3><table>
+<thead>
+<tr>
+<th align="left">Pattern</th>
+<th align="right">ops&#x2F;sec</th>
+<th align="right">Relative</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>Coaction</strong> cached getter</td>
+<td align="right">76,726,880</td>
+<td align="right"><strong>1.00x</strong></td>
+</tr>
+<tr>
+<td align="left"><strong>Coaction</strong> <code>get(deps, selector)</code></td>
+<td align="right">49,119,723</td>
+<td align="right">0.64x</td>
+</tr>
+<tr>
+<td align="left">Zustand selector that recomputes</td>
+<td align="right">796,100</td>
+<td align="right">0.010x</td>
+</tr>
+<tr>
+<td align="left">Zustand manually maintained <code>total</code> field</td>
+<td align="right">112,175,343</td>
+<td align="right">1.46x</td>
+</tr>
+</tbody></table>
+<p>Against the pattern most codebases actually write — a selector that recomputes derived data — a cached getter is roughly <strong>96x faster</strong>.</p>
+<p>The only thing faster is a derived field the application maintains by hand inside every action, <strong>which is precisely what this article has been arguing against</strong>. The numbers state the trade plainly:</p>
+<blockquote>
+<p>You can be 1.46x faster and maintain consistency by hand forever, or give up 32% of read throughput and delete that entire class of bug.</p>
+</blockquote>
+<h3 id="Updating-then-reading-—-same-script"><a href="#Updating-then-reading-—-same-script" class="headerlink" title="Updating, then reading — same script"></a>Updating, then reading — same script</h3><table>
+<thead>
+<tr>
+<th align="left">Pattern</th>
+<th align="right">ops&#x2F;sec</th>
+<th align="right">Relative</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>Coaction</strong> draft update + cached getter</td>
+<td align="right">43,918</td>
+<td align="right"><strong>1.00x</strong></td>
+</tr>
+<tr>
+<td align="left"><strong>Coaction</strong> draft update + <code>get(deps, selector)</code></td>
+<td align="right">43,660</td>
+<td align="right">0.99x</td>
+</tr>
+<tr>
+<td align="left"><strong>Coaction</strong> object replacement + cached getter</td>
+<td align="right">342</td>
+<td align="right">0.008x</td>
+</tr>
+<tr>
+<td align="left">Zustand immutable update + selector recompute</td>
+<td align="right">88,935</td>
+<td align="right">2.03x</td>
+</tr>
+<tr>
+<td align="left">Zustand immutable update + maintained field</td>
+<td align="right">3,302,630</td>
+<td align="right">75.2x</td>
+</tr>
+</tbody></table>
+<p><strong>Coaction loses this one.</strong> Its write path is about 2x behind a plain Zustand update, and much further behind a hand-maintained field.</p>
+<p>Read-heavy interfaces — most product surfaces — absorb that easily. High-frequency drag, animation frames, and streaming tick handlers do not. I have to state this, because it is also written into the project’s own README and its “when not to use Coaction” guide.</p>
+<p>The third row mixes two separate things: a trade-off and a defect. The next section pulls them apart — <strong>one of them I have already fixed.</strong></p>
+<h3 id="Bulk-update-throughput-—-pnpm-benchmark"><a href="#Bulk-update-throughput-—-pnpm-benchmark" class="headerlink" title="Bulk update throughput — pnpm benchmark"></a>Bulk update throughput — <code>pnpm benchmark</code></h3><p>State holds a 50,000-object array and a 1,000-entry map; each operation appends one of each:</p>
+<table>
+<thead>
+<tr>
+<th align="left">Update path</th>
+<th align="right">ops&#x2F;sec</th>
+<th align="right">Relative</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>Coaction</strong> — Mutative draft</td>
+<td align="right">4,648</td>
+<td align="right"><strong>1.00x</strong></td>
+</tr>
+<tr>
+<td align="left"><strong>Zustand</strong> — object replacement</td>
+<td align="right">5,886</td>
+<td align="right">1.27x</td>
+</tr>
+<tr>
+<td align="left"><strong>Zustand</strong> — Immer draft</td>
+<td align="right">298</td>
+<td align="right">0.06x</td>
+</tr>
+</tbody></table>
+<p>The draft path is ~21% behind Zustand’s object replacement and ~15.6x ahead of Immer.</p>
+<p><strong>Coaction’s own object-replacement path is deliberately absent from this table.</strong> At this state size it is dominated by the payload sanitizer, so it measures the guarantee rather than the update mechanism. The next section explains why.</p>
+<h3 id="Beyond-the-three-benchmarks-I-found-and-fixed-a-bug-while-writing-this"><a href="#Beyond-the-three-benchmarks-I-found-and-fixed-a-bug-while-writing-this" class="headerlink" title="Beyond the three benchmarks: I found and fixed a bug while writing this"></a>Beyond the three benchmarks: I found and fixed a bug while writing this</h3><p>While preparing the table above I re-ran <code>pnpm benchmark</code>, and the result did not match the snapshot that had been sitting in the README for a long time. Digging in, the <code>set({ ... })</code> path turned out to stack <strong>two different things</strong> — one a genuine defect, one a guarantee I added on purpose. Taken separately:</p>
+<p><strong>One: copying the current state was a deep clone (a real defect, now fixed)</strong></p>
+<p>On an object-payload commit, the code first copies the current root state, and that copy helper ran every value through a deeply recursive replacement sanitizer. The result: <strong>every <code>set({ ... })</code> was O(total state)</strong> — change one scalar and untouched fields were re-cloned in full anyway.</p>
+<p>Replacing an unrelated scalar in a store that merely <em>holds</em> a 10,000-item array, 400 operations:</p>
+<table>
+<thead>
+<tr>
+<th align="left"></th>
+<th align="right">Before</th>
+<th align="right">After</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><code>set({ counter })</code></td>
+<td align="right">1,591 ms</td>
+<td align="right"><strong>2 ms</strong></td>
+</tr>
+</tbody></table>
+<p>The store already owns and already sanitized its current state, so re-sanitizing it on every commit was redundant. Switching to a shallow copy of own keys — nested values keep their identity — brings this path back into the same order of magnitude as the draft path. <strong>Incoming payloads are unaffected</strong>, which brings us to the second item.</p>
+<p><strong>Two: incoming payloads are deep-sanitized (not a defect — a guarantee)</strong></p>
+<p>Whatever you hand to <code>set({ ... })</code> is caller-supplied data. It is deep-cloned to strip unsafe keys and to break aliasing with objects the caller still holds. So passing in a fresh 1,000-element array costs O(payload):</p>
+<table>
+<thead>
+<tr>
+<th align="left">Update path</th>
+<th align="right">ops&#x2F;sec</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><code>set((draft) =&gt; { ... })</code></td>
+<td align="right">43,918</td>
+</tr>
+<tr>
+<td align="left"><code>set({ items })</code></td>
+<td align="right">342</td>
+</tr>
+</tbody></table>
+<p><strong>This one cannot be optimized away</strong> without giving up the guarantee. Coaction 1.5.0 looks dramatically faster on this benchmark only because it did not make that guarantee — the sanitizer arrived in 2.0.0. I initially conflated the two and assumed the whole ~1,100x gap was a regression. That was my mistake.</p>
+<p><strong>Why nobody noticed</strong></p>
+<p>This repository has a mechanical gate for almost everything, but <code>benchmark-regression-thresholds.json</code> had no entry covering the object-payload path at all, and the regression suite never ran it. So <code>pnpm benchmark:check</code> stayed green throughout.</p>
+<p>Both paths are now gated: <code>Coaction unrelated field replacement</code> guards the fixed clone (1,053,858 ops&#x2F;sec today, floor 400,000), and <code>Coaction object replacement + cached getter</code> guards the payload sanitizer so it cannot silently get worse.</p>
+<p><strong>Takeaway for anyone migrating</strong></p>
+<blockquote>
+<p>Whenever the value you are writing is large, use <code>set((draft) =&gt; { ... })</code>. The draft path lets Mutative report precise patches, so neither the payload walk nor the cached getter’s snapshot rebuild is needed.</p>
+</blockquote>
+<p>I left this section in rather than quietly fixing it before publishing, because it makes the earlier point concrete: microbenchmarks are good at surfacing implementation differences. This time the difference it surfaced was mine — and it corrected my own first diagnosis along the way.</p>
+<p>All three of these are microbenchmarks. They are good for finding implementation differences, but they do not replace testing against a real workload, and they cover none of component-tree re-rendering, dependency-collection cost, subscription memory, or cross-thread communication.</p>
+<hr>
+<h2 id="Pitfalls-you-will-hit-during-the-migration"><a href="#Pitfalls-you-will-hit-during-the-migration" class="headerlink" title="Pitfalls you will hit during the migration"></a>Pitfalls you will hit during the migration</h2><h3 id="Pitfall-1-tracking-stops-at-the-top-level-field-boundary-the-one-that-changes-the-most-code"><a href="#Pitfall-1-tracking-stops-at-the-top-level-field-boundary-the-one-that-changes-the-most-code" class="headerlink" title="Pitfall 1: tracking stops at the top-level field boundary (the one that changes the most code)"></a>Pitfall 1: tracking stops at the top-level field boundary (the one that changes the most code)</h3><p>“Reads are subscriptions” sounds like property-level tracking. It is not. Tracking happens at the <strong>field</strong> boundary of a store or slice.</p>
+<p>Verified with a minimal reproduction:</p>
+<figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> useStore = <span class="title function_">create</span>(<span class="function">(<span class="params">set</span>) =&gt;</span> (&#123;</span><br><span class="line">  <span class="attr">user</span>: &#123; <span class="attr">name</span>: <span class="string">&#x27;Ada&#x27;</span>, <span class="attr">email</span>: <span class="string">&#x27;a@x.com&#x27;</span> &#125;,</span><br><span class="line">  <span class="attr">unrelated</span>: <span class="number">0</span>,</span><br><span class="line">  <span class="title function_">setEmail</span>(<span class="params">v</span>) &#123; <span class="title function_">set</span>(<span class="function">() =&gt;</span> &#123; <span class="variable language_">this</span>.<span class="property">user</span>.<span class="property">email</span> = v; &#125;); &#125;,</span><br><span class="line">  <span class="title function_">setUnrelated</span>(<span class="params">v</span>) &#123; <span class="title function_">set</span>(<span class="function">() =&gt;</span> &#123; <span class="variable language_">this</span>.<span class="property">unrelated</span> = v; &#125;); &#125;</span><br><span class="line">&#125;));</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> <span class="title class_">View</span> = <span class="title function_">observer</span>(<span class="function">() =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">const</span> s = <span class="title function_">useStore</span>();</span><br><span class="line">  <span class="keyword">return</span> <span class="language-xml"><span class="tag">&lt;<span class="name">span</span>&gt;</span>&#123;s.user.name&#125;<span class="tag">&lt;/<span class="name">span</span>&gt;</span></span>; <span class="comment">// reads name only</span></span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>Results:</p>
+<table>
+<thead>
+<tr>
+<th align="left">Action</th>
+<th align="left">Component re-renders?</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">Change <code>user.email</code> (sibling field, same object)</td>
+<td align="left"><strong>Yes</strong> ← the pitfall</td>
+</tr>
+<tr>
+<td align="left">Change <code>unrelated</code> (unrelated top-level field)</td>
+<td align="left">No</td>
+</tr>
+</tbody></table>
+<p>The second row shows tracking is working. The first shows its granularity is the <code>user</code> field, not <code>user.name</code>.</p>
+<p>Two fixes, both verified:</p>
+<figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Fix 1: flatten hot fields to the top level</span></span><br><span class="line">&#123; <span class="attr">userName</span>: <span class="string">&#x27;Ada&#x27;</span>, <span class="attr">userEmail</span>: <span class="string">&#x27;a@x.com&#x27;</span> &#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Fix 2: split by change frequency into slices</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="attr">name</span>: <span class="function">() =&gt;</span> (&#123; <span class="attr">value</span>: <span class="string">&#x27;Ada&#x27;</span> &#125;),</span><br><span class="line">  <span class="attr">contact</span>: <span class="function">(<span class="params">set</span>) =&gt;</span> (&#123; <span class="attr">email</span>: <span class="string">&#x27;a@x.com&#x27;</span>, <span class="title function_">setEmail</span>(<span class="params">v</span>) &#123; <span class="comment">/* ... */</span> &#125; &#125;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>After either change, updating the email no longer re-renders the component that reads only the name.</p>
+<p><strong>Conclusion: migrating to Coaction does not make state modeling less important. It moves the modeling problem from “designing selectors” to “designing field boundaries.”</strong> If your stores hold large object fields whose inner fields change at very different rates, this is the bulk of the migration work.</p>
+<p>You can audit for it before migrating — <strong>a field is a re-render source if all three hold</strong>:</p>
+<ol>
+<li>it is an object or array, not a scalar;</li>
+<li>its sub-fields change at very different rates (say, <code>user.lastActiveAt</code> every second while <code>user.name</code> almost never changes);</li>
+<li>some component reads only a small part of it.</li>
+</ol>
+<p>The classic high-risk shape is the catch-all field: <code>user</code>, <code>settings</code>, <code>session</code>, <code>meta</code>. These usually exist in the Zustand version too — they were just masked by the selector’s hand-tuned granularity. <code>useStore(s =&gt; s.user.name)</code> plus <code>Object.is</code> happens to block sibling changes; <code>observer()</code>‘s field boundary does not. <strong>In other words this is not a new problem Coaction introduces; it makes modeling debt that was hidden inside selectors explicit.</strong></p>
+<p>One counterintuitive but correct behavior: destructuring during render does <strong>not</strong> break tracking.</p>
+<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> &#123; count &#125; = <span class="title function_">useStore</span>(); <span class="comment">// still tracks count correctly</span></span><br></pre></td></tr></table></figure>
+
+<p>because destructuring is itself a read.</p>
+<h3 id="Pitfall-2-not-every-useMemo-can-move-into-the-store"><a href="#Pitfall-2-not-every-useMemo-can-move-into-the-store" class="headerlink" title="Pitfall 2: not every useMemo can move into the store"></a>Pitfall 2: not every <code>useMemo</code> can move into the store</h3><p>Mentioned earlier, but you only hit it concretely during a migration. The test is simple — <strong>if even one input to the computation does not belong to the store, it stays in the component</strong>: props, local state, route params, <code>useContext</code> values all count.</p>
+<p>The tempting mistake is: “if I put the props into the store too, I could use a getter.” Don’t. That couples component lifecycle to global state — the input outlives the component after unmount, and multiple mounted instances overwrite each other. Leaving these computations in <code>useMemo</code> is correct, not a compromise.</p>
+<p>Using the earlier estimate, a 100k-line application has ~260 <code>useMemo</code> uses, of which roughly 85 are purely store-derived and can move; the other ~175 belong in components anyway. <strong>“Delete every useMemo” was never the goal.</strong></p>
+<h3 id="Pitfall-3-the-set-boundary-throws-in-a-burst-mid-migration"><a href="#Pitfall-3-the-set-boundary-throws-in-a-burst-mid-migration" class="headerlink" title="Pitfall 3: the set() boundary throws in a burst mid-migration"></a>Pitfall 3: the <code>set()</code> boundary throws in a burst mid-migration</h3><p>Code migrated from Zustand contains places that write state directly — especially after pulling an object out of <code>getState()</code> and assigning to a field. In Coaction these throw instead of silently taking effect.</p>
+<p>That is a good thing: the error message is direct, and those writes were bugs already. But be prepared — <strong>these errors arrive in a burst mid-migration</strong>, not sprinkled thinly.</p>
+<p>You can find them before you start:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># suspicious direct writes to fields pulled out of getState()</span></span><br><span class="line">grep -rEn <span class="string">&quot;getState\(\)\.[A-Za-z_$][A-Za-z0-9_$]*\s*(=[^=]|\+\+|--|\.push\(|\.splice\()&quot;</span> src</span><br></pre></td></tr></table></figure>
+
+<p>Worth noting: these are equally wrong in Zustand — Zustand just does not stop them. So this batch of errors usually contains some pre-existing state corruption that had never been noticed.</p>
+<h3 id="Pitfall-4-no-cached-getters-on-mutable-external-adapters"><a href="#Pitfall-4-no-cached-getters-on-mutable-external-adapters" class="headerlink" title="Pitfall 4: no cached getters on mutable external adapters"></a>Pitfall 4: no cached getters on mutable external adapters</h3><p>If you bind an existing store through a mutable adapter such as <code>@coaction/mobx</code> or <code>@coaction/pinia</code>, cached getters and <code>get(deps, selector)</code> are unavailable on those instances. <code>observer()</code> still receives updates, but subject to the same field-boundary granularity.</p>
+<p>This is documented explicitly in the project docs; check whether you are on that path before migrating.</p>
+<h3 id="Pitfall-5-Zustand-muscle-memory-walks-straight-into-set"><a href="#Pitfall-5-Zustand-muscle-memory-walks-straight-into-set" class="headerlink" title="Pitfall 5: Zustand muscle memory walks straight into set({ ... })"></a>Pitfall 5: Zustand muscle memory walks straight into <code>set({ ... })</code></h3><p>This one is migration-specific, and the one I think is most worth knowing in advance.</p>
+<p><code>set({ items })</code> is simply how you write Zustand. Coaction’s <code>set()</code> accepts the same object payload — <strong>semantically correct, and correctly typed</strong> — so code carried over from Zustand runs unchanged. It is just two orders of magnitude slower at this scale, with nothing to warn you.</p>
+<figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// carried over from Zustand: works, but takes the slow path</span></span><br><span class="line"><span class="title function_">bump</span>(<span class="params">index</span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> items = <span class="title function_">get</span>().<span class="property">items</span>.<span class="title function_">slice</span>();</span><br><span class="line">  items[index] = &#123; ...items[index], <span class="attr">quantity</span>: items[index].<span class="property">quantity</span> + <span class="number">1</span> &#125;;</span><br><span class="line">  <span class="title function_">set</span>(&#123; items &#125;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// how it should be written in Coaction</span></span><br><span class="line"><span class="title function_">bump</span>(<span class="params">index</span>) &#123;</span><br><span class="line">  <span class="title function_">set</span>(<span class="function">(<span class="params">draft</span>) =&gt;</span> &#123;</span><br><span class="line">    draft.<span class="property">items</span>[index].<span class="property">quantity</span> += <span class="number">1</span>;</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>After the rewrite, the same operation goes from ~340 ops&#x2F;sec to 43,918 ops&#x2F;sec.</p>
+<p>Note this is distinct from the defect fixed in the previous section: that one is fixed, this one is the intrinsic cost of the payload sanitizer, and only a rewrite avoids it.</p>
+<p><strong>This is the single most valuable thing to sweep for during a migration</strong>: every <code>set({ ... })</code> write whose target field is a sizable array or object should become a draft update. Nothing throws, tests stay green, and only performance degrades — which makes it the hardest kind of problem to catch in review.</p>
+<p>Find all the candidates:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># object-payload set() calls; judge each by the size of the target field</span></span><br><span class="line">grep -rEn <span class="string">&quot;set\(\s*\&#123;&quot;</span> src</span><br></pre></td></tr></table></figure>
+
+<p>The criterion is not <em>how many</em> there are but <strong>how large the value written at each site is</strong>. For a scalar or a handful of keys, the two forms are indistinguishable; for arrays, lists, and lookup tables, the draft form is required. Sweep them once during the migration rather than hunting them down after production slows.</p>
+<h2 id="Zustand-or-Coaction"><a href="#Zustand-or-Coaction" class="headerlink" title="Zustand or Coaction?"></a>Zustand or Coaction?</h2><p>Both handle most state-management work. The difference is mainly who carries the complexity: the application code, or the state runtime.</p>
+<table>
+<thead>
+<tr>
+<th align="left">Better suited to Zustand</th>
+<th align="left">Better suited to Coaction</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">Small stores, few selectors, little derived state</td>
+<td align="left">Selectors, caches, and shared derived state are already everywhere</td>
+</tr>
+<tr>
+<td align="left">Minimal dependencies and bundle size come first</td>
+<td align="left">Willing to pay ~10x entry size for a built-in runtime</td>
+</tr>
+<tr>
+<td align="left">Write-heavy hot paths (drag, animation, live streams)</td>
+<td align="left">Read-heavy product surfaces, with draft updates used consistently</td>
+</tr>
+<tr>
+<td align="left">Team prefers explicit subscriptions over implicit tracking</td>
+<td align="left">Comfortable with “reads are subscriptions”, and with investing modeling effort in field boundaries</td>
+</tr>
+<tr>
+<td align="left">Maturity and ecosystem depth matter most</td>
+<td align="left">Worker, SharedWorker, or collaboration is on the roadmap</td>
+</tr>
+</tbody></table>
+<p>If selectors show up only occasionally, they are a clear, explicit design.</p>
+<p>It is when selectors, caches, and derived relationships are spread across the whole project that they turn into infrastructure you have to maintain. That is what Coaction is offering to take over.</p>
+<hr>
+<h2 id="Workers-are-the-architectural-ceiling-not-a-free-upgrade"><a href="#Workers-are-the-architectural-ceiling-not-a-free-upgrade" class="headerlink" title="Workers are the architectural ceiling, not a free upgrade"></a>Workers are the architectural ceiling, not a free upgrade</h2><p>Coaction also offers a path toward Web Workers, SharedWorkers, cross-tab state, and Yjs collaboration.</p>
+<p>None of that is a prerequisite for single-threaded use. You can adopt only automatic tracking, computeds, and draft updates.</p>
+<p>But shared mode is not a zero-cost switch:</p>
+<ul>
+<li>the client holds a mirror of the authoritative state;</li>
+<li>methods execute across a thread boundary and return promises;</li>
+<li>state ownership, call ordering, and the error-handling model all change;</li>
+<li>everything crossing the boundary must be JSON-shaped — no <code>Date</code>, no <code>Map</code>, no class instances.</li>
+</ul>
+<p>So the accurate claim is not “flip one option and you get multithreading.” It is:</p>
+<blockquote>
+<p>The same state model has a path to evolve into multithreaded and collaborative scenarios, without replacing your state abstraction from scratch.</p>
+</blockquote>
+<p>That is an architectural ceiling, not a free implementation detail.</p>
+<hr>
+<h2 id="Closing"><a href="#Closing" class="headerlink" title="Closing"></a>Closing</h2><p>The reason to migrate from Zustand to Coaction is not that Zustand is inadequate, nor that Coaction is faster on every axis — <strong>it is clearly slower on write-heavy paths, and while writing this article I found a performance defect in my own object-replacement path that had survived two major versions</strong>.</p>
+<p>The only reason that holds is this: selectors, caches, and derived relationships have grown into a second body of state infrastructure that you now maintain. Go back to the table at the top — if you counted only a few dozen selectors, that reason does not apply to you.</p>
+<p>Zustand keeps its core simple and hands subscription and derivation policy to the application. Coaction uses a fuller runtime to take over automatic tracking, cached computeds, immutable drafts, and a path into shared mode.</p>
+<p>Both are reasonable choices.</p>
+<p>If your Zustand project is still clear, stable, and simple, stay on Zustand. If what you want is getters plus <code>this</code> plus automatic tracking, and mutable observables are fine for you, MobX is more mature.</p>
+<p>Coaction occupies a narrow position: <strong>you want that developer experience <em>and</em> you need what immutable snapshots and a patch stream make possible</strong> — undo, persistence, cross-thread state, collaboration.</p>
+<blockquote>
+<p><strong>What it is really offering to take over is not a few lines of selector, but the complexity behind them.</strong></p>
+</blockquote>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install coaction @coaction/react</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="Reproducing-everything-here"><a href="#Reproducing-everything-here" class="headerlink" title="Reproducing everything here"></a>Reproducing everything here</h3><ul>
+<li><a href="https://github.com/coactionjs/coaction">Coaction repository</a></li>
+<li><a href="https://github.com/coactionjs/coaction/blob/main/docs/comparison/single-thread.md">Why Coaction Without Multithreading</a></li>
+<li><a href="https://github.com/coactionjs/coaction/blob/main/docs/comparison/zustand.md">Coaction vs Zustand</a></li>
+<li><a href="https://github.com/coactionjs/coaction/blob/main/docs/migration/from-zustand.md">Migrating from Zustand</a></li>
+<li><a href="https://coactionjs.github.io/coaction/en/docs/guides/when-not-to-use">When not to use Coaction</a></li>
+<li>Derived-state benchmark: <code>pnpm benchmark:zustand-positioning</code> (<a href="https://github.com/coactionjs/coaction/blob/main/scripts/benchmark-zustand-positioning.ts">script</a>)</li>
+<li>Bulk update benchmark: <code>pnpm benchmark</code> (<a href="https://github.com/coactionjs/coaction/blob/main/scripts/benchmark.ts">script</a>)</li>
+<li>Known gap on the object-replacement path, with version history: <a href="https://github.com/coactionjs/coaction/blob/main/docs/benchmarking/zustand.md">Zustand-focused benchmarks</a></li>
+</ul>
+<blockquote>
+<p><strong>Disclosure: I am the author and maintainer of Coaction.</strong> This is an opinionated analysis, not an independent third-party comparison. Challenges to the implementation, the boundaries, or the benchmarks are welcome — ideally with reproducible code and a test scenario.</p>
+</blockquote>
+
+  </div>
+</article>
+
+  </div>
+</div>
+
+
+  <!-- scripts list from theme config.yml -->
+  
+    <script src="/js/attraction.js"></script>
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/codemirror.min.js"></script>
+  
+  <script>
+    var nodes = Array.from(document.querySelectorAll('pre code'));
+    var render = {};
+    var titleSvg = '<svg style="position: absolute;z-index: 1;margin: 12px 0 0 12px;" xmlns="http://www.w3.org/2000/svg" width="54" height="14" viewBox="0 0 54 14"><g fill="none" fill-rule="evenodd" transform="translate(1 1)"><circle cx="6" cy="6" r="6" fill="#FF5F56" stroke="#E0443E" stroke-width=".5"></circle><circle cx="26" cy="6" r="6" fill="#FFBD2E" stroke="#DEA123" stroke-width=".5"></circle><circle cx="46" cy="6" r="6" fill="#27C93F" stroke="#1AAB29" stroke-width=".5"></circle></g></svg>';
+    nodes.forEach((node, index) => {
+      var lang = node.getAttribute('class');
+      var code = node.innerText;
+      var mode = lang;
+      switch(lang) {
+        case 'jsx':
+          lang = 'javascript';
+          mode = 'text/jsx';
+          break;
+        case 'tsx':
+          lang = 'javascript';
+          mode = 'text/typescript-jsx';
+        case 'typescript':
+          lang = 'javascript';
+          mode = 'text/typescript';
+        default:
+          break;
+      }
+      var config = {
+        value: code,
+        mode,
+        theme: 'seti'
+      };
+      if (!lang) return;
+      var hasExisted = nodes.slice(0, index).find(function(node) { return node.getAttribute('class') === lang; });
+      if (hasExisted) {
+        render[lang].push(function() {
+          node.innerHTML = titleSvg;
+          CodeMirror(node, config);
+        });
+        return;
+      }
+      render[lang] = [];
+      var languagePackge = document.createElement('script');
+      languagePackge.src = `https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/mode/${lang}/${lang}.min.js`;
+      languagePackge.onload = () => {
+        setTimeout(() => {
+          node.innerHTML = titleSvg;
+          CodeMirror(node, config);
+          render[lang].forEach(function(callback) { callback(); })
+        }, 0);
+      }
+      document.body.appendChild(languagePackge);
+    });
+  </script>
+
+</body>
+</html>
