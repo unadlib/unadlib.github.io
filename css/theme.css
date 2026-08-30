@@ -6,12 +6,12 @@
   --text-secondary: #ccc;
   --border-color: #e0e0e0;
   --border-light: #b5b5b5;
-  --shadow-color: rgba(0,0,0,.3);
+  --shadow-color: rgba(0, 0, 0, 0.3);
   --blockquote-border: #eee;
   --blockquote-text: #666;
   --code-border: #d0d7de;
   --code-label: #57606a;
-  --inline-code-bg: rgba(175,184,193,.2);
+  --inline-code-bg: rgba(175, 184, 193, 0.2);
 }
 
 /* Dark theme */
@@ -22,19 +22,21 @@
   --text-secondary: #888;
   --border-color: #404040;
   --border-light: #555;
-  --shadow-color: rgba(0,0,0,.6);
+  --shadow-color: rgba(0, 0, 0, 0.6);
   --blockquote-border: #555;
   --blockquote-text: #aaa;
   --code-border: #444c56;
   --code-label: #adbac7;
-  --inline-code-bg: rgba(99,110,123,.4);
+  --inline-code-bg: rgba(99, 110, 123, 0.4);
 }
 
 /* Apply CSS variables */
 body {
   background-color: var(--bg-color);
   color: var(--text-color);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
 }
 
 a {
@@ -46,7 +48,10 @@ a {
   background: var(--content-bg);
   border-bottom: 1px solid var(--border-light);
   box-shadow: 0 0 3px -1px var(--shadow-color);
-  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 .recent-post-item {
@@ -65,7 +70,9 @@ a {
 #post .content blockquote {
   border-left: 3px solid var(--blockquote-border);
   color: var(--blockquote-text);
-  transition: border-color 0.3s ease, color 0.3s ease;
+  transition:
+    border-color 0.3s ease,
+    color 0.3s ease;
 }
 
 /* Theme toggle button styles */
@@ -114,10 +121,10 @@ a {
 }
 
 #post .content :not(pre) > code {
-  padding: .15em .35em;
+  padding: 0.15em 0.35em;
   background: var(--inline-code-bg);
   border-radius: 4px;
-  font-size: .9em !important;
+  font-size: 0.9em !important;
 }
 
 #post .content .shiki {
@@ -127,10 +134,12 @@ a {
   border: 1px solid var(--code-border);
   border-radius: 8px;
   overflow-x: auto;
-  line-height: 1.35;
+  line-height: 1.55;
   tab-size: 2;
   -webkit-overflow-scrolling: touch;
-  transition: background-color .3s ease, border-color .3s ease;
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease;
 }
 
 #post .content .shiki::before {
@@ -138,22 +147,24 @@ a {
   position: absolute;
   top: 1.1em;
   left: 1.25em;
-  width: .7em;
-  height: .7em;
+  width: 0.7em;
+  height: 0.7em;
   border-radius: 50%;
   background: #ff5f56;
-  box-shadow: 1.25em 0 #ffbd2e, 2.5em 0 #27c93f;
+  box-shadow:
+    1.25em 0 #ffbd2e,
+    2.5em 0 #27c93f;
 }
 
 #post .content .shiki::after {
   content: attr(data-language);
   position: absolute;
-  top: .85em;
+  top: 0.85em;
   right: 1.25em;
   color: var(--code-label);
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: .04em;
+  letter-spacing: 0.04em;
   line-height: 1.5;
   text-transform: uppercase;
 }
@@ -167,12 +178,13 @@ a {
   display: block;
   width: max-content;
   min-width: 100%;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
 }
 
 #post .content .shiki .line {
-  display: block;
-  min-height: 1.35em;
+  min-height: 1.55em;
 }
 
 [data-theme="dark"] #post .content .shiki,
@@ -193,7 +205,7 @@ a {
 }
 
 #post .content .shiki-block > figcaption {
-  margin-bottom: .5em;
+  margin-bottom: 0.5em;
   color: var(--blockquote-text);
   font-size: 14px;
 }
