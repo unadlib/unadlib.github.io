@@ -105,22 +105,6 @@
       font-size: 16px !important;
     }
 
-    .CodeMirror {
-      height: auto !important;
-      padding: 36px 24px 0;
-      border-radius: 6px;
-    }
-
-    #post .content figure {
-      padding: 0 1em;
-      margin: 0;
-      overflow: auto;
-    }
-
-    #post .content figure table {
-      width: 100%;
-    }
-
     @media screen and (max-width: 1024px)  {
       #content-outer {
         margin: 2% 7%;
@@ -157,13 +141,9 @@
     
       <link rel="stylesheet" href="/css/theme.css">
     
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/codemirror.min.css">
-    
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/theme/seti.min.css">
-    
   
 <meta name="generator" content="Hexo 8.1.1"></head>
-<body class="cm-s-seti">
+<body>
 
 <div id="content-outer">
   <div id="content-inner">
@@ -228,17 +208,136 @@
 <li>First, create <code>app.tsx</code>, which contains the <code>ProxyCounter</code> module that will be executed in the Coworker.</li>
 </ol>
 <p>The call <code>delegate(this.proxyCounter, &#39;increase&#39;, [])</code> is the same style used in general Shared Web Apps. Whether it executes through a Coworker proxy depends on the <code>createApp</code> configuration.</p>
-<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> <span class="title class_">React</span> <span class="keyword">from</span> <span class="string">&quot;react&quot;</span>;</span><br><span class="line"><span class="keyword">import</span> &#123;</span><br><span class="line">  <span class="title class_">ViewModule</span>,</span><br><span class="line">  injectable,</span><br><span class="line">  useConnector,</span><br><span class="line">  action,</span><br><span class="line">  state,</span><br><span class="line">  delegate,</span><br><span class="line">&#125; <span class="keyword">from</span> <span class="string">&quot;reactant-share&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="meta">@injectable</span>(&#123;</span><br><span class="line">  <span class="attr">name</span>: <span class="string">&quot;ProxyCounter&quot;</span>,</span><br><span class="line">&#125;)</span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> <span class="title class_">ProxyCounter</span> &#123;</span><br><span class="line">  <span class="meta">@state</span></span><br><span class="line">  count = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@action</span></span><br><span class="line">  <span class="title function_">increase</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">count</span> += <span class="number">1</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@injectable</span>(&#123;</span><br><span class="line">  <span class="attr">name</span>: <span class="string">&quot;AppView&quot;</span>,</span><br><span class="line">&#125;)</span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> <span class="title class_">AppView</span> <span class="keyword">extends</span> <span class="title class_ inherited__">ViewModule</span> &#123;</span><br><span class="line">  <span class="title function_">constructor</span>(<span class="params"><span class="keyword">public</span> <span class="attr">proxyCounter</span>: <span class="title class_">ProxyCounter</span></span>) &#123;</span><br><span class="line">    <span class="variable language_">super</span>();</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@state</span></span><br><span class="line">  count = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@action</span></span><br><span class="line">  <span class="title function_">increase</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">count</span> += <span class="number">1</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="title function_">component</span>(<span class="params"><span class="attr">this</span>: <span class="title class_">AppView</span></span>) &#123;</span><br><span class="line">    <span class="keyword">const</span> [count, proxyCount] = <span class="title function_">useConnector</span>(<span class="function">() =&gt;</span> [</span><br><span class="line">      <span class="variable language_">this</span>.<span class="property">count</span>,</span><br><span class="line">      <span class="variable language_">this</span>.<span class="property">proxyCounter</span>.<span class="property">count</span>,</span><br><span class="line">    ]);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> (</span><br><span class="line">      <span class="language-xml"><span class="tag">&lt;&gt;</span></span></span><br><span class="line"><span class="language-xml">        <span class="tag">&lt;<span class="name">div</span>&gt;</span>&#123;count&#125;<span class="tag">&lt;/<span class="name">div</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">        <span class="tag">&lt;<span class="name">button</span> <span class="attr">type</span>=<span class="string">&quot;button&quot;</span> <span class="attr">onClick</span>=<span class="string">&#123;()</span> =&gt;</span> delegate(this, &quot;increase&quot;, [])&#125;&gt;</span></span><br><span class="line"><span class="language-xml">          +</span></span><br><span class="line"><span class="language-xml">        <span class="tag">&lt;/<span class="name">button</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">        <span class="tag">&lt;<span class="name">p</span>&gt;</span>proxy in coworker<span class="tag">&lt;/<span class="name">p</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">        <span class="tag">&lt;<span class="name">div</span>&gt;</span>&#123;proxyCount&#125;<span class="tag">&lt;/<span class="name">div</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">        <span class="tag">&lt;<span class="name">button</span></span></span></span><br><span class="line"><span class="tag"><span class="language-xml">          <span class="attr">type</span>=<span class="string">&quot;button&quot;</span></span></span></span><br><span class="line"><span class="tag"><span class="language-xml">          <span class="attr">onClick</span>=<span class="string">&#123;()</span> =&gt;</span> delegate(this.proxyCounter, &quot;increase&quot;, [])&#125;</span></span><br><span class="line"><span class="language-xml">        &gt;</span></span><br><span class="line"><span class="language-xml">          +</span></span><br><span class="line"><span class="language-xml">        <span class="tag">&lt;/<span class="name">button</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">      <span class="tag">&lt;/&gt;</span></span></span><br><span class="line">    );</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="tsx" data-shiki-language="tsx" data-highlighted="true" aria-label="tsx code"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> React </span><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "react"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  ViewModule,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  injectable,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  useConnector,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  action,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  state,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  delegate,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125; </span><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "reactant-share"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">@</span><span style="color:#6F42C1;--shiki-dark:#B392F0">injectable</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(&#123;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  name: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"ProxyCounter"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;)</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">export</span><span style="color:#D73A49;--shiki-dark:#F97583"> class</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> ProxyCounter</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  @state</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">  count</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> 0</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  @action</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">  increase</span><span style="color:#24292E;--shiki-dark:#E1E4E8">() &#123;</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">    this</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.count </span><span style="color:#D73A49;--shiki-dark:#F97583">+=</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> 1</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  &#125;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">@</span><span style="color:#6F42C1;--shiki-dark:#B392F0">injectable</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(&#123;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  name: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"AppView"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;)</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">export</span><span style="color:#D73A49;--shiki-dark:#F97583"> class</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> AppView</span><span style="color:#D73A49;--shiki-dark:#F97583"> extends</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> ViewModule</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123;</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  constructor</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#D73A49;--shiki-dark:#F97583">public</span><span style="color:#E36209;--shiki-dark:#FFAB70"> proxyCounter</span><span style="color:#D73A49;--shiki-dark:#F97583">:</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> ProxyCounter</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) &#123;</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">    super</span><span style="color:#24292E;--shiki-dark:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  &#125;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  @state</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">  count</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> 0</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  @action</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">  increase</span><span style="color:#24292E;--shiki-dark:#E1E4E8">() &#123;</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">    this</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.count </span><span style="color:#D73A49;--shiki-dark:#F97583">+=</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> 1</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  &#125;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">  component</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#005CC5;--shiki-dark:#79B8FF">this</span><span style="color:#D73A49;--shiki-dark:#F97583">:</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> AppView</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) &#123;</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">    const</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> [</span><span style="color:#005CC5;--shiki-dark:#79B8FF">count</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#005CC5;--shiki-dark:#79B8FF">proxyCount</span><span style="color:#24292E;--shiki-dark:#E1E4E8">] </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> useConnector</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(() </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> [</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">      this</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.count,</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">      this</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.proxyCounter.count,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    ]);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">    return</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> (</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      &#x3C;></span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        &#x3C;</span><span style="color:#22863A;--shiki-dark:#85E89D">div</span><span style="color:#24292E;--shiki-dark:#E1E4E8">>&#123;count&#125;&#x3C;/</span><span style="color:#22863A;--shiki-dark:#85E89D">div</span><span style="color:#24292E;--shiki-dark:#E1E4E8">></span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        &#x3C;</span><span style="color:#22863A;--shiki-dark:#85E89D">button</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> type</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"button"</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> onClick</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">&#123;() </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#6F42C1;--shiki-dark:#B392F0"> delegate</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#005CC5;--shiki-dark:#79B8FF">this</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"increase"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, [])&#125;></span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">          +</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        &#x3C;/</span><span style="color:#22863A;--shiki-dark:#85E89D">button</span><span style="color:#24292E;--shiki-dark:#E1E4E8">></span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        &#x3C;</span><span style="color:#22863A;--shiki-dark:#85E89D">p</span><span style="color:#24292E;--shiki-dark:#E1E4E8">>proxy in coworker&#x3C;/</span><span style="color:#22863A;--shiki-dark:#85E89D">p</span><span style="color:#24292E;--shiki-dark:#E1E4E8">></span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        &#x3C;</span><span style="color:#22863A;--shiki-dark:#85E89D">div</span><span style="color:#24292E;--shiki-dark:#E1E4E8">>&#123;proxyCount&#125;&#x3C;/</span><span style="color:#22863A;--shiki-dark:#85E89D">div</span><span style="color:#24292E;--shiki-dark:#E1E4E8">></span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        &#x3C;</span><span style="color:#22863A;--shiki-dark:#85E89D">button</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">          type</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"button"</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">          onClick</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">&#123;() </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#6F42C1;--shiki-dark:#B392F0"> delegate</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#005CC5;--shiki-dark:#79B8FF">this</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.proxyCounter, </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"increase"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, [])&#125;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        ></span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">          +</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        &#x3C;/</span><span style="color:#22863A;--shiki-dark:#85E89D">button</span><span style="color:#24292E;--shiki-dark:#E1E4E8">></span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      &#x3C;/></span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    );</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  &#125;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;</span></span></code></pre>
 
 <ol start="2">
 <li>Create the main file, <code>index.ts</code>. Here, we configure <code>ProxyCounter</code> as a Coworker module and set <code>isCoworker</code> to <code>false</code>.</li>
 </ol>
-<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; render &#125; <span class="keyword">from</span> <span class="string">&#x27;reactant-web&#x27;</span>;</span><br><span class="line"><span class="keyword">import</span> &#123;</span><br><span class="line">  createSharedApp,</span><br><span class="line">  <span class="title class_">Coworker</span>,</span><br><span class="line">  <span class="title class_">CoworkerOptions</span>,</span><br><span class="line">  <span class="title class_">ICoworkerOptions</span>,</span><br><span class="line">&#125; <span class="keyword">from</span> <span class="string">&#x27;reactant-share&#x27;</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; <span class="title class_">AppView</span>, <span class="title class_">ProxyCounter</span> &#125; <span class="keyword">from</span> <span class="string">&#x27;./app&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="title function_">createSharedApp</span>(&#123;</span><br><span class="line">  <span class="attr">modules</span>: [</span><br><span class="line">    <span class="title class_">Coworker</span>,</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="attr">provide</span>: <span class="title class_">CoworkerOptions</span>,</span><br><span class="line">      <span class="attr">useValue</span>: &#123;</span><br><span class="line">        <span class="attr">useModules</span>: [<span class="title class_">ProxyCounter</span>],</span><br><span class="line">        <span class="attr">worker</span>: <span class="keyword">new</span> <span class="title class_">Worker</span>(<span class="keyword">new</span> <span class="title function_">URL</span>(<span class="string">&#x27;./coworker.ts&#x27;</span>, <span class="keyword">import</span>.<span class="property">meta</span>.<span class="property">url</span>)),</span><br><span class="line">        <span class="attr">isCoworker</span>: <span class="literal">false</span>,</span><br><span class="line">      &#125; <span class="keyword">as</span> <span class="title class_">ICoworkerOptions</span>,</span><br><span class="line">    &#125;,</span><br><span class="line">  ],</span><br><span class="line">  <span class="attr">main</span>: <span class="title class_">AppView</span>,</span><br><span class="line">  render,</span><br><span class="line">  <span class="attr">share</span>: &#123;</span><br><span class="line">    <span class="attr">name</span>: <span class="string">&#x27;SharedWorkerApp&#x27;</span>,</span><br><span class="line">    <span class="attr">type</span>: <span class="string">&#x27;Base&#x27;</span>,</span><br><span class="line">  &#125;,</span><br><span class="line">&#125;).<span class="title function_">then</span>(<span class="function">(<span class="params">app</span>) =&gt;</span> &#123;</span><br><span class="line">  app.<span class="title function_">bootstrap</span>(<span class="variable language_">document</span>.<span class="title function_">getElementById</span>(<span class="string">&#x27;app&#x27;</span>));</span><br><span class="line">  <span class="variable language_">window</span>.<span class="property">app</span> = app;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="tsx" data-shiki-language="tsx" data-highlighted="true" aria-label="tsx code"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123; render &#125; </span><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> 'reactant-web'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  createSharedApp,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  Coworker,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  CoworkerOptions,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  ICoworkerOptions,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125; </span><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> 'reactant-share'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123; AppView, ProxyCounter &#125; </span><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> './app'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">createSharedApp</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(&#123;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  modules: [</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    Coworker,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    &#123;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      provide: CoworkerOptions,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      useValue: &#123;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        useModules: [ProxyCounter],</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        worker: </span><span style="color:#D73A49;--shiki-dark:#F97583">new</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> Worker</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#D73A49;--shiki-dark:#F97583">new</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> URL</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">'./coworker.ts'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.</span><span style="color:#005CC5;--shiki-dark:#79B8FF">meta</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.url)),</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        isCoworker: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">false</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      &#125; </span><span style="color:#D73A49;--shiki-dark:#F97583">as</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> ICoworkerOptions</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    &#125;,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  ],</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  main: AppView,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  render,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  share: &#123;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    name: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">'SharedWorkerApp'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    type: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">'Base'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  &#125;,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;).</span><span style="color:#6F42C1;--shiki-dark:#B392F0">then</span><span style="color:#24292E;--shiki-dark:#E1E4E8">((</span><span style="color:#E36209;--shiki-dark:#FFAB70">app</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  app.</span><span style="color:#6F42C1;--shiki-dark:#B392F0">bootstrap</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(document.</span><span style="color:#6F42C1;--shiki-dark:#B392F0">getElementById</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">'app'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">));</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  window.app </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> app;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;);</span></span></code></pre>
 
 <ol start="3">
 <li>Create the Coworker file, <code>coworker.ts</code>. Here, we also configure <code>ProxyCounter</code> as a Coworker module, but this time set <code>isCoworker</code> to <code>true</code>.</li>
 </ol>
-<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123;</span><br><span class="line">  createSharedApp,</span><br><span class="line">  <span class="title class_">Coworker</span>,</span><br><span class="line">  <span class="title class_">CoworkerOptions</span>,</span><br><span class="line">  <span class="title class_">ICoworkerOptions</span>,</span><br><span class="line">&#125; <span class="keyword">from</span> <span class="string">&#x27;reactant-share&#x27;</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; <span class="title class_">AppView</span>, <span class="title class_">ProxyCounter</span> &#125; <span class="keyword">from</span> <span class="string">&#x27;./app&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="title function_">createSharedApp</span>(&#123;</span><br><span class="line">  <span class="attr">modules</span>: [</span><br><span class="line">    <span class="title class_">Coworker</span>,</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="attr">provide</span>: <span class="title class_">CoworkerOptions</span>,</span><br><span class="line">      <span class="attr">useValue</span>: &#123;</span><br><span class="line">        <span class="attr">useModules</span>: [<span class="title class_">ProxyCounter</span>],</span><br><span class="line">        <span class="attr">isCoworker</span>: <span class="literal">true</span>,</span><br><span class="line">      &#125; <span class="keyword">as</span> <span class="title class_">ICoworkerOptions</span>,</span><br><span class="line">    &#125;,</span><br><span class="line">  ],</span><br><span class="line">  <span class="attr">main</span>: <span class="title class_">AppView</span>,</span><br><span class="line">  <span class="attr">render</span>: <span class="function">() =&gt;</span> &#123;&#125;,</span><br><span class="line">  <span class="attr">share</span>: &#123;</span><br><span class="line">    <span class="attr">name</span>: <span class="string">&#x27;SharedWorkerApp&#x27;</span>,</span><br><span class="line">    <span class="attr">type</span>: <span class="string">&#x27;Base&#x27;</span>,</span><br><span class="line">  &#125;,</span><br><span class="line">&#125;).<span class="title function_">then</span>(<span class="function">(<span class="params">app</span>) =&gt;</span> &#123;</span><br><span class="line">  self.<span class="property">app</span> = app;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="tsx" data-shiki-language="tsx" data-highlighted="true" aria-label="tsx code"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  createSharedApp,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  Coworker,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  CoworkerOptions,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  ICoworkerOptions,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125; </span><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> 'reactant-share'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123; AppView, ProxyCounter &#125; </span><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> './app'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">createSharedApp</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(&#123;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  modules: [</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    Coworker,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    &#123;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      provide: CoworkerOptions,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      useValue: &#123;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        useModules: [ProxyCounter],</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        isCoworker: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">true</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      &#125; </span><span style="color:#D73A49;--shiki-dark:#F97583">as</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> ICoworkerOptions</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    &#125;,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  ],</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  main: AppView,</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">  render</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: () </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123;&#125;,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  share: &#123;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    name: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">'SharedWorkerApp'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    type: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">'Base'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  &#125;,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;).</span><span style="color:#6F42C1;--shiki-dark:#B392F0">then</span><span style="color:#24292E;--shiki-dark:#E1E4E8">((</span><span style="color:#E36209;--shiki-dark:#FFAB70">app</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  self.app </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> app;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;);</span></span></code></pre>
 
 <p>At this point, we have created a basic application using Coworker. Users trigger <code>delegate(this.proxyCounter, &#39;increase&#39;, [])</code> in the main thread through the UI. This action is forwarded to the Coworker, which executes <code>proxyCounter.increase()</code>. The shared state then synchronizes back to the main thread, and the rendering update is handled by the <code>useConnector()</code> Hook.</p>
 <h2 id="Q-A"><a href="#Q-A" class="headerlink" title="Q&amp;A"></a>Q&amp;A</h2><p><strong>1. What are the challenges of multithreaded programming with Coworker based on reactant-share?</strong></p>
@@ -271,57 +370,6 @@
   
     <script src="/js/attraction.js"></script>
   
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/codemirror.min.js"></script>
-  
-  <script>
-    var nodes = Array.from(document.querySelectorAll('pre code'));
-    var render = {};
-    var titleSvg = '<svg style="position: absolute;z-index: 1;margin: 12px 0 0 12px;" xmlns="http://www.w3.org/2000/svg" width="54" height="14" viewBox="0 0 54 14"><g fill="none" fill-rule="evenodd" transform="translate(1 1)"><circle cx="6" cy="6" r="6" fill="#FF5F56" stroke="#E0443E" stroke-width=".5"></circle><circle cx="26" cy="6" r="6" fill="#FFBD2E" stroke="#DEA123" stroke-width=".5"></circle><circle cx="46" cy="6" r="6" fill="#27C93F" stroke="#1AAB29" stroke-width=".5"></circle></g></svg>';
-    nodes.forEach((node, index) => {
-      var lang = node.getAttribute('class');
-      var code = node.innerText;
-      var mode = lang;
-      switch(lang) {
-        case 'jsx':
-          lang = 'javascript';
-          mode = 'text/jsx';
-          break;
-        case 'tsx':
-          lang = 'javascript';
-          mode = 'text/typescript-jsx';
-        case 'typescript':
-          lang = 'javascript';
-          mode = 'text/typescript';
-        default:
-          break;
-      }
-      var config = {
-        value: code,
-        mode,
-        theme: 'seti'
-      };
-      if (!lang) return;
-      var hasExisted = nodes.slice(0, index).find(function(node) { return node.getAttribute('class') === lang; });
-      if (hasExisted) {
-        render[lang].push(function() {
-          node.innerHTML = titleSvg;
-          CodeMirror(node, config);
-        });
-        return;
-      }
-      render[lang] = [];
-      var languagePackge = document.createElement('script');
-      languagePackge.src = `https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/mode/${lang}/${lang}.min.js`;
-      languagePackge.onload = () => {
-        setTimeout(() => {
-          node.innerHTML = titleSvg;
-          CodeMirror(node, config);
-          render[lang].forEach(function(callback) { callback(); })
-        }, 0);
-      }
-      document.body.appendChild(languagePackge);
-    });
-  </script>
 
 </body>
 </html>

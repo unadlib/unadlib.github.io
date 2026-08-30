@@ -105,22 +105,6 @@
       font-size: 16px !important;
     }
 
-    .CodeMirror {
-      height: auto !important;
-      padding: 36px 24px 0;
-      border-radius: 6px;
-    }
-
-    #post .content figure {
-      padding: 0 1em;
-      margin: 0;
-      overflow: auto;
-    }
-
-    #post .content figure table {
-      width: 100%;
-    }
-
     @media screen and (max-width: 1024px)  {
       #content-outer {
         margin: 2% 7%;
@@ -157,13 +141,9 @@
     
       <link rel="stylesheet" href="/css/theme.css">
     
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/codemirror.min.css">
-    
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/theme/seti.min.css">
-    
   
 <meta name="generator" content="Hexo 8.1.1"></head>
-<body class="cm-s-seti">
+<body>
 
 <div id="content-outer">
   <div id="content-inner">
@@ -191,57 +171,6 @@
   
     <script src="/js/attraction.js"></script>
   
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/codemirror.min.js"></script>
-  
-  <script>
-    var nodes = Array.from(document.querySelectorAll('pre code'));
-    var render = {};
-    var titleSvg = '<svg style="position: absolute;z-index: 1;margin: 12px 0 0 12px;" xmlns="http://www.w3.org/2000/svg" width="54" height="14" viewBox="0 0 54 14"><g fill="none" fill-rule="evenodd" transform="translate(1 1)"><circle cx="6" cy="6" r="6" fill="#FF5F56" stroke="#E0443E" stroke-width=".5"></circle><circle cx="26" cy="6" r="6" fill="#FFBD2E" stroke="#DEA123" stroke-width=".5"></circle><circle cx="46" cy="6" r="6" fill="#27C93F" stroke="#1AAB29" stroke-width=".5"></circle></g></svg>';
-    nodes.forEach((node, index) => {
-      var lang = node.getAttribute('class');
-      var code = node.innerText;
-      var mode = lang;
-      switch(lang) {
-        case 'jsx':
-          lang = 'javascript';
-          mode = 'text/jsx';
-          break;
-        case 'tsx':
-          lang = 'javascript';
-          mode = 'text/typescript-jsx';
-        case 'typescript':
-          lang = 'javascript';
-          mode = 'text/typescript';
-        default:
-          break;
-      }
-      var config = {
-        value: code,
-        mode,
-        theme: 'seti'
-      };
-      if (!lang) return;
-      var hasExisted = nodes.slice(0, index).find(function(node) { return node.getAttribute('class') === lang; });
-      if (hasExisted) {
-        render[lang].push(function() {
-          node.innerHTML = titleSvg;
-          CodeMirror(node, config);
-        });
-        return;
-      }
-      render[lang] = [];
-      var languagePackge = document.createElement('script');
-      languagePackge.src = `https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/mode/${lang}/${lang}.min.js`;
-      languagePackge.onload = () => {
-        setTimeout(() => {
-          node.innerHTML = titleSvg;
-          CodeMirror(node, config);
-          render[lang].forEach(function(callback) { callback(); })
-        }, 0);
-      }
-      document.body.appendChild(languagePackge);
-    });
-  </script>
 
 </body>
 </html>

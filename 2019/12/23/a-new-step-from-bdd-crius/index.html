@@ -105,22 +105,6 @@
       font-size: 16px !important;
     }
 
-    .CodeMirror {
-      height: auto !important;
-      padding: 36px 24px 0;
-      border-radius: 6px;
-    }
-
-    #post .content figure {
-      padding: 0 1em;
-      margin: 0;
-      overflow: auto;
-    }
-
-    #post .content figure table {
-      width: 100%;
-    }
-
     @media screen and (max-width: 1024px)  {
       #content-outer {
         margin: 2% 7%;
@@ -157,13 +141,9 @@
     
       <link rel="stylesheet" href="/css/theme.css">
     
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/codemirror.min.css">
-    
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/theme/seti.min.css">
-    
   
 <meta name="generator" content="Hexo 8.1.1"></head>
-<body class="cm-s-seti">
+<body>
 
 <div id="content-outer">
   <div id="content-inner">
@@ -184,7 +164,77 @@
 </ol>
 <p>These shortcomings eventually led to the advent of Crius.</p>
 <h2 id="What-is-Crius"><a href="#What-is-Crius" class="headerlink" title="What is Crius"></a>What is Crius</h2><p>Crius is our answer to these Cucumber limitations. Let’s look at an example:</p>
-<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@autorun</span>(test)</span><br><span class="line"><span class="meta">@title</span>(<span class="string">&#x27;User add $&#123;todo&#125; item in todo list&#x27;</span>)</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">AddTodoItem</span> <span class="keyword">extends</span> <span class="title class_ inherited__">Step</span> &#123;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// cucumber-like example table, with JavaScript literals</span></span><br><span class="line">  <span class="meta">@examples</span><span class="string">`</span></span><br><span class="line"><span class="string">    | todo       | object             |</span></span><br><span class="line"><span class="string">    | &#x27;learning&#x27; | &#123; obj: &#x27;literal&#x27; &#125; |</span></span><br><span class="line"><span class="string">    | &#x27;crius&#x27;    | &#123; obj: &#x27;hello&#x27; &#125;   |</span></span><br><span class="line"><span class="string">  `</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// which is equivalent to:</span></span><br><span class="line">  <span class="comment">// @examples([&#123;</span></span><br><span class="line">  <span class="comment">//     todo: &#x27;learning&#x27;,</span></span><br><span class="line">  <span class="comment">//     object: &#123; obj: &#x27;literal&#x27; &#125;</span></span><br><span class="line">  <span class="comment">// &#125;, &#123;</span></span><br><span class="line">  <span class="comment">//     todo: &#x27;crius&#x27;,</span></span><br><span class="line">  <span class="comment">//     object: &#123; obj: &#x27;hello&#x27; &#125;</span></span><br><span class="line">  <span class="comment">// &#125;])</span></span><br><span class="line"></span><br><span class="line">  <span class="title function_">run</span>(<span class="params"></span>) &#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// JSX-like declarative feature description</span></span><br><span class="line">    <span class="keyword">return</span> (</span><br><span class="line">      <span class="comment">// explicit reference to actions</span></span><br><span class="line">      <span class="language-xml"><span class="tag">&lt;<span class="name">Scenario</span> <span class="attr">desc</span>=<span class="string">&#x27;User logs in to the website&#x27;</span> <span class="attr">action</span>=<span class="string">&#123;Login&#125;</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">        <span class="tag">&lt;<span class="name">Given</span> <span class="attr">desc</span>=<span class="string">&#x27;User navigates to the todo list&#x27;</span> <span class="attr">action</span>=<span class="string">&#123;Navigate&#125;</span> /&gt;</span></span></span><br><span class="line"><span class="language-xml"></span></span><br><span class="line"><span class="language-xml">        &#123; /* Allow Step class AddTodo to be used as an action to promote re-use */ &#125;</span></span><br><span class="line"><span class="language-xml">        <span class="tag">&lt;<span class="name">When</span> <span class="attr">desc</span>=<span class="string">&#x27;User types $&#123;todo&#125; in the input field and clicks the &quot;add&quot; button&#x27;</span> <span class="attr">action</span>=<span class="string">&#123;AddTodo&#125;</span> /&gt;</span></span></span><br><span class="line"><span class="language-xml">        <span class="tag">&lt;<span class="name">Then</span> <span class="attr">desc</span>=<span class="string">&#x27;User should see the $&#123;todo&#125; item in the todo list&#x27;</span> <span class="attr">action</span>=<span class="string">&#123;CheckTodo&#125;</span> /&gt;</span></span></span><br><span class="line"><span class="language-xml"></span></span><br><span class="line"><span class="language-xml">        &#123; /* action is optional */ &#125;</span></span><br><span class="line"><span class="language-xml">        <span class="tag">&lt;<span class="name">Then</span> <span class="attr">desc</span>=<span class="string">&#x27;Just a description&#x27;</span> /&gt;</span></span></span><br><span class="line"><span class="language-xml">      <span class="tag">&lt;/<span class="name">Scenario</span>&gt;</span></span></span><br><span class="line">    )</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Functional Step definition similar to Functional Components in React</span></span><br><span class="line"><span class="keyword">const</span> <span class="title function_">Login</span> = <span class="keyword">async</span> (<span class="params"></span>) =&gt; &#123;</span><br><span class="line">  <span class="comment">// actual code to perform login</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> <span class="title function_">Navigate</span> = <span class="keyword">async</span> (<span class="params"></span>) =&gt; &#123;</span><br><span class="line">  <span class="comment">// navigate to todo list</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Step is similar to React Component class</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">AddTodo</span> <span class="keyword">extends</span> <span class="title class_ inherited__">Step</span> &#123;</span><br><span class="line">  <span class="keyword">async</span> <span class="title function_">run</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">return</span> (</span><br><span class="line">      <span class="language-xml"><span class="tag">&lt;&gt;</span></span></span><br><span class="line"><span class="language-xml">        <span class="tag">&lt;<span class="name">TypeTodoText</span> <span class="attr">text</span>=<span class="string">&#123;this.context.example.todo&#125;</span> /&gt;</span></span></span><br><span class="line"><span class="language-xml">        <span class="tag">&lt;<span class="name">SubmitTodo</span> /&gt;</span></span></span><br><span class="line"><span class="language-xml">      <span class="tag">&lt;/&gt;</span></span></span><br><span class="line">    );</span><br><span class="line">  &#125;;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> <span class="title function_">TypeTodoText</span> = <span class="keyword">async</span> (<span class="params">props</span>) =&gt; &#123;</span><br><span class="line">  <span class="comment">// `props.text` is the todo text.</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> <span class="title function_">SubmitTodo</span> = <span class="keyword">async</span> (<span class="params"></span>) =&gt; &#123;</span><br><span class="line">  <span class="comment">// click the &quot;add&quot; button</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> <span class="title function_">CheckTodo</span> = <span class="keyword">async</span> (<span class="params">_, &#123; example &#125;</span>) =&gt; &#123;</span><br><span class="line">  <span class="comment">// check todo item</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="tsx" data-shiki-language="tsx" data-highlighted="true" aria-label="tsx code"><code><span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">@</span><span style="color:#6F42C1;--shiki-dark:#B392F0">autorun</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(test)</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">@</span><span style="color:#6F42C1;--shiki-dark:#B392F0">title</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">'User add $&#123;todo&#125; item in todo list'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">class</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> AddTodoItem</span><span style="color:#D73A49;--shiki-dark:#F97583"> extends</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> Step</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">  // cucumber-like example table, with JavaScript literals</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  @</span><span style="color:#6F42C1;--shiki-dark:#B392F0">examples</span><span style="color:#032F62;--shiki-dark:#9ECBFF">`</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">    | todo       | object             |</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">    | 'learning' | &#123; obj: 'literal' &#125; |</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">    | 'crius'    | &#123; obj: 'hello' &#125;   |</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">  `</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">  // which is equivalent to:</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">  // @examples([&#123;</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">  //     todo: 'learning',</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">  //     object: &#123; obj: 'literal' &#125;</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">  // &#125;, &#123;</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">  //     todo: 'crius',</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">  //     object: &#123; obj: 'hello' &#125;</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">  // &#125;])</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">  run</span><span style="color:#24292E;--shiki-dark:#E1E4E8">() &#123;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">    // JSX-like declarative feature description</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">    return</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> (</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">      // explicit reference to actions</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      &#x3C;</span><span style="color:#005CC5;--shiki-dark:#79B8FF">Scenario</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> desc</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#032F62;--shiki-dark:#9ECBFF">'User logs in to the website'</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> action</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">&#123;Login&#125;></span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        &#x3C;</span><span style="color:#005CC5;--shiki-dark:#79B8FF">Given</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> desc</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#032F62;--shiki-dark:#9ECBFF">'User navigates to the todo list'</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> action</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">&#123;Navigate&#125; /></span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        &#123; </span><span style="color:#6A737D;--shiki-dark:#6A737D">/* Allow Step class AddTodo to be used as an action to promote re-use */</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#125;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        &#x3C;</span><span style="color:#005CC5;--shiki-dark:#79B8FF">When</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> desc</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#032F62;--shiki-dark:#9ECBFF">'User types $&#123;todo&#125; in the input field and clicks the "add" button'</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> action</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">&#123;AddTodo&#125; /></span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        &#x3C;</span><span style="color:#005CC5;--shiki-dark:#79B8FF">Then</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> desc</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#032F62;--shiki-dark:#9ECBFF">'User should see the $&#123;todo&#125; item in the todo list'</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> action</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">&#123;CheckTodo&#125; /></span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        &#123; </span><span style="color:#6A737D;--shiki-dark:#6A737D">/* action is optional */</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#125;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        &#x3C;</span><span style="color:#005CC5;--shiki-dark:#79B8FF">Then</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> desc</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#032F62;--shiki-dark:#9ECBFF">'Just a description'</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> /></span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      &#x3C;/</span><span style="color:#005CC5;--shiki-dark:#79B8FF">Scenario</span><span style="color:#24292E;--shiki-dark:#E1E4E8">></span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    )</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  &#125;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">// Functional Step definition similar to Functional Components in React</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> Login</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#D73A49;--shiki-dark:#F97583"> async</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> () </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123;</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">  // actual code to perform login</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> Navigate</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#D73A49;--shiki-dark:#F97583"> async</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> () </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123;</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">  // navigate to todo list</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">// Step is similar to React Component class</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">class</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> AddTodo</span><span style="color:#D73A49;--shiki-dark:#F97583"> extends</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> Step</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123;</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  async</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> run</span><span style="color:#24292E;--shiki-dark:#E1E4E8">() &#123;</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">    return</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> (</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      &#x3C;></span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        &#x3C;</span><span style="color:#005CC5;--shiki-dark:#79B8FF">TypeTodoText</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> text</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">&#123;</span><span style="color:#005CC5;--shiki-dark:#79B8FF">this</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.context.example.todo&#125; /></span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        &#x3C;</span><span style="color:#005CC5;--shiki-dark:#79B8FF">SubmitTodo</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> /></span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      &#x3C;/></span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    );</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  &#125;;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> TypeTodoText</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#D73A49;--shiki-dark:#F97583"> async</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> (</span><span style="color:#E36209;--shiki-dark:#FFAB70">props</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123;</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">  // `props.text` is the todo text.</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> SubmitTodo</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#D73A49;--shiki-dark:#F97583"> async</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> () </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123;</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">  // click the "add" button</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> CheckTodo</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#D73A49;--shiki-dark:#F97583"> async</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> (</span><span style="color:#E36209;--shiki-dark:#FFAB70">_</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, &#123; </span><span style="color:#E36209;--shiki-dark:#FFAB70">example</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#125;) </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123;</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">  // check todo item</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;;</span></span></code></pre>
 
 <h3 id="Features-of-Crius"><a href="#Features-of-Crius" class="headerlink" title="Features of Crius"></a>Features of Crius</h3><ul>
 <li><strong>Declarative and expressive DSL</strong> - Combines DSL characteristics from Cucumber and React</li>
@@ -217,57 +267,6 @@
   
     <script src="/js/attraction.js"></script>
   
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/codemirror.min.js"></script>
-  
-  <script>
-    var nodes = Array.from(document.querySelectorAll('pre code'));
-    var render = {};
-    var titleSvg = '<svg style="position: absolute;z-index: 1;margin: 12px 0 0 12px;" xmlns="http://www.w3.org/2000/svg" width="54" height="14" viewBox="0 0 54 14"><g fill="none" fill-rule="evenodd" transform="translate(1 1)"><circle cx="6" cy="6" r="6" fill="#FF5F56" stroke="#E0443E" stroke-width=".5"></circle><circle cx="26" cy="6" r="6" fill="#FFBD2E" stroke="#DEA123" stroke-width=".5"></circle><circle cx="46" cy="6" r="6" fill="#27C93F" stroke="#1AAB29" stroke-width=".5"></circle></g></svg>';
-    nodes.forEach((node, index) => {
-      var lang = node.getAttribute('class');
-      var code = node.innerText;
-      var mode = lang;
-      switch(lang) {
-        case 'jsx':
-          lang = 'javascript';
-          mode = 'text/jsx';
-          break;
-        case 'tsx':
-          lang = 'javascript';
-          mode = 'text/typescript-jsx';
-        case 'typescript':
-          lang = 'javascript';
-          mode = 'text/typescript';
-        default:
-          break;
-      }
-      var config = {
-        value: code,
-        mode,
-        theme: 'seti'
-      };
-      if (!lang) return;
-      var hasExisted = nodes.slice(0, index).find(function(node) { return node.getAttribute('class') === lang; });
-      if (hasExisted) {
-        render[lang].push(function() {
-          node.innerHTML = titleSvg;
-          CodeMirror(node, config);
-        });
-        return;
-      }
-      render[lang] = [];
-      var languagePackge = document.createElement('script');
-      languagePackge.src = `https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/mode/${lang}/${lang}.min.js`;
-      languagePackge.onload = () => {
-        setTimeout(() => {
-          node.innerHTML = titleSvg;
-          CodeMirror(node, config);
-          render[lang].forEach(function(callback) { callback(); })
-        }, 0);
-      }
-      document.body.appendChild(languagePackge);
-    });
-  </script>
 
 </body>
 </html>

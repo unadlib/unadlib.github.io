@@ -105,22 +105,6 @@
       font-size: 16px !important;
     }
 
-    .CodeMirror {
-      height: auto !important;
-      padding: 36px 24px 0;
-      border-radius: 6px;
-    }
-
-    #post .content figure {
-      padding: 0 1em;
-      margin: 0;
-      overflow: auto;
-    }
-
-    #post .content figure table {
-      width: 100%;
-    }
-
     @media screen and (max-width: 1024px)  {
       #content-outer {
         margin: 2% 7%;
@@ -157,13 +141,9 @@
     
       <link rel="stylesheet" href="/css/theme.css">
     
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/codemirror.min.css">
-    
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/theme/seti.min.css">
-    
   
 <meta name="generator" content="Hexo 8.1.1"></head>
-<body class="cm-s-seti">
+<body>
 
 <div id="content-outer">
   <div id="content-inner">
@@ -183,7 +163,20 @@
 </blockquote>
 <p>Measured in ops&#x2F;sec while updating 50K arrays and 1K objects. Higher is better (<a href="https://github.com/unadlib/mutative/blob/main/test/performance/benchmark.ts">view source</a>). [Mutative v0.5.0 vs Immer v10.0.1]</p>
 <p><img src="/assets/2022-12-31-mutative-10x-faster-than-immer/benchmark.jpg" alt="Benchmark"></p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">Naive handcrafted reducer - No Freeze x 3,692 ops/sec ±1.28% (95 runs sampled)</span><br><span class="line">Mutative - No Freeze x 5,425 ops/sec ±1.70% (93 runs sampled)</span><br><span class="line">Immer - No Freeze x 5.08 ops/sec ±0.58% (17 runs sampled)</span><br><span class="line"></span><br><span class="line">Mutative - Freeze x 818 ops/sec ±1.49% (96 runs sampled)</span><br><span class="line">Immer - Freeze x 357 ops/sec ±0.79% (92 runs sampled)</span><br><span class="line"></span><br><span class="line">Mutative - Patches and No Freeze x 746 ops/sec ±0.83% (96 runs sampled)</span><br><span class="line">Immer - Patches and No Freeze x 5.08 ops/sec ±0.25% (17 runs sampled)</span><br><span class="line"></span><br><span class="line">Mutative - Patches and Freeze x 408 ops/sec ±0.28% (96 runs sampled)</span><br><span class="line">Immer - Patches and Freeze x 264 ops/sec ±0.59% (91 runs sampled)</span><br><span class="line"></span><br><span class="line">The fastest method is Mutative - No Freeze</span><br></pre></td></tr></table></figure>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="text" data-shiki-language="text" data-highlighted="false" aria-label="text code"><code><span class="line"><span>Naive handcrafted reducer - No Freeze x 3,692 ops/sec ±1.28% (95 runs sampled)</span></span>
+<span class="line"><span>Mutative - No Freeze x 5,425 ops/sec ±1.70% (93 runs sampled)</span></span>
+<span class="line"><span>Immer - No Freeze x 5.08 ops/sec ±0.58% (17 runs sampled)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>Mutative - Freeze x 818 ops/sec ±1.49% (96 runs sampled)</span></span>
+<span class="line"><span>Immer - Freeze x 357 ops/sec ±0.79% (92 runs sampled)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>Mutative - Patches and No Freeze x 746 ops/sec ±0.83% (96 runs sampled)</span></span>
+<span class="line"><span>Immer - Patches and No Freeze x 5.08 ops/sec ±0.25% (17 runs sampled)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>Mutative - Patches and Freeze x 408 ops/sec ±0.28% (96 runs sampled)</span></span>
+<span class="line"><span>Immer - Patches and Freeze x 264 ops/sec ±0.59% (91 runs sampled)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>The fastest method is Mutative - No Freeze</span></span></code></pre>
 
 <p>Run <code>yarn benchmark</code> to measure performance.</p>
 <blockquote>
@@ -251,10 +244,20 @@
 </tr>
 </tbody></table>
 <p>Mutative has fewer bugs such as accidental draft escapes than Immer, <a href="https://github.com/unadlib/mutative/blob/main/test/immer-non-support.test.ts">view details</a>.</p>
-<h2 id="Installation"><a href="#Installation" class="headerlink" title="Installation"></a>Installation</h2><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yarn install mutative <span class="comment"># npm install mutative</span></span><br></pre></td></tr></table></figure>
+<h2 id="Installation"><a href="#Installation" class="headerlink" title="Installation"></a>Installation</h2><pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="sh" data-shiki-language="sh" data-highlighted="true" aria-label="sh code"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">yarn</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> install</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> mutative</span><span style="color:#6A737D;--shiki-dark:#6A737D"> # npm install mutative</span></span></code></pre>
 
 <h2 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h2><p>Use <code>create()</code> for draft mutation to get a new state, which also supports currying.</p>
-<figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; create &#125; <span class="keyword">from</span> <span class="string">&#x27;mutative&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> baseState = &#123;</span><br><span class="line">  <span class="attr">foo</span>: <span class="string">&#x27;bar&#x27;</span>,</span><br><span class="line">  <span class="attr">list</span>: [&#123; <span class="attr">text</span>: <span class="string">&#x27;todo&#x27;</span> &#125;],</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> state = <span class="title function_">create</span>(baseState, <span class="function">(<span class="params">draft</span>) =&gt;</span> &#123;</span><br><span class="line">  draft.<span class="property">foo</span> = <span class="string">&#x27;foobar&#x27;</span>;</span><br><span class="line">  draft.<span class="property">list</span>.<span class="title function_">push</span>(&#123; <span class="attr">text</span>: <span class="string">&#x27;learning&#x27;</span> &#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="ts" data-shiki-language="ts" data-highlighted="true" aria-label="ts code"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123; create &#125; </span><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> 'mutative'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> baseState</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  foo: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">'bar'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  list: [&#123; text: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">'todo'</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#125;],</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> state</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> create</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(baseState, (</span><span style="color:#E36209;--shiki-dark:#FFAB70">draft</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  draft.foo </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> 'foobar'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  draft.list.</span><span style="color:#6F42C1;--shiki-dark:#B392F0">push</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(&#123; text: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">'learning'</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#125;);</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;);</span></span></code></pre>
 
 <p>In this basic example, the changes to the draft are ‘mutative’ within the draft callback, and <code>create()</code> is finally executed with a new immutable state.</p>
 <h4 id="create-state-fn-options-The-options-argument-is-optional"><a href="#create-state-fn-options-The-options-argument-is-optional" class="headerlink" title="create(state, fn, options) - The options argument is optional."></a><code>create(state, fn, options)</code> - The options argument is optional.</h4><ul>
@@ -311,57 +314,6 @@
   
     <script src="/js/attraction.js"></script>
   
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/codemirror.min.js"></script>
-  
-  <script>
-    var nodes = Array.from(document.querySelectorAll('pre code'));
-    var render = {};
-    var titleSvg = '<svg style="position: absolute;z-index: 1;margin: 12px 0 0 12px;" xmlns="http://www.w3.org/2000/svg" width="54" height="14" viewBox="0 0 54 14"><g fill="none" fill-rule="evenodd" transform="translate(1 1)"><circle cx="6" cy="6" r="6" fill="#FF5F56" stroke="#E0443E" stroke-width=".5"></circle><circle cx="26" cy="6" r="6" fill="#FFBD2E" stroke="#DEA123" stroke-width=".5"></circle><circle cx="46" cy="6" r="6" fill="#27C93F" stroke="#1AAB29" stroke-width=".5"></circle></g></svg>';
-    nodes.forEach((node, index) => {
-      var lang = node.getAttribute('class');
-      var code = node.innerText;
-      var mode = lang;
-      switch(lang) {
-        case 'jsx':
-          lang = 'javascript';
-          mode = 'text/jsx';
-          break;
-        case 'tsx':
-          lang = 'javascript';
-          mode = 'text/typescript-jsx';
-        case 'typescript':
-          lang = 'javascript';
-          mode = 'text/typescript';
-        default:
-          break;
-      }
-      var config = {
-        value: code,
-        mode,
-        theme: 'seti'
-      };
-      if (!lang) return;
-      var hasExisted = nodes.slice(0, index).find(function(node) { return node.getAttribute('class') === lang; });
-      if (hasExisted) {
-        render[lang].push(function() {
-          node.innerHTML = titleSvg;
-          CodeMirror(node, config);
-        });
-        return;
-      }
-      render[lang] = [];
-      var languagePackge = document.createElement('script');
-      languagePackge.src = `https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/mode/${lang}/${lang}.min.js`;
-      languagePackge.onload = () => {
-        setTimeout(() => {
-          node.innerHTML = titleSvg;
-          CodeMirror(node, config);
-          render[lang].forEach(function(callback) { callback(); })
-        }, 0);
-      }
-      document.body.appendChild(languagePackge);
-    });
-  </script>
 
 </body>
 </html>
