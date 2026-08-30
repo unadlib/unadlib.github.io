@@ -127,7 +127,7 @@ a {
   border: 1px solid var(--code-border);
   border-radius: 8px;
   overflow-x: auto;
-  line-height: 1.55;
+  line-height: 1.35;
   tab-size: 2;
   -webkit-overflow-scrolling: touch;
   transition: background-color .3s ease, border-color .3s ease;
@@ -172,7 +172,7 @@ a {
 
 #post .content .shiki .line {
   display: block;
-  min-height: 1.55em;
+  min-height: 1.35em;
 }
 
 [data-theme="dark"] #post .content .shiki,
