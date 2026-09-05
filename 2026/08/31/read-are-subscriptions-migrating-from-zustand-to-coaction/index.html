@@ -153,86 +153,128 @@
   <p class="time">2026-08-31</span>
   <div class="content">
       <p>I used Zustand for a long time.</p>
-<p>It is small, fast, and refreshingly restrained. To this day, if a project needs a handful of simple hook stores, Zustand is still what I recommend.</p>
-<p>But as a codebase grows, the same chores keep coming back:</p>
+<p>It is small, fast, and refreshingly restrained. If a project needs a handful of simple hook stores, Zustand is still one of the easiest state libraries to recommend.</p>
+<p>But as a codebase grows, two kinds of infrastructure keep appearing around the store.</p>
+<p>The first is <strong>observation infrastructure</strong>:</p>
 <ul>
-<li>designing a selector for each component;</li>
-<li>keeping composed selectors referentially stable;</li>
-<li>caching derived values that several components need;</li>
-<li>keeping “the fields a component reads” and “the fields a component subscribes to” in sync;</li>
-<li>updating selectors and dependency arrays every time the domain model shifts.</li>
+<li>selectors for each component;</li>
+<li><code>useShallow</code> and equality functions;</li>
+<li>selector composition and referential stability;</li>
+<li>keeping “what this component reads” aligned with “what this component subscribes to”.</li>
 </ul>
-<p>None of these is hard on its own.</p>
-<p>The problem is that once selectors, caches, and derived relationships are spread across a codebase, they quietly become infrastructure you have to maintain.</p>
-<h3 id="First-let’s-put-a-number-on-“large”"><a href="#First-let’s-put-a-number-on-“large”" class="headerlink" title="First, let’s put a number on “large”"></a>First, let’s put a number on “large”</h3><p>“It stops scaling once the project gets big” is empty unless you say how big. Here is the typical shape of a ~100k-line frontend application, which anchors every trade-off discussed below:</p>
+<p>The second is <strong>computation infrastructure</strong>:</p>
+<ul>
+<li><code>useMemo</code> for values derived from store state;</li>
+<li>shared Reselect or <code>proxy-memoize</code> selectors;</li>
+<li>deciding where caches live and how long they live;</li>
+<li>composing one derived value from another;</li>
+<li>keeping dependency declarations synchronized with the actual reads.</li>
+</ul>
+<p>None of these mechanisms is bad. In fact, Zustand is intentionally designed so that the application can choose them.</p>
+<p>The problem is that, beyond a certain scale, they stop feeling like incidental application code. They become a second state-management layer that your team has to design, review, debug, and keep consistent.</p>
+<p>That is the distinction I want to make in this article.</p>
+<p>It is not primarily:</p>
+<blockquote>
+<p>Zustand has more boilerplate; Coaction has fewer lines.</p>
+</blockquote>
+<p>It is:</p>
+<blockquote>
+<p><strong>Zustand largely leaves the dependency model to application code. Coaction moves both observation and derived computation into the runtime.</strong></p>
+</blockquote>
+<p>Those are two separate questions:</p>
+<table>
+<thead>
+<tr>
+<th align="left">Question</th>
+<th align="left">What it means</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>Who needs to react?</strong></td>
+<td align="left">Observation &#x2F; subscription dependencies</td>
+</tr>
+<tr>
+<td align="left"><strong>What needs to recompute?</strong></td>
+<td align="left">Derived &#x2F; computation dependencies</td>
+</tr>
+</tbody></table>
+<p>In Zustand, selectors and memoization answer those questions outside the store runtime.</p>
+<p>In Coaction, both participate in one reactive graph.</p>
+<p>That difference is small in a counter. It becomes much more important in an application with hundreds of state reads and a large amount of shared derived data.</p>
+<hr>
+<h2 id="First-let’s-put-a-number-on-“large”"><a href="#First-let’s-put-a-number-on-“large”" class="headerlink" title="First, let’s put a number on “large”"></a>First, let’s put a number on “large”</h2><p>“It gets harder when the project gets big” is not useful unless we say what kind of scale we are talking about.</p>
+<p>Here is one plausible shape for a roughly 100k-line frontend application:</p>
 <table>
 <thead>
 <tr>
 <th align="left">Dimension</th>
-<th align="left">Plausible range</th>
+<th align="right">Plausible range</th>
 <th align="right">Midpoint</th>
 </tr>
 </thead>
 <tbody><tr>
 <td align="left">Application source</td>
-<td align="left">—</td>
+<td align="right">—</td>
 <td align="right">~100,000 LOC</td>
 </tr>
 <tr>
 <td align="left">Components</td>
-<td align="left">280 – 450</td>
+<td align="right">280–450</td>
 <td align="right">~350</td>
 </tr>
 <tr>
 <td align="left">Zustand stores</td>
-<td align="left">8 – 25</td>
+<td align="right">8–25</td>
 <td align="right">~15</td>
 </tr>
 <tr>
 <td align="left">Components reading store state</td>
-<td align="left">120 – 220</td>
+<td align="right">120–220</td>
 <td align="right">~160</td>
 </tr>
 <tr>
-<td align="left"><strong>Selector call sites</strong></td>
-<td align="left">250 – 550</td>
-<td align="right"><strong>~380</strong></td>
+<td align="left">Selector call sites</td>
+<td align="right">250–550</td>
+<td align="right">~380</td>
 </tr>
 <tr>
-<td align="left"><strong><code>useShallow</code> uses</strong></td>
-<td align="left">30 – 80</td>
-<td align="right"><strong>~55</strong></td>
+<td align="left"><code>useShallow</code> uses</td>
+<td align="right">30–80</td>
+<td align="right">~55</td>
 </tr>
 <tr>
-<td align="left"><code>useMemo</code> uses (total)</td>
-<td align="left">200 – 330</td>
+<td align="left"><code>useMemo</code> uses, total</td>
+<td align="right">200–330</td>
 <td align="right">~260</td>
 </tr>
 <tr>
-<td align="left"><strong>…of which purely store-derived</strong></td>
-<td align="left">60 – 120</td>
-<td align="right"><strong>~85</strong></td>
+<td align="left">…of which purely store-derived</td>
+<td align="right">60–120</td>
+<td align="right">~85</td>
 </tr>
 </tbody></table>
-<blockquote>
-<p><strong>This table is an order-of-magnitude estimate, not a measurement from any one migration.</strong> It is derived from 150–250 LOC per file, components at 55–70% of files, 35–50% of components reading store state, and 1.5–3 selector call sites per consuming component. Its purpose is to give you something to compare your own counts against. Every performance number later in this article is measured, not estimated, and every one of them is reproducible from a script.</p>
-</blockquote>
-<p>You can count your own project directly:</p>
-<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="bash" data-shiki-language="bash" data-highlighted="true" aria-label="bash code"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">grep</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> -rEc</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "use[A-Z][A-Za-z]*\((state|s)\s*=>"</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> src</span><span style="color:#D73A49;--shiki-dark:#F97583"> |</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> awk</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> -F:</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> '&#123;n+=$2&#125; END &#123;print "selector call sites:", n+0&#125;'</span></span>
-<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">grep</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> -rc</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "useShallow"</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> src</span><span style="color:#D73A49;--shiki-dark:#F97583"> |</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> awk</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> -F:</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> '&#123;n+=$2&#125; END &#123;print "useShallow:", n+0&#125;'</span></span>
-<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">grep</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> -rc</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "useMemo("</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> src</span><span style="color:#D73A49;--shiki-dark:#F97583">   |</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> awk</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> -F:</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> '&#123;n+=$2&#125; END &#123;print "useMemo:", n+0&#125;'</span></span></code></pre>
+<p>This table is an order-of-magnitude estimate, not a measurement from one migration. Its purpose is to give you something to compare your own project against.</p>
+<p>You can count some of the obvious signals directly:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="bash" data-shiki-language="bash" data-highlighted="true" aria-label="bash code"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">grep</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> -rEc</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "use[A-Z][A-Za-z]*\((state|s)\s*=>"</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> src</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> \</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  |</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> awk</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> -F:</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> '&#123;n+=$2&#125; END &#123;print "selector call sites:", n+0&#125;'</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">grep</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> -rc</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "useShallow"</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> src</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> \</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  |</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> awk</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> -F:</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> '&#123;n+=$2&#125; END &#123;print "useShallow:", n+0&#125;'</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">grep</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> -rc</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "useMemo("</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> src</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> \</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  |</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> awk</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> -F:</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> '&#123;n+=$2&#125; END &#123;print "useMemo:", n+0&#125;'</span></span></code></pre>
 
-<p>If you count a few dozen selectors, the premise of this article does not hold for you — stay on Zustand. The codebases that get crushed by this complexity are the ones with selector counts in the hundreds and derived relationships reused across many components.</p>
-<p>At that scale, <a href="https://github.com/coactionjs/coaction">Coaction</a>‘s trade-offs start to make sense. It keeps a Zustand-like <code>create</code> API but moves three things into the runtime:</p>
+<p>If you count a few dozen selectors and almost no shared derived state, the premise of this article probably does not apply to you. Stay on Zustand.</p>
+<p>The interesting case is when selectors, caches, and derived relationships appear everywhere.</p>
+<p>At that scale, Coaction’s trade starts to make more sense. It moves three things into the store model:</p>
 <ol>
-<li><strong>Render tracking</strong> — automatically tracks the state a component reads while rendering;</li>
-<li><strong>Cached computed state</strong> — automatically memoizes values derived from store state;</li>
-<li><strong>Draft updates</strong> — mutable syntax, immutable results.</li>
+<li><strong>Reactive read tracking</strong> — the runtime records the state paths a consumer actually reads.</li>
+<li><strong>Cached computed state</strong> — getters are runtime-owned computed nodes with dependency-aware invalidation.</li>
+<li><strong>Draft updates</strong> — mutable syntax with immutable results.</li>
 </ol>
-<p>The migration payoff concentrates in three kinds of code: most selectors, nearly all <code>useShallow</code> calls, and the <code>useMemo</code> calls that exist purely to derive store state.</p>
-<p>Note “most” and “nearly all”, not “everything” — the boundaries are spelled out below.</p>
+<p>The first two are the architectural argument. The third is useful ergonomics.</p>
 <hr>
-<h2 id="Being-fair-first-for-simple-cases-Zustand-is-already-good-enough"><a href="#Being-fair-first-for-simple-cases-Zustand-is-already-good-enough" class="headerlink" title="Being fair first: for simple cases, Zustand is already good enough"></a>Being fair first: for simple cases, Zustand is already good enough</h2><p>Start with an ordinary counter:</p>
+<h2 id="Being-fair-first-simple-Zustand-is-already-good-enough"><a href="#Being-fair-first-simple-Zustand-is-already-good-enough" class="headerlink" title="Being fair first: simple Zustand is already good enough"></a>Being fair first: simple Zustand is already good enough</h2><p>Start with an ordinary counter:</p>
 <pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="tsx" data-shiki-language="tsx" data-highlighted="true" aria-label="tsx code"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123; create &#125; </span><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "zustand"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">type</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> CounterStore</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123;</span></span>
@@ -264,11 +306,12 @@
 <span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  );</span></span>
 <span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;</span></span></code></pre>
 
-<p>No <code>useShallow</code> here, no <code>useMemo</code>, and no need to reach for <code>useCounter.getState().increment()</code> to call an action.</p>
-<p>Selecting <code>count</code>, <code>step</code>, and <code>increment</code> separately is idiomatic Zustand. And a computation as cheap as <code>count * 2</code> has no business being wrapped in <code>useMemo</code>.</p>
-<p>So if your store is small and components read only a few fields, Zustand imposes no meaningful “subscription tax”. In that situation, adopting a fuller automatic-tracking runtime may not be worth it.</p>
+<p>This is good code.</p>
+<p>There is no reason to put <code>count * 2</code> into <code>useMemo</code>. Selecting <code>count</code>, <code>step</code>, and <code>increment</code> separately is idiomatic Zustand. There is no meaningful subscription problem here.</p>
+<p>Zustand’s minimalism is an advantage when the problem is minimal.</p>
+<p>The difference starts to matter when the state graph gets richer than the component tree.</p>
 <hr>
-<h2 id="The-difference-isn’t-fewer-lines-—-it’s-that-reads-are-subscriptions"><a href="#The-difference-isn’t-fewer-lines-—-it’s-that-reads-are-subscriptions" class="headerlink" title="The difference isn’t fewer lines — it’s that reads are subscriptions"></a>The difference isn’t fewer lines — it’s that reads are subscriptions</h2><p>The same counter in Coaction:</p>
+<h2 id="Graph-one-observation-—-reads-are-subscriptions"><a href="#Graph-one-observation-—-reads-are-subscriptions" class="headerlink" title="Graph one: observation — reads are subscriptions"></a>Graph one: observation — reads are subscriptions</h2><p>The same counter in Coaction:</p>
 <pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="tsx" data-shiki-language="tsx" data-highlighted="true" aria-label="tsx code"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123; create, observer &#125; </span><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "@coaction/react"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> useCounter</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> create</span><span style="color:#24292E;--shiki-dark:#E1E4E8">((</span><span style="color:#E36209;--shiki-dark:#FFAB70">set</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> (&#123;</span></span>
@@ -290,28 +333,62 @@
 <span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> store</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> useCounter</span><span style="color:#24292E;--shiki-dark:#E1E4E8">();</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  return</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> (</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">    // increment is already bound to the store; pass it directly, no arrow wrapper</span></span>
 <span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    &#x3C;</span><span style="color:#22863A;--shiki-dark:#85E89D">button</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> onClick</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">&#123;store.increment&#125;></span></span>
 <span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      &#123;store.count&#125; (step &#123;store.step&#125;) → &#123;store.doubled&#125;</span></span>
 <span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    &#x3C;/</span><span style="color:#22863A;--shiki-dark:#85E89D">button</span><span style="color:#24292E;--shiki-dark:#E1E4E8">></span></span>
 <span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  );</span></span>
 <span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;);</span></span></code></pre>
 
-<p>For an example this small, saving a few lines is not a decisive advantage.</p>
-<p>The real difference is this:</p>
+<p>For an example this small, saving a few lines is not important.</p>
+<p>The important difference is the observation model.</p>
+<p>In Zustand, the component usually declares its subscription separately from its reads:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="tsx" data-shiki-language="tsx" data-highlighted="true" aria-label="tsx code"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> name</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> useUser</span><span style="color:#24292E;--shiki-dark:#E1E4E8">((</span><span style="color:#E36209;--shiki-dark:#FFAB70">state</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> state.user.profile.name);</span></span></code></pre>
+
+<p>Conceptually:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="text" data-shiki-language="text" data-highlighted="false" aria-label="text code"><code><span class="line"><span>render logic</span></span>
+<span class="line"><span>    │</span></span>
+<span class="line"><span>    └──── reads name</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>selector logic</span></span>
+<span class="line"><span>    │</span></span>
+<span class="line"><span>    └──── declares subscription to name</span></span></code></pre>
+
+<p>The two pieces of code happen to agree because the developer made them agree.</p>
+<p>In Coaction, the read is itself the subscription declaration:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="tsx" data-shiki-language="tsx" data-highlighted="true" aria-label="tsx code"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> UserName</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> observer</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(() </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123;</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> store</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> useUser</span><span style="color:#24292E;--shiki-dark:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  return</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#x3C;</span><span style="color:#22863A;--shiki-dark:#85E89D">span</span><span style="color:#24292E;--shiki-dark:#E1E4E8">>&#123;store.user.profile.name&#125;&#x3C;/</span><span style="color:#22863A;--shiki-dark:#85E89D">span</span><span style="color:#24292E;--shiki-dark:#E1E4E8">>;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;);</span></span></code></pre>
+
+<p>Conceptually:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="text" data-shiki-language="text" data-highlighted="false" aria-label="text code"><code><span class="line"><span>render</span></span>
+<span class="line"><span>  │</span></span>
+<span class="line"><span>  └── read user.profile.name</span></span>
+<span class="line"><span>              │</span></span>
+<span class="line"><span>              └── runtime records dependency</span></span></code></pre>
+
+<p>In short:</p>
 <blockquote>
-<p>In Zustand, “which fields you read” and “which fields you subscribe to” are matched up by hand through a selector. In Coaction, the fields a component reads while rendering <em>are</em> the fields it subscribes to.</p>
+<p><strong>Reads are subscriptions.</strong></p>
 </blockquote>
-<p>In short: <strong>reads are subscriptions.</strong></p>
-<p>When a component reads one or two fields, the distinction barely matters. It starts to matter when read relationships change often and shared derived state accumulates.</p>
+<p>Current immutable Coaction state is wrapped in readonly reactive proxies, so nested reads are path-tracked as well. If a consumer reads:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="ts" data-shiki-language="ts" data-highlighted="true" aria-label="ts code"><code><span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">store.user.profile.name;</span></span></code></pre>
+
+<p>then a sibling write such as:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="ts" data-shiki-language="ts" data-highlighted="true" aria-label="ts code"><code><span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">store.user.profile.age </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> 37</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span></code></pre>
+
+<p>does not need to invalidate a dependency that only read <code>name</code>.</p>
+<p>That is a different model from “the whole store changed, now rerun every selector and compare its result.”</p>
+<p>The runtime knows the path that was observed.</p>
+<p>This is the first structural advantage:</p>
+<blockquote>
+<p><strong>Zustand’s default observation model is selector + equality. Coaction can make observation dependency-aware.</strong></p>
+</blockquote>
+<p>That does not mean selectors disappear completely. Explicit selectors remain useful, especially when you want a particular projection or library-style API. But they are no longer the only way to express a subscription.</p>
 <hr>
-<h2 id="Where-the-gap-actually-opens-complex-derived-state"><a href="#Where-the-gap-actually-opens-complex-derived-state" class="headerlink" title="Where the gap actually opens: complex derived state"></a>Where the gap actually opens: complex derived state</h2><p>Consider a shopping cart with an item list, a filter, a discount rate, the filtered items, and the discounted total.</p>
-<p>In Zustand you might organize it like this:</p>
-<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="tsx" data-shiki-language="tsx" data-highlighted="true" aria-label="tsx code"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123; useMemo &#125; </span><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "react"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123; create &#125; </span><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "zustand"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123; useShallow &#125; </span><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "zustand/react/shallow"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">type</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> CartItem</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123;</span></span>
+<h2 id="Graph-two-computation-—-one-derived-node-many-consumers"><a href="#Graph-two-computation-—-one-derived-node-many-consumers" class="headerlink" title="Graph two: computation — one derived node, many consumers"></a>Graph two: computation — one derived node, many consumers</h2><p>This is the more important difference.</p>
+<p>Consider a cart:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="ts" data-shiki-language="ts" data-highlighted="true" aria-label="ts code"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">type</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> CartItem</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123;</span></span>
 <span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">  id</span><span style="color:#D73A49;--shiki-dark:#F97583">:</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> string</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
 <span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">  price</span><span style="color:#D73A49;--shiki-dark:#F97583">:</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> number</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
 <span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">  quantity</span><span style="color:#D73A49;--shiki-dark:#F97583">:</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> number</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
@@ -322,7 +399,41 @@
 <span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">  items</span><span style="color:#D73A49;--shiki-dark:#F97583">:</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> CartItem</span><span style="color:#24292E;--shiki-dark:#E1E4E8">[];</span></span>
 <span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">  filter</span><span style="color:#D73A49;--shiki-dark:#F97583">:</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "all"</span><span style="color:#D73A49;--shiki-dark:#F97583"> |</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "selected"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
 <span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">  discountRate</span><span style="color:#D73A49;--shiki-dark:#F97583">:</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> number</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;;</span></span></code></pre>
+
+<p>We want:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="text" data-shiki-language="text" data-highlighted="false" aria-label="text code"><code><span class="line"><span>items + filter</span></span>
+<span class="line"><span>      │</span></span>
+<span class="line"><span>      ▼</span></span>
+<span class="line"><span> visibleItems</span></span>
+<span class="line"><span>      │</span></span>
+<span class="line"><span>      ▼</span></span>
+<span class="line"><span>   subtotal</span></span>
+<span class="line"><span>      │</span></span>
+<span class="line"><span>      ├──────── discountRate</span></span>
+<span class="line"><span>      │              │</span></span>
+<span class="line"><span>      └──────┬───────┘</span></span>
+<span class="line"><span>             ▼</span></span>
+<span class="line"><span>            total</span></span></code></pre>
+
+<p>And several components need those values:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="text" data-shiki-language="text" data-highlighted="false" aria-label="text code"><code><span class="line"><span>                         ┌── CartList</span></span>
+<span class="line"><span>                         │</span></span>
+<span class="line"><span>items + filter ──→ visibleItems ──┼── CartCount</span></span>
+<span class="line"><span>                         │</span></span>
+<span class="line"><span>                         └── subtotal ──→ total ──→ CartSummary</span></span></code></pre>
+
+<p>The important question is not whether JavaScript can express those calculations.</p>
+<p>Of course it can.</p>
+<p>The question is:</p>
+<blockquote>
+<p><strong>Does the state runtime understand that <code>visibleItems</code>, <code>subtotal</code>, and <code>total</code> are shared computation nodes?</strong></p>
+</blockquote>
+<hr>
+<h2 id="The-component-local-Zustand-version"><a href="#The-component-local-Zustand-version" class="headerlink" title="The component-local Zustand version"></a>The component-local Zustand version</h2><p>A common first version is to derive the values in a component:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="tsx" data-shiki-language="tsx" data-highlighted="true" aria-label="tsx code"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123; useMemo &#125; </span><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "react"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123; create &#125; </span><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "zustand"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123; useShallow &#125; </span><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "zustand/react/shallow"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> useCart</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> create</span><span style="color:#24292E;--shiki-dark:#E1E4E8">&#x3C;</span><span style="color:#6F42C1;--shiki-dark:#B392F0">CartStore</span><span style="color:#24292E;--shiki-dark:#E1E4E8">>(() </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> (&#123;</span></span>
 <span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  items: [],</span></span>
@@ -362,33 +473,85 @@
 <span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  );</span></span>
 <span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;</span></span></code></pre>
 
-<p>The composed selector here is one common style, not Zustand’s only option. You could select the three fields separately, or lift the derived logic into a shared memoized selector.</p>
-<p>The component-level version above is meant to illustrate a single point: when derived logic lives at the consumer, the application has to maintain the subscriptions, dependencies, and caches itself.</p>
-<p>The issue was never that Zustand cannot do this. It is that these policies are the application’s job:</p>
-<ul>
-<li>where derived values should live;</li>
-<li>whether they need caching;</li>
-<li>how several components reuse the same derived logic;</li>
-<li>which equality function to use when a selector returns an object;</li>
-<li>which selectors and dependency arrays must change when the state dependencies change.</li>
-</ul>
-<p>Zustand’s model is explicit and flexible. But explicit means your team designs and maintains those policies.</p>
+<p>This is not wrong.</p>
+<p>But now add <code>CartList</code>, <code>CartCount</code>, <code>CheckoutButton</code>, and a sidebar that all need <code>visibleItems</code> or <code>total</code>.</p>
+<p>A component-local memo belongs to one component instance. It is not an application-level derived node.</p>
+<p>You start duplicating either the calculation or the memoization policy.</p>
 <hr>
-<h2 id="Coaction-putting-derived-relationships-back-into-the-state-model"><a href="#Coaction-putting-derived-relationships-back-into-the-state-model" class="headerlink" title="Coaction: putting derived relationships back into the state model"></a>Coaction: putting derived relationships back into the state model</h2><p>The same cart:</p>
-<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="tsx" data-shiki-language="tsx" data-highlighted="true" aria-label="tsx code"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123; create, observer &#125; </span><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "@coaction/react"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
+<h2 id="The-strongest-Zustand-answer-is-a-shared-memoized-selector"><a href="#The-strongest-Zustand-answer-is-a-shared-memoized-selector" class="headerlink" title="The strongest Zustand answer is a shared memoized selector"></a>The strongest Zustand answer is a shared memoized selector</h2><p>A serious Zustand codebase does not have to leave expensive shared derivation inside components.</p>
+<p>You can use Reselect:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="ts" data-shiki-language="ts" data-highlighted="true" aria-label="ts code"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123; createSelector &#125; </span><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "reselect"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">type</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> CartItem</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123;</span></span>
-<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">  id</span><span style="color:#D73A49;--shiki-dark:#F97583">:</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> string</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
-<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">  price</span><span style="color:#D73A49;--shiki-dark:#F97583">:</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> number</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
-<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">  quantity</span><span style="color:#D73A49;--shiki-dark:#F97583">:</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> number</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
-<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">  selected</span><span style="color:#D73A49;--shiki-dark:#F97583">:</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> boolean</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;;</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> selectItems</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> (</span><span style="color:#E36209;--shiki-dark:#FFAB70">state</span><span style="color:#D73A49;--shiki-dark:#F97583">:</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> CartStore</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> state.items;</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> selectFilter</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> (</span><span style="color:#E36209;--shiki-dark:#FFAB70">state</span><span style="color:#D73A49;--shiki-dark:#F97583">:</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> CartStore</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> state.filter;</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> selectDiscountRate</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> (</span><span style="color:#E36209;--shiki-dark:#FFAB70">state</span><span style="color:#D73A49;--shiki-dark:#F97583">:</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> CartStore</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> state.discountRate;</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">type</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> CartFilter</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "all"</span><span style="color:#D73A49;--shiki-dark:#F97583"> |</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "selected"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> selectVisibleItems</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> createSelector</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  [selectItems, selectFilter],</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  (</span><span style="color:#E36209;--shiki-dark:#FFAB70">items</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#E36209;--shiki-dark:#FFAB70">filter</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    filter </span><span style="color:#D73A49;--shiki-dark:#F97583">===</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "selected"</span><span style="color:#D73A49;--shiki-dark:#F97583"> ?</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> items.</span><span style="color:#6F42C1;--shiki-dark:#B392F0">filter</span><span style="color:#24292E;--shiki-dark:#E1E4E8">((</span><span style="color:#E36209;--shiki-dark:#FFAB70">item</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> item.selected) </span><span style="color:#D73A49;--shiki-dark:#F97583">:</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> items,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> selectSubtotal</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> createSelector</span><span style="color:#24292E;--shiki-dark:#E1E4E8">([selectVisibleItems], (</span><span style="color:#E36209;--shiki-dark:#FFAB70">items</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  items.</span><span style="color:#6F42C1;--shiki-dark:#B392F0">reduce</span><span style="color:#24292E;--shiki-dark:#E1E4E8">((</span><span style="color:#E36209;--shiki-dark:#FFAB70">sum</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#E36209;--shiki-dark:#FFAB70">item</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> sum </span><span style="color:#D73A49;--shiki-dark:#F97583">+</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> item.price </span><span style="color:#D73A49;--shiki-dark:#F97583">*</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> item.quantity, </span><span style="color:#005CC5;--shiki-dark:#79B8FF">0</span><span style="color:#24292E;--shiki-dark:#E1E4E8">),</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> selectTotal</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> createSelector</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  [selectSubtotal, selectDiscountRate],</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  (</span><span style="color:#E36209;--shiki-dark:#FFAB70">subtotal</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#E36209;--shiki-dark:#FFAB70">discountRate</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> subtotal </span><span style="color:#D73A49;--shiki-dark:#F97583">*</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> (</span><span style="color:#005CC5;--shiki-dark:#79B8FF">1</span><span style="color:#D73A49;--shiki-dark:#F97583"> -</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> discountRate),</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">);</span></span></code></pre>
+
+<p>And then reuse the same selector instances:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="tsx" data-shiki-language="tsx" data-highlighted="true" aria-label="tsx code"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">function</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> CartList</span><span style="color:#24292E;--shiki-dark:#E1E4E8">() &#123;</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> items</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> useCart</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(selectVisibleItems);</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  return</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#x3C;</span><span style="color:#005CC5;--shiki-dark:#79B8FF">List</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> items</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">&#123;items&#125; />;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">function</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> CartCount</span><span style="color:#24292E;--shiki-dark:#E1E4E8">() &#123;</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> items</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> useCart</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(selectVisibleItems);</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  return</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#x3C;</span><span style="color:#22863A;--shiki-dark:#85E89D">span</span><span style="color:#24292E;--shiki-dark:#E1E4E8">>&#123;items.</span><span style="color:#005CC5;--shiki-dark:#79B8FF">length</span><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;&#x3C;/</span><span style="color:#22863A;--shiki-dark:#85E89D">span</span><span style="color:#24292E;--shiki-dark:#E1E4E8">>;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">function</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> CartSummary</span><span style="color:#24292E;--shiki-dark:#E1E4E8">() &#123;</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> total</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> useCart</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(selectTotal);</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  return</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#x3C;</span><span style="color:#22863A;--shiki-dark:#85E89D">span</span><span style="color:#24292E;--shiki-dark:#E1E4E8">>&#123;total&#125;&#x3C;/</span><span style="color:#22863A;--shiki-dark:#85E89D">span</span><span style="color:#24292E;--shiki-dark:#E1E4E8">>;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;</span></span></code></pre>
+
+<p>This is a good solution.</p>
+<p>It can share cached computation across consumers that reuse the same memoized selector instance.</p>
+<p>So the argument for Coaction cannot honestly be:</p>
+<blockquote>
+<p>Zustand recomputes everything and Coaction caches it.</p>
+</blockquote>
+<p>Zustand can cache it.</p>
+<p>The real difference is <strong>ownership</strong>.</p>
+<p>With Zustand + Reselect, the application owns:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="text" data-shiki-language="text" data-highlighted="false" aria-label="text code"><code><span class="line"><span>selector identity</span></span>
+<span class="line"><span>dependency declaration</span></span>
+<span class="line"><span>memoization policy</span></span>
+<span class="line"><span>cache scope</span></span>
+<span class="line"><span>selector composition</span></span>
+<span class="line"><span>parameterized selector factories</span></span>
+<span class="line"><span>cache lifetime</span></span></code></pre>
+
+<p>Zustand itself still sees something closer to:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="text" data-shiki-language="text" data-highlighted="false" aria-label="text code"><code><span class="line"><span>state changed</span></span>
+<span class="line"><span>    │</span></span>
+<span class="line"><span>    ▼</span></span>
+<span class="line"><span>subscriber calls selector function</span></span>
+<span class="line"><span>    │</span></span>
+<span class="line"><span>    ▼</span></span>
+<span class="line"><span>selector's own memoization decides whether to compute</span></span></code></pre>
+
+<p>The selector graph exists, but it exists in application-level functions layered on top of Zustand.</p>
+<p>That distinction matters because the store runtime itself does not own <code>visibleItems</code> as a first-class computation node.</p>
+<hr>
+<h2 id="Coaction-the-computation-belongs-to-the-runtime"><a href="#Coaction-the-computation-belongs-to-the-runtime" class="headerlink" title="Coaction: the computation belongs to the runtime"></a>Coaction: the computation belongs to the runtime</h2><p>The same relationships in Coaction:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="ts" data-shiki-language="ts" data-highlighted="true" aria-label="ts code"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123; create &#125; </span><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "@coaction/react"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> useCart</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> create</span><span style="color:#24292E;--shiki-dark:#E1E4E8">((</span><span style="color:#E36209;--shiki-dark:#FFAB70">set</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> (&#123;</span></span>
 <span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  items: [] </span><span style="color:#D73A49;--shiki-dark:#F97583">as</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> CartItem</span><span style="color:#24292E;--shiki-dark:#E1E4E8">[],</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  filter: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"all"</span><span style="color:#D73A49;--shiki-dark:#F97583"> as</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> CartFilter</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  filter: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"all"</span><span style="color:#D73A49;--shiki-dark:#F97583"> as</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "all"</span><span style="color:#D73A49;--shiki-dark:#F97583"> |</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "selected"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
 <span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  discountRate: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">0</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  get</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> visibleItems</span><span style="color:#24292E;--shiki-dark:#E1E4E8">() &#123;</span></span>
@@ -397,13 +560,15 @@
 <span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">      :</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> this</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.items;</span></span>
 <span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  &#125;,</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  get</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> total</span><span style="color:#24292E;--shiki-dark:#E1E4E8">() &#123;</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">    const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> subtotal</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> this</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.visibleItems.</span><span style="color:#6F42C1;--shiki-dark:#B392F0">reduce</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  get</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> subtotal</span><span style="color:#24292E;--shiki-dark:#E1E4E8">() &#123;</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">    return</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> this</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.visibleItems.</span><span style="color:#6F42C1;--shiki-dark:#B392F0">reduce</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span></span>
 <span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      (</span><span style="color:#E36209;--shiki-dark:#FFAB70">sum</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#E36209;--shiki-dark:#FFAB70">item</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> sum </span><span style="color:#D73A49;--shiki-dark:#F97583">+</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> item.price </span><span style="color:#D73A49;--shiki-dark:#F97583">*</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> item.quantity,</span></span>
 <span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">      0</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
 <span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    );</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  &#125;,</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">    return</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> subtotal </span><span style="color:#D73A49;--shiki-dark:#F97583">*</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> (</span><span style="color:#005CC5;--shiki-dark:#79B8FF">1</span><span style="color:#D73A49;--shiki-dark:#F97583"> -</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> this</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.discountRate);</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  get</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> total</span><span style="color:#24292E;--shiki-dark:#E1E4E8">() &#123;</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">    return</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> this</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.subtotal </span><span style="color:#D73A49;--shiki-dark:#F97583">*</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> (</span><span style="color:#005CC5;--shiki-dark:#79B8FF">1</span><span style="color:#D73A49;--shiki-dark:#F97583"> -</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> this</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.discountRate);</span></span>
 <span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  &#125;,</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">  addItem</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#E36209;--shiki-dark:#FFAB70">item</span><span style="color:#D73A49;--shiki-dark:#F97583">:</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> CartItem</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) &#123;</span></span>
@@ -411,61 +576,196 @@
 <span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">      this</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.items.</span><span style="color:#6F42C1;--shiki-dark:#B392F0">push</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(item);</span></span>
 <span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    &#125;);</span></span>
 <span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  &#125;,</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;));</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;));</span></span></code></pre>
+
+<p>Now the graph is part of the state runtime:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="text" data-shiki-language="text" data-highlighted="false" aria-label="text code"><code><span class="line"><span>items ───────┐</span></span>
+<span class="line"><span>             │</span></span>
+<span class="line"><span>filter ──────┴──→ visibleItems</span></span>
+<span class="line"><span>                    │</span></span>
+<span class="line"><span>                    ▼</span></span>
+<span class="line"><span>                 subtotal ─────┐</span></span>
+<span class="line"><span>                               │</span></span>
+<span class="line"><span>discountRate ──────────────────┴──→ total</span></span></code></pre>
+
+<p>And the consumers attach to those nodes:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="tsx" data-shiki-language="tsx" data-highlighted="true" aria-label="tsx code"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> CartList</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> observer</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(() </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123;</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> store</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> useCart</span><span style="color:#24292E;--shiki-dark:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  return</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#x3C;</span><span style="color:#005CC5;--shiki-dark:#79B8FF">List</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> items</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">&#123;store.visibleItems&#125; />;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> CartCount</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> observer</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(() </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123;</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> store</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> useCart</span><span style="color:#24292E;--shiki-dark:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  return</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#x3C;</span><span style="color:#22863A;--shiki-dark:#85E89D">span</span><span style="color:#24292E;--shiki-dark:#E1E4E8">>&#123;store.visibleItems.</span><span style="color:#005CC5;--shiki-dark:#79B8FF">length</span><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;&#x3C;/</span><span style="color:#22863A;--shiki-dark:#85E89D">span</span><span style="color:#24292E;--shiki-dark:#E1E4E8">>;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;);</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> CartSummary</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> observer</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(() </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123;</span></span>
 <span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> store</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> useCart</span><span style="color:#24292E;--shiki-dark:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  return</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#x3C;</span><span style="color:#22863A;--shiki-dark:#85E89D">span</span><span style="color:#24292E;--shiki-dark:#E1E4E8">>&#123;store.total&#125;&#x3C;/</span><span style="color:#22863A;--shiki-dark:#85E89D">span</span><span style="color:#24292E;--shiki-dark:#E1E4E8">>;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;);</span></span></code></pre>
+
+<p>The important property is not the getter syntax.</p>
+<p>It is this:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="text" data-shiki-language="text" data-highlighted="false" aria-label="text code"><code><span class="line"><span>3 consumers</span></span>
+<span class="line"><span>1 visibleItems node</span></span>
+<span class="line"><span>1 cache</span></span>
+<span class="line"><span>1 invalidation relationship</span></span></code></pre>
+
+<p>When a dependency changes, the computed becomes invalid.</p>
+<p>When it is read again, it recomputes and caches the result.</p>
+<p>Other consumers of the same runtime read the same cached node rather than owning independent component caches.</p>
+<p>And derived state composes naturally:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="text" data-shiki-language="text" data-highlighted="false" aria-label="text code"><code><span class="line"><span>visibleItems</span></span>
+<span class="line"><span>     │</span></span>
+<span class="line"><span>     ▼</span></span>
+<span class="line"><span> subtotal</span></span>
+<span class="line"><span>     │</span></span>
+<span class="line"><span>     ▼</span></span>
+<span class="line"><span>   total</span></span></code></pre>
+
+<p>A getter can read another getter. Those are not merely functions calling functions; they are connected through the same reactive substrate.</p>
+<p>This is the second structural advantage:</p>
+<blockquote>
+<p><strong>Zustand can build shared derived computation around the store. Coaction makes shared derived computation part of the store runtime.</strong></p>
+</blockquote>
+<hr>
+<h2 id="The-deeper-difference-two-graphs-one-runtime"><a href="#The-deeper-difference-two-graphs-one-runtime" class="headerlink" title="The deeper difference: two graphs, one runtime"></a>The deeper difference: two graphs, one runtime</h2><p>This is the part I think is easy to miss if the comparison is framed only as “selectors vs no selectors” or “<code>useMemo</code> vs getters”.</p>
+<p>There are really two dependency graphs.</p>
+<h2 id="Observation-graph"><a href="#Observation-graph" class="headerlink" title="Observation graph"></a>Observation graph</h2><p>It answers:</p>
+<blockquote>
+<p><strong>Who needs to react when state changes?</strong></p>
+</blockquote>
+<p>Example:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="text" data-shiki-language="text" data-highlighted="false" aria-label="text code"><code><span class="line"><span>user.profile.name</span></span>
+<span class="line"><span>      │</span></span>
+<span class="line"><span>      ├── Header</span></span>
+<span class="line"><span>      └── AccountMenu</span></span></code></pre>
+
+<p>If <code>user.profile.age</code> changes, consumers that only observed <code>name</code> should not care.</p>
+<h2 id="Computation-graph"><a href="#Computation-graph" class="headerlink" title="Computation graph"></a>Computation graph</h2><p>It answers:</p>
+<blockquote>
+<p><strong>What needs to recompute when state changes?</strong></p>
+</blockquote>
+<p>Example:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="text" data-shiki-language="text" data-highlighted="false" aria-label="text code"><code><span class="line"><span>items ──→ visibleItems ──→ subtotal ──→ total</span></span>
+<span class="line"><span>filter ───────┘                         ↑</span></span>
+<span class="line"><span>discountRate ──────────────────────────┘</span></span></code></pre>
+
+<p>Those are related but different problems.</p>
+<p>A state runtime that understands only subscriptions still leaves derived computation to application code.</p>
+<p>A computation system that caches values but does not integrate with observation still leaves the UI boundary to another mechanism.</p>
+<p>Coaction’s architectural bet is that both should sit on the same reactive graph.</p>
+<p>That produces a much simpler invariant:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="text" data-shiki-language="text" data-highlighted="false" aria-label="text code"><code><span class="line"><span>state read</span></span>
+<span class="line"><span>   │</span></span>
+<span class="line"><span>   ▼</span></span>
+<span class="line"><span>dependency recorded</span></span>
+<span class="line"><span>   │</span></span>
+<span class="line"><span>   ▼</span></span>
+<span class="line"><span>source changes</span></span>
+<span class="line"><span>   │</span></span>
+<span class="line"><span>   ▼</span></span>
+<span class="line"><span>only dependent observers/computeds invalidate</span></span></code></pre>
+
+<p>This is why I would summarize the difference this way:</p>
+<blockquote>
+<p><strong>Zustand manages state subscriptions. Coaction manages state dependencies.</strong></p>
+</blockquote>
+<p>That sentence is deliberately broader than “Coaction has cached getters.”</p>
+<p>The getter is just the API surface. The graph is the feature.</p>
+<hr>
+<h2 id="Why-Reselect-does-not-make-this-distinction-disappear"><a href="#Why-Reselect-does-not-make-this-distinction-disappear" class="headerlink" title="Why Reselect does not make this distinction disappear"></a>Why Reselect does not make this distinction disappear</h2><p>Reselect is mature, effective, and often exactly what a Zustand application should use.</p>
+<p>But it solves the problem as an application-level memoization system.</p>
+<p>That means the architecture becomes:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="text" data-shiki-language="text" data-highlighted="false" aria-label="text code"><code><span class="line"><span>              application</span></span>
+<span class="line"><span>                  │</span></span>
+<span class="line"><span>       ┌──────────┴──────────┐</span></span>
+<span class="line"><span>       │                     │</span></span>
+<span class="line"><span>   Zustand store         Reselect graph</span></span>
+<span class="line"><span>       │                     │</span></span>
+<span class="line"><span>       └──────── subscribers ┘</span></span></code></pre>
+
+<p>With Coaction, the goal is closer to:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="text" data-shiki-language="text" data-highlighted="false" aria-label="text code"><code><span class="line"><span>                  runtime</span></span>
+<span class="line"><span>                    │</span></span>
+<span class="line"><span>          ┌─────────┴─────────┐</span></span>
+<span class="line"><span>          │                   │</span></span>
+<span class="line"><span>       source state       computed state</span></span>
+<span class="line"><span>          │                   │</span></span>
+<span class="line"><span>          └──── dependency ───┘</span></span>
+<span class="line"><span>                    │</span></span>
+<span class="line"><span>                    ▼</span></span>
+<span class="line"><span>                 observers</span></span></code></pre>
+
+<p>The first architecture is explicit and modular.</p>
+<p>The second is more integrated.</p>
+<p>There are good reasons to prefer either one.</p>
+<p>But they are not the same abstraction merely because both can avoid an expensive recomputation.</p>
+<hr>
+<h2 id="Parameterized-derived-state-exposes-the-difference-even-more"><a href="#Parameterized-derived-state-exposes-the-difference-even-more" class="headerlink" title="Parameterized derived state exposes the difference even more"></a>Parameterized derived state exposes the difference even more</h2><p>Suppose an editor repeatedly asks for:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="ts" data-shiki-language="ts" data-highlighted="true" aria-label="ts code"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">getNodeBounds</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(nodeId);</span></span></code></pre>
+
+<p>Many components may need the same node’s bounds, while thousands of other nodes exist.</p>
+<p>A good derived system wants something like:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="text" data-shiki-language="text" data-highlighted="false" aria-label="text code"><code><span class="line"><span>nodeBounds('a') ──→ shared derived node A</span></span>
+<span class="line"><span>nodeBounds('b') ──→ shared derived node B</span></span>
+<span class="line"><span>nodeBounds('c') ──→ shared derived node C</span></span></code></pre>
+
+<p>Then:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="text" data-shiki-language="text" data-highlighted="false" aria-label="text code"><code><span class="line"><span>node 'a' changes</span></span>
+<span class="line"><span>      │</span></span>
+<span class="line"><span>      └── invalidate nodeBounds('a')</span></span></code></pre>
+
+<p>not every bounds calculation.</p>
+<p>In Zustand, this usually leads to selector factories, maps of memoized selectors, or another caching layer. Then cache lifecycle becomes part of your design:</p>
+<ul>
+<li>who creates a keyed selector;</li>
+<li>who owns it;</li>
+<li>when it can be reclaimed;</li>
+<li>how it is isolated between store instances;</li>
+<li>how SSR affects it;</li>
+<li>how parameters participate in memoization.</li>
+</ul>
+<p>That is workable, but notice what happened: you are designing a reactive computation runtime around the store.</p>
+<p>This is the ceiling I care about more than a few extra selector lines.</p>
+<hr>
+<h2 id="What-a-migration-actually-deletes"><a href="#What-a-migration-actually-deletes" class="headerlink" title="What a migration actually deletes"></a>What a migration actually deletes</h2><p>The payoff is concentrated in a few kinds of code.</p>
+<h2 id="1-Most-subscription-only-selectors-and-useShallow"><a href="#1-Most-subscription-only-selectors-and-useShallow" class="headerlink" title="1. Most subscription-only selectors and useShallow"></a>1. Most subscription-only selectors and <code>useShallow</code></h2><p>With render tracking:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="tsx" data-shiki-language="tsx" data-highlighted="true" aria-label="tsx code"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> UserCard</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> observer</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(() </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123;</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> store</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> useUser</span><span style="color:#24292E;--shiki-dark:#E1E4E8">();</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  return</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> (</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    &#x3C;</span><span style="color:#22863A;--shiki-dark:#85E89D">section</span><span style="color:#24292E;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      &#x3C;</span><span style="color:#22863A;--shiki-dark:#85E89D">p</span><span style="color:#24292E;--shiki-dark:#E1E4E8">>Items: &#123;store.visibleItems.</span><span style="color:#005CC5;--shiki-dark:#79B8FF">length</span><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;&#x3C;/</span><span style="color:#22863A;--shiki-dark:#85E89D">p</span><span style="color:#24292E;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      &#x3C;</span><span style="color:#22863A;--shiki-dark:#85E89D">p</span><span style="color:#24292E;--shiki-dark:#E1E4E8">>Total: &#123;store.total&#125;&#x3C;/</span><span style="color:#22863A;--shiki-dark:#85E89D">p</span><span style="color:#24292E;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    &#x3C;/</span><span style="color:#22863A;--shiki-dark:#85E89D">section</span><span style="color:#24292E;--shiki-dark:#E1E4E8">></span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    &#x3C;</span><span style="color:#22863A;--shiki-dark:#85E89D">article</span><span style="color:#24292E;--shiki-dark:#E1E4E8">></span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      &#x3C;</span><span style="color:#22863A;--shiki-dark:#85E89D">img</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> src</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">&#123;store.user.avatar&#125; /></span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      &#x3C;</span><span style="color:#22863A;--shiki-dark:#85E89D">strong</span><span style="color:#24292E;--shiki-dark:#E1E4E8">>&#123;store.user.name&#125;&#x3C;/</span><span style="color:#22863A;--shiki-dark:#85E89D">strong</span><span style="color:#24292E;--shiki-dark:#E1E4E8">></span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      &#x3C;</span><span style="color:#22863A;--shiki-dark:#85E89D">span</span><span style="color:#24292E;--shiki-dark:#E1E4E8">>&#123;store.user.status&#125;&#x3C;/</span><span style="color:#22863A;--shiki-dark:#85E89D">span</span><span style="color:#24292E;--shiki-dark:#E1E4E8">></span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    &#x3C;/</span><span style="color:#22863A;--shiki-dark:#85E89D">article</span><span style="color:#24292E;--shiki-dark:#E1E4E8">></span></span>
 <span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  );</span></span>
 <span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;);</span></span></code></pre>
 
-<p>The derived relationships are declared in the store itself:</p>
-<ul>
-<li><code>visibleItems</code> depends on <code>items</code> and <code>filter</code>;</li>
-<li><code>total</code> depends on <code>visibleItems</code> and <code>discountRate</code> — <strong>a getter may read another getter, and the cache chain links up automatically</strong>;</li>
-<li>the derived logic is defined once and reused by any number of consumers.</li>
-</ul>
-<p>It is closer to a built-in, store-level computed system.</p>
-<p>Coaction does not suddenly make possible something Zustand could not do. What it does is push the subscription, caching, and derivation policies — the ones your application used to organize by hand — down into the runtime.</p>
-<hr>
-<h2 id="What-the-migration-deletes"><a href="#What-the-migration-deletes" class="headerlink" title="What the migration deletes"></a>What the migration deletes</h2><h3 id="1-Most-selectors-and-useShallow"><a href="#1-Most-selectors-and-useShallow" class="headerlink" title="1. Most selectors and useShallow"></a>1. Most selectors and <code>useShallow</code></h3><p>Inside a component wrapped in <code>observer()</code>, the fields read during render subscribe automatically:</p>
-<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="tsx" data-shiki-language="tsx" data-highlighted="true" aria-label="tsx code"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> UserName</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> observer</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(() </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123;</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> store</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> useUser</span><span style="color:#24292E;--shiki-dark:#E1E4E8">();</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  return</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#x3C;</span><span style="color:#22863A;--shiki-dark:#85E89D">span</span><span style="color:#24292E;--shiki-dark:#E1E4E8">>&#123;store.name&#125;&#x3C;/</span><span style="color:#22863A;--shiki-dark:#85E89D">span</span><span style="color:#24292E;--shiki-dark:#E1E4E8">>;</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;);</span></span></code></pre>
-
-<p>A component reads exactly what it needs. The render code <em>is</em> the subscription declaration.</p>
-<p>So there is no longer a need to maintain:</p>
-<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="ts" data-shiki-language="ts" data-highlighted="true" aria-label="ts code"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> name</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> useUser</span><span style="color:#24292E;--shiki-dark:#E1E4E8">((</span><span style="color:#E36209;--shiki-dark:#FFAB70">state</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> state.name);</span></span></code></pre>
-
-<p>or:</p>
-<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="ts" data-shiki-language="ts" data-highlighted="true" aria-label="ts code"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">useShallow</span><span style="color:#24292E;--shiki-dark:#E1E4E8">((</span><span style="color:#E36209;--shiki-dark:#FFAB70">state</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> (&#123;</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  name: state.name,</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  avatar: state.avatar,</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  status: state.status,</span></span>
+<p>You no longer need a second declaration such as:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="tsx" data-shiki-language="tsx" data-highlighted="true" aria-label="tsx code"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">useShallow</span><span style="color:#24292E;--shiki-dark:#E1E4E8">((</span><span style="color:#E36209;--shiki-dark:#FFAB70">state</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> (&#123;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  avatar: state.user.avatar,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  name: state.user.name,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  status: state.user.status,</span></span>
 <span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;));</span></span></code></pre>
 
-<p>But automatic tracking is <strong>not</strong> unbounded property-level tracking. The pitfalls section below demonstrates this with measurements — it is the part of a migration that requires the most code changes.</p>
-<p>When you want explicit control, the selector-style API is still there. Automatic tracking is the default, not a cage.</p>
-<h3 id="2-useMemo-that-only-derives-store-state"><a href="#2-useMemo-that-only-derives-store-state" class="headerlink" title="2. useMemo that only derives store state"></a>2. <code>useMemo</code> that only derives store state</h3><p>Coaction’s getters do not replace every <code>useMemo</code>. They replace this specific kind of computation:</p>
+<p>The render is already the dependency declaration.</p>
+<p>This is especially valuable when component reads evolve frequently. Add one read, remove one read, or move a field, and there is no separate selector object to keep synchronized.</p>
+<hr>
+<h2 id="2-Store-derived-useMemo"><a href="#2-Store-derived-useMemo" class="headerlink" title="2. Store-derived useMemo"></a>2. Store-derived <code>useMemo</code></h2><p>Coaction getters should replace only computations that genuinely belong to the state model:</p>
 <ul>
-<li>depends only on store state;</li>
-<li>is reused across several components;</li>
-<li>expresses a relationship that belongs to the state model;</li>
-<li>is expensive enough, or needs a stable result.</li>
+<li>all inputs come from store state;</li>
+<li>multiple consumers may reuse the value;</li>
+<li>the relationship has domain meaning;</li>
+<li>caching or stable identity is useful.</li>
 </ul>
+<p>For example:</p>
 <pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="ts" data-shiki-language="ts" data-highlighted="true" aria-label="ts code"><code><span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">get </span><span style="color:#6F42C1;--shiki-dark:#B392F0">sortedItems</span><span style="color:#24292E;--shiki-dark:#E1E4E8">() &#123;</span></span>
 <span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  return</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> [</span><span style="color:#D73A49;--shiki-dark:#F97583">...</span><span style="color:#005CC5;--shiki-dark:#79B8FF">this</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.items].</span><span style="color:#6F42C1;--shiki-dark:#B392F0">sort</span><span style="color:#24292E;--shiki-dark:#E1E4E8">((</span><span style="color:#E36209;--shiki-dark:#FFAB70">a</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#E36209;--shiki-dark:#FFAB70">b</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> b.score </span><span style="color:#D73A49;--shiki-dark:#F97583">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> a.score);</span></span>
 <span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;</span></span></code></pre>
 
-<p>Two things distinguish it from a <code>useMemo</code> in a component: the derived logic lives in the store rather than scattered across component instances, and the dependencies come from the state reads that happen while the getter runs, so there is no second dependency array to keep in sync.</p>
-<p>But if a computation depends on props, local state, or transient input, it does not belong in the store:</p>
+<p>But this still belongs in the component:</p>
 <pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="tsx" data-shiki-language="tsx" data-highlighted="true" aria-label="tsx code"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">function</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> ProductList</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(&#123; </span><span style="color:#E36209;--shiki-dark:#FFAB70">minimumPrice</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#125;</span><span style="color:#D73A49;--shiki-dark:#F97583">:</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123; </span><span style="color:#E36209;--shiki-dark:#FFAB70">minimumPrice</span><span style="color:#D73A49;--shiki-dark:#F97583">:</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> number</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#125;) &#123;</span></span>
 <span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> items</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> useCart</span><span style="color:#24292E;--shiki-dark:#E1E4E8">((</span><span style="color:#E36209;--shiki-dark:#FFAB70">state</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> state.items);</span></span>
 <span class="line"></span>
@@ -477,61 +777,66 @@
 <span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">  // ...</span></span>
 <span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;</span></span></code></pre>
 
-<p><code>minimumPrice</code> is component input; it should not necessarily become global state.</p>
-<p>So what you can delete is not every <code>useMemo</code>, but:</p>
+<p><code>minimumPrice</code> is component input. Moving it into global state just to use a computed getter would couple component lifetime to the store.</p>
+<p>So the accurate claim is not:</p>
 <blockquote>
-<p><strong>the ones that are really re-implementing a store computed inside a component.</strong></p>
+<p>delete every <code>useMemo</code>.</p>
 </blockquote>
-<h3 id="3-Object-spreads-and-Immer-boilerplate"><a href="#3-Object-spreads-and-Immer-boilerplate" class="headerlink" title="3. Object spreads and Immer boilerplate"></a>3. Object spreads and Immer boilerplate</h3><p>The draft update form lets you describe an update with mutable syntax:</p>
+<p>It is:</p>
+<blockquote>
+<p><strong>delete the <code>useMemo</code> calls that are really re-implementing store-level computed state inside components.</strong></p>
+</blockquote>
+<hr>
+<h2 id="3-A-large-amount-of-selector-specific-memoization-infrastructure"><a href="#3-A-large-amount-of-selector-specific-memoization-infrastructure" class="headerlink" title="3. A large amount of selector-specific memoization infrastructure"></a>3. A large amount of selector-specific memoization infrastructure</h2><p>If a shared Reselect selector exists because several components need one domain-level derived value, a cached getter can often own that relationship directly.</p>
+<p>This does not make Reselect obsolete. Parameterized projections, reusable library selectors, and some cross-store calculations can still be better expressed explicitly.</p>
+<p>The change is that memoized selectors stop being the default way the application invents first-class derived state.</p>
+<hr>
+<h2 id="4-Immutable-update-boilerplate"><a href="#4-Immutable-update-boilerplate" class="headerlink" title="4. Immutable update boilerplate"></a>4. Immutable update boilerplate</h2><p>Coaction’s draft path gives mutable syntax with immutable results:</p>
 <pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="ts" data-shiki-language="ts" data-highlighted="true" aria-label="ts code"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">set</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(() </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123;</span></span>
 <span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">  this</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.count </span><span style="color:#D73A49;--shiki-dark:#F97583">+=</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> 1</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
 <span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">  this</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.items.</span><span style="color:#6F42C1;--shiki-dark:#B392F0">push</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(item);</span></span>
 <span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;);</span></span></code></pre>
 
-<p>That path produces an immutable result through Mutative.</p>
-<p>But Coaction does not let you mutate state anywhere you like. Writes must happen inside <code>set()</code>:</p>
-<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="ts" data-shiki-language="ts" data-highlighted="true" aria-label="ts code"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> useCounter</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> create</span><span style="color:#24292E;--shiki-dark:#E1E4E8">((</span><span style="color:#E36209;--shiki-dark:#FFAB70">set</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> (&#123;</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  count: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">0</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">  incrementWrong</span><span style="color:#24292E;--shiki-dark:#E1E4E8">() &#123;</span></span>
-<span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">    this</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.count </span><span style="color:#D73A49;--shiki-dark:#F97583">+=</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> 1</span><span style="color:#24292E;--shiki-dark:#E1E4E8">; </span><span style="color:#6A737D;--shiki-dark:#6A737D">// throws</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  &#125;,</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">  increment</span><span style="color:#24292E;--shiki-dark:#E1E4E8">() &#123;</span></span>
-<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">    set</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(() </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123;</span></span>
-<span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">      this</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.count </span><span style="color:#D73A49;--shiki-dark:#F97583">+=</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> 1</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    &#125;);</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  &#125;,</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;));</span></span></code></pre>
+<p>Writes still have a strict boundary.</p>
+<p>This is invalid:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="ts" data-shiki-language="ts" data-highlighted="true" aria-label="ts code"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">incrementWrong</span><span style="color:#24292E;--shiki-dark:#E1E4E8">() &#123;</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">  this</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.count </span><span style="color:#D73A49;--shiki-dark:#F97583">+=</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> 1</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;</span></span></code></pre>
 
-<p>The error is explicit:</p>
-<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="text" data-shiki-language="text" data-highlighted="false" aria-label="text code"><code><span class="line"><span>Direct state mutation is not allowed in immutable Coaction stores.</span></span>
-<span class="line"><span>Wrap mutations in set(() => &#123; ... &#125;).</span></span></code></pre>
+<p>and throws.</p>
+<p>The valid form is:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="ts" data-shiki-language="ts" data-highlighted="true" aria-label="ts code"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">increment</span><span style="color:#24292E;--shiki-dark:#E1E4E8">() &#123;</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">  set</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(() </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123;</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">    this</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.count </span><span style="color:#D73A49;--shiki-dark:#F97583">+=</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> 1</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  &#125;);</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;</span></span></code></pre>
 
-<p>State updates therefore keep a clear boundary. <code>set()</code> is the single entry point that produces the next state and notifies subscribers. Compared to “a reactive object you can mutate from anywhere”, that constraint makes update sources easier to locate and easier to debug.</p>
-<h3 id="4-Manually-preserving-this-and-manually-selecting-actions"><a href="#4-Manually-preserving-this-and-manually-selecting-actions" class="headerlink" title="4. Manually preserving this, and manually selecting actions"></a>4. Manually preserving <code>this</code>, and manually selecting actions</h3><p>In Zustand, actions are ordinary fields on the store. To use one in a component you normally select it:</p>
-<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="tsx" data-shiki-language="tsx" data-highlighted="true" aria-label="tsx code"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> increment</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> useCounter</span><span style="color:#24292E;--shiki-dark:#E1E4E8">((</span><span style="color:#E36209;--shiki-dark:#FFAB70">state</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> state.increment);</span></span></code></pre>
-
-<p>or grab the latest one inside an event handler:</p>
-<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="tsx" data-shiki-language="tsx" data-highlighted="true" aria-label="tsx code"><code><span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">onClick</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">&#123;() => useCounter.getState().increment()&#125;</span></span></code></pre>
-
-<p>In Coaction, methods are bound to the store or slice they belong to, so you can pass them directly:</p>
-<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="tsx" data-shiki-language="tsx" data-highlighted="true" aria-label="tsx code"><code><span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#x3C;</span><span style="color:#22863A;--shiki-dark:#85E89D">button</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> onClick</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">&#123;store.increment&#125;>+1&#x3C;/</span><span style="color:#22863A;--shiki-dark:#85E89D">button</span><span style="color:#24292E;--shiki-dark:#E1E4E8">></span></span></code></pre>
-
-<p>Even destructured out of <code>getState()</code>, <code>this</code> survives:</p>
-<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="ts" data-shiki-language="ts" data-highlighted="true" aria-label="ts code"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123; </span><span style="color:#005CC5;--shiki-dark:#79B8FF">increment</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#125; </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> useStore.</span><span style="color:#6F42C1;--shiki-dark:#B392F0">getState</span><span style="color:#24292E;--shiki-dark:#E1E4E8">().counter;</span></span>
-<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">increment</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(); </span><span style="color:#6A737D;--shiki-dark:#6A737D">// still correct; this still points at that slice</span></span></code></pre>
-
-<p>For a single counter this is barely visible. But as the number of actions grows and cross-slice calls multiply, “never hand-preserving <code>this</code>, never writing a selection for each action” steadily removes one class of boilerplate and one class of bug.</p>
+<p>So Coaction is not “a mutable observable object you can change from anywhere.” The public state remains an immutable snapshot; <code>set()</code> is the transition boundary.</p>
+<p>I consider this a useful third advantage, but not the central argument of this article. The central argument is still dependency ownership.</p>
 <hr>
-<h2 id="“Isn’t-this-just-MobX-”"><a href="#“Isn’t-this-just-MobX-”" class="headerlink" title="“Isn’t this just MobX?”"></a>“Isn’t this just MobX?”</h2><p>This is the question I expect most, so let me answer it directly.</p>
-<p>Getters, <code>this</code>, automatic tracking, cached computeds — none of this is new. MobX has shipped it for a decade, and Pinia gives Vue the same shape. I am not going to pretend this is an invention.</p>
-<p>The difference is the <strong>substrate</strong>. Both points below were measured against <code>mobx@6.15</code>:</p>
-<p><strong>First, MobX computeds are cached only while observed.</strong></p>
-<p>MobX memoizes a <code>computed</code> only while a reaction observes it. Read the same getter four times outside <code>observer()</code> &#x2F; <code>autorun()</code> — in an event handler, a test, during SSR — and it evaluates four times. Coaction’s getters are backed by <code>alien-signals</code> computeds and cache unconditionally; the same four reads evaluate once.</p>
-<p><strong>Second, MobX is a mutable observable; Coaction is an immutable snapshot.</strong></p>
-<p>MobX mutates in place, so a reference you captured earlier changes underneath you. Coaction’s public state is frozen and structurally shared.</p>
-<p>The second point is the important one. Because every update produces an immutable result, Coaction has a <strong>patch stream</strong> — and undo&#x2F;redo, persistence, cross-thread transport, and CRDT collaboration are all built on it. <code>mobx-state-tree</code> buys snapshots and patches back, at the cost of a second type system.</p>
+<h2 id="A-subtle-performance-issue-fine-grained-tracking-is-not-free"><a href="#A-subtle-performance-issue-fine-grained-tracking-is-not-free" class="headerlink" title="A subtle performance issue: fine-grained tracking is not free"></a>A subtle performance issue: fine-grained tracking is not free</h2><p>Nested path tracking is powerful, but proxy traps have a cost.</p>
+<p>For a selector that touches one small path, that precision is useful:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="ts" data-shiki-language="ts" data-highlighted="true" aria-label="ts code"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> name</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> useStore</span><span style="color:#24292E;--shiki-dark:#E1E4E8">((</span><span style="color:#E36209;--shiki-dark:#FFAB70">state</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> state.user.profile.name);</span></span></code></pre>
+
+<p>For a selector that scans every element of a large collection, per-element tracking may be wasted work because any relevant collection change will cause the scan to run again anyway.</p>
+<p>Coaction exposes <code>whole()</code> for that case:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="ts" data-shiki-language="ts" data-highlighted="true" aria-label="ts code"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123; whole &#125; </span><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "coaction"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> total</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> useCart</span><span style="color:#24292E;--shiki-dark:#E1E4E8">((</span><span style="color:#E36209;--shiki-dark:#FFAB70">state</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">  whole</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(state.items).</span><span style="color:#6F42C1;--shiki-dark:#B392F0">reduce</span><span style="color:#24292E;--shiki-dark:#E1E4E8">((</span><span style="color:#E36209;--shiki-dark:#FFAB70">sum</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#E36209;--shiki-dark:#FFAB70">item</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> sum </span><span style="color:#D73A49;--shiki-dark:#F97583">+</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> item.price, </span><span style="color:#005CC5;--shiki-dark:#79B8FF">0</span><span style="color:#24292E;--shiki-dark:#E1E4E8">),</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">);</span></span></code></pre>
+
+<p><code>whole(state.items)</code> records one dependency on the collection and returns the underlying value for the scan.</p>
+<p>This is a good example of the trade-off in an automatic dependency runtime:</p>
+<blockquote>
+<p>finer dependency knowledge can remove unnecessary invalidation, but dependency collection itself is work.</p>
+</blockquote>
+<p>The correct granularity depends on the access pattern.</p>
+<hr>
+<h2 id="“Isn’t-this-just-MobX-”"><a href="#“Isn’t-this-just-MobX-”" class="headerlink" title="“Isn’t this just MobX?”"></a>“Isn’t this just MobX?”</h2><p>This is the obvious question.</p>
+<p>Getters, <code>this</code>, automatic tracking, and computed values are not new. MobX has had these ideas for a long time.</p>
+<p>Coaction’s distinction is not that it invented reactive graphs.</p>
+<p>The more interesting difference is the substrate.</p>
 <table>
 <thead>
 <tr>
@@ -542,53 +847,56 @@
 </tr>
 </thead>
 <tbody><tr>
-<td align="left">Function-style <code>create()</code>, no decorators</td>
+<td align="left">Function-style <code>create()</code></td>
 <td align="left">yes</td>
 <td align="left">yes</td>
-<td align="left"><code>makeAutoObservable</code></td>
+<td align="left">typically <code>makeAutoObservable</code> &#x2F; observable setup</td>
 </tr>
 <tr>
 <td align="left">Render tracking without selectors</td>
 <td align="left"><code>observer()</code></td>
-<td align="left">no</td>
+<td align="left">no by default</td>
 <td align="left"><code>observer()</code></td>
 </tr>
 <tr>
-<td align="left"><code>get value()</code> + <code>this</code></td>
+<td align="left">Runtime cached derived values</td>
 <td align="left">yes</td>
-<td align="left">no</td>
+<td align="left">external &#x2F; manual</td>
 <td align="left">yes</td>
 </tr>
 <tr>
-<td align="left">Derived values memoized</td>
-<td align="left">always</td>
-<td align="left">no</td>
-<td align="left">only while observed</td>
-</tr>
-<tr>
-<td align="left">Frozen snapshots, structural sharing</td>
+<td align="left">Immutable snapshots</td>
 <td align="left">yes</td>
-<td align="left">via Immer&#x2F;Mutative</td>
-<td align="left">no — mutable observables</td>
+<td align="left">yes if updates are written immutably</td>
+<td align="left">no, mutable observables by default</td>
 </tr>
 <tr>
-<td align="left">Patch stream (undo &#x2F; persist &#x2F; sync &#x2F; CRDT)</td>
-<td align="left">built in</td>
-<td align="left">no</td>
-<td align="left"><code>mobx-state-tree</code></td>
+<td align="left">Structural sharing</td>
+<td align="left">yes</td>
+<td align="left">depends on update path</td>
+<td align="left">not the primary model</td>
 </tr>
 <tr>
-<td align="left">Entry size (gzip, deps excluded)</td>
-<td align="left">11.1 KB <code>coaction/local</code></td>
-<td align="left">0.6 KB vanilla+react</td>
-<td align="left">16.4 KB</td>
+<td align="left">Patch stream</td>
+<td align="left">built into Coaction’s immutable update model</td>
+<td align="left">external</td>
+<td align="left">use another layer such as MST if needed</td>
+</tr>
+<tr>
+<td align="left">Worker&#x2F;shared-state direction</td>
+<td align="left">built into Coaction architecture</td>
+<td align="left">external</td>
+<td align="left">external</td>
 </tr>
 </tbody></table>
-<p>Read that last row carefully: <strong>Zustand really is an order of magnitude smaller</strong>, and that is the trade being made. Coaction’s 11.1 KB excludes <code>mutative</code> (~6.7 KB) and <code>alien-signals</code>; MobX’s 16.4 KB is self-contained.</p>
-<p>If what you want is a mature, battle-tested reactive graph and mutable observables suit you, <strong>MobX is the safer choice</strong> — its ecosystem and track record are far deeper than Coaction’s.</p>
+<p>MobX remains the much more mature reactive system.</p>
+<p>If what you want is a battle-tested dependency graph and mutable observables fit your architecture, MobX is the safer choice today.</p>
+<p>Coaction is interesting because it combines that style of dependency-aware runtime with immutable snapshots, structural sharing, patches, and a Zustand-like store API.</p>
+<p>That combination is the point, not the existence of <code>get value()</code> syntax by itself.</p>
 <hr>
-<h2 id="Performance-one-set-of-numbers-supports-me-two-do-not"><a href="#Performance-one-set-of-numbers-supports-me-two-do-not" class="headerlink" title="Performance: one set of numbers supports me, two do not"></a>Performance: one set of numbers supports me, two do not</h2><p>All of these are reproducible from the repository. Regenerate before quoting them — microbenchmarks move with CPU, runtime, and package versions. The numbers below come from a single run on an Apple M1 Max, Node 24.16, <code>zustand@5.0.11</code>.</p>
-<h3 id="Reading-derived-state-—-pnpm-benchmark-zustand-positioning"><a href="#Reading-derived-state-—-pnpm-benchmark-zustand-positioning" class="headerlink" title="Reading derived state — pnpm benchmark:zustand-positioning"></a>Reading derived state — <code>pnpm benchmark:zustand-positioning</code></h3><table>
+<h2 id="Performance-read-the-benchmark-for-what-it-actually-proves"><a href="#Performance-read-the-benchmark-for-what-it-actually-proves" class="headerlink" title="Performance: read the benchmark for what it actually proves"></a>Performance: read the benchmark for what it actually proves</h2><p>Microbenchmarks are useful for exposing implementation differences. They are terrible when turned into slogans.</p>
+<p>The current repository benchmark for derived reads reports roughly:</p>
+<table>
 <thead>
 <tr>
 <th align="left">Pattern</th>
@@ -597,12 +905,12 @@
 </tr>
 </thead>
 <tbody><tr>
-<td align="left"><strong>Coaction</strong> cached getter</td>
+<td align="left">Coaction cached getter</td>
 <td align="right">76,726,880</td>
-<td align="right"><strong>1.00x</strong></td>
+<td align="right">1.00x</td>
 </tr>
 <tr>
-<td align="left"><strong>Coaction</strong> <code>get(deps, selector)</code></td>
+<td align="left">Coaction <code>get(deps, selector)</code></td>
 <td align="right">49,119,723</td>
 <td align="right">0.64x</td>
 </tr>
@@ -617,12 +925,18 @@
 <td align="right">1.46x</td>
 </tr>
 </tbody></table>
-<p>Against the pattern most codebases actually write — a selector that recomputes derived data — a cached getter is roughly <strong>96x faster</strong>.</p>
-<p>The only thing faster is a derived field the application maintains by hand inside every action, <strong>which is precisely what this article has been arguing against</strong>. The numbers state the trade plainly:</p>
+<p>On that benchmark, the cached getter is roughly 96x faster than a Zustand selector that performs the expensive calculation on every invocation.</p>
+<p>But this table must <strong>not</strong> be interpreted as:</p>
 <blockquote>
-<p>You can be 1.46x faster and maintain consistency by hand forever, or give up 32% of read throughput and delete that entire class of bug.</p>
+<p>Coaction is 96x faster than a well-designed Zustand + Reselect application.</p>
 </blockquote>
-<h3 id="Updating-then-reading-—-same-script"><a href="#Updating-then-reading-—-same-script" class="headerlink" title="Updating, then reading — same script"></a>Updating, then reading — same script</h3><table>
+<p>A shared memoized selector can also turn repeated reads into cache hits.</p>
+<p>That is exactly why Reselect belongs in this comparison.</p>
+<p>The benchmark proves the value of caching relative to recomputation. The architectural argument is that Coaction makes that caching and invalidation a store primitive instead of an application-managed selector layer.</p>
+<p>Those are different claims.</p>
+<hr>
+<h2 id="Updating-then-reading"><a href="#Updating-then-reading" class="headerlink" title="Updating, then reading"></a>Updating, then reading</h2><p>The same repository benchmark also reports:</p>
+<table>
 <thead>
 <tr>
 <th align="left">Pattern</th>
@@ -631,17 +945,17 @@
 </tr>
 </thead>
 <tbody><tr>
-<td align="left"><strong>Coaction</strong> draft update + cached getter</td>
+<td align="left">Coaction draft update + cached getter</td>
 <td align="right">43,918</td>
-<td align="right"><strong>1.00x</strong></td>
+<td align="right">1.00x</td>
 </tr>
 <tr>
-<td align="left"><strong>Coaction</strong> draft update + <code>get(deps, selector)</code></td>
+<td align="left">Coaction draft update + <code>get(deps, selector)</code></td>
 <td align="right">43,660</td>
 <td align="right">0.99x</td>
 </tr>
 <tr>
-<td align="left"><strong>Coaction</strong> object replacement + cached getter</td>
+<td align="left">Coaction object replacement + cached getter</td>
 <td align="right">342</td>
 <td align="right">0.008x</td>
 </tr>
@@ -656,176 +970,76 @@
 <td align="right">75.2x</td>
 </tr>
 </tbody></table>
-<p><strong>Coaction loses this one.</strong> Its write path is about 2x behind a plain Zustand update, and much further behind a hand-maintained field.</p>
-<p>Read-heavy interfaces — most product surfaces — absorb that easily. High-frequency drag, animation frames, and streaming tick handlers do not. I have to state this, because it is also written into the project’s own README and its “when not to use Coaction” guide.</p>
-<p>The third row mixes two separate things: a trade-off and a defect. The next section pulls them apart — <strong>one of them I have already fixed.</strong></p>
-<h3 id="Bulk-update-throughput-—-pnpm-benchmark"><a href="#Bulk-update-throughput-—-pnpm-benchmark" class="headerlink" title="Bulk update throughput — pnpm benchmark"></a>Bulk update throughput — <code>pnpm benchmark</code></h3><p>State holds a 50,000-object array and a 1,000-entry map; each operation appends one of each:</p>
+<p>Here Zustand wins the ordinary update path by about 2x.</p>
+<p>That matters.</p>
+<p>Coaction pays for a fuller runtime, immutable draft processing, dependency invalidation, and other guarantees. High-frequency drag loops, animation state, game ticks, or streaming updates should be measured carefully rather than assumed to benefit from the richer abstraction.</p>
+<p>Read-heavy product UIs and write-heavy simulation loops are different workloads.</p>
+<hr>
+<h2 id="Bulk-immutable-updates"><a href="#Bulk-immutable-updates" class="headerlink" title="Bulk immutable updates"></a>Bulk immutable updates</h2><p>For a state containing a 50,000-object array and a 1,000-entry map, the repository’s bulk update benchmark reports:</p>
 <table>
 <thead>
 <tr>
-<th align="left">Update path</th>
+<th align="left">Library</th>
 <th align="right">ops&#x2F;sec</th>
 <th align="right">Relative</th>
 </tr>
 </thead>
 <tbody><tr>
-<td align="left"><strong>Coaction</strong> — Mutative draft</td>
+<td align="left">Coaction with Mutative</td>
 <td align="right">4,648</td>
-<td align="right"><strong>1.00x</strong></td>
+<td align="right">1.00x</td>
 </tr>
 <tr>
-<td align="left"><strong>Zustand</strong> — object replacement</td>
+<td align="left">Zustand</td>
 <td align="right">5,886</td>
 <td align="right">1.27x</td>
 </tr>
 <tr>
-<td align="left"><strong>Zustand</strong> — Immer draft</td>
+<td align="left">Zustand with Immer</td>
 <td align="right">298</td>
 <td align="right">0.06x</td>
 </tr>
 </tbody></table>
-<p>The draft path is ~21% behind Zustand’s object replacement and ~15.6x ahead of Immer.</p>
-<p><strong>Coaction’s own object-replacement path is deliberately absent from this table.</strong> At this state size it is dominated by the payload sanitizer, so it measures the guarantee rather than the update mechanism. The next section explains why.</p>
-<h3 id="Beyond-the-three-benchmarks-I-found-and-fixed-a-bug-while-writing-this"><a href="#Beyond-the-three-benchmarks-I-found-and-fixed-a-bug-while-writing-this" class="headerlink" title="Beyond the three benchmarks: I found and fixed a bug while writing this"></a>Beyond the three benchmarks: I found and fixed a bug while writing this</h3><p>While preparing the table above I re-ran <code>pnpm benchmark</code>, and the result did not match the snapshot that had been sitting in the README for a long time. Digging in, the <code>set({ ... })</code> path turned out to stack <strong>two different things</strong> — one a genuine defect, one a guarantee I added on purpose. Taken separately:</p>
-<p><strong>One: copying the current state was a deep clone (a real defect, now fixed)</strong></p>
-<p>On an object-payload commit, the code first copies the current root state, and that copy helper ran every value through a deeply recursive replacement sanitizer. The result: <strong>every <code>set({ ... })</code> was O(total state)</strong> — change one scalar and untouched fields were re-cloned in full anyway.</p>
-<p>Replacing an unrelated scalar in a store that merely <em>holds</em> a 10,000-item array, 400 operations:</p>
-<table>
-<thead>
-<tr>
-<th align="left"></th>
-<th align="right">Before</th>
-<th align="right">After</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="left"><code>set({ counter })</code></td>
-<td align="right">1,591 ms</td>
-<td align="right"><strong>2 ms</strong></td>
-</tr>
-</tbody></table>
-<p>The store already owns and already sanitized its current state, so re-sanitizing it on every commit was redundant. Switching to a shallow copy of own keys — nested values keep their identity — brings this path back into the same order of magnitude as the draft path. <strong>Incoming payloads are unaffected</strong>, which brings us to the second item.</p>
-<p><strong>Two: incoming payloads are deep-sanitized (not a defect — a guarantee)</strong></p>
-<p>Whatever you hand to <code>set({ ... })</code> is caller-supplied data. It is deep-cloned to strip unsafe keys and to break aliasing with objects the caller still holds. So passing in a fresh 1,000-element array costs O(payload):</p>
-<table>
-<thead>
-<tr>
-<th align="left">Update path</th>
-<th align="right">ops&#x2F;sec</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="left"><code>set((draft) =&gt; { ... })</code></td>
-<td align="right">43,918</td>
-</tr>
-<tr>
-<td align="left"><code>set({ items })</code></td>
-<td align="right">342</td>
-</tr>
-</tbody></table>
-<p><strong>This one cannot be optimized away</strong> without giving up the guarantee. Coaction 1.5.0 looks dramatically faster on this benchmark only because it did not make that guarantee — the sanitizer arrived in 2.0.0. I initially conflated the two and assumed the whole ~1,100x gap was a regression. That was my mistake.</p>
-<p><strong>Why nobody noticed</strong></p>
-<p>This repository has a mechanical gate for almost everything, but <code>benchmark-regression-thresholds.json</code> had no entry covering the object-payload path at all, and the regression suite never ran it. So <code>pnpm benchmark:check</code> stayed green throughout.</p>
-<p>Both paths are now gated: <code>Coaction unrelated field replacement</code> guards the fixed clone (1,053,858 ops&#x2F;sec today, floor 400,000), and <code>Coaction object replacement + cached getter</code> guards the payload sanitizer so it cannot silently get worse.</p>
-<p><strong>Takeaway for anyone migrating</strong></p>
-<blockquote>
-<p>Whenever the value you are writing is large, use <code>set((draft) =&gt; { ... })</code>. The draft path lets Mutative report precise patches, so neither the payload walk nor the cached getter’s snapshot rebuild is needed.</p>
-</blockquote>
-<p>I left this section in rather than quietly fixing it before publishing, because it makes the earlier point concrete: microbenchmarks are good at surfacing implementation differences. This time the difference it surfaced was mine — and it corrected my own first diagnosis along the way.</p>
-<p>All three of these are microbenchmarks. They are good for finding implementation differences, but they do not replace testing against a real workload, and they cover none of component-tree re-rendering, dependency-collection cost, subscription memory, or cross-thread communication.</p>
+<p>Again, the useful conclusion is not “Coaction always wins” — it does not.</p>
+<p>The useful conclusion is that the draft path is reasonably close to a plain immutable Zustand update while providing the runtime machinery Coaction needs, and is much faster than the measured Immer path in this particular benchmark.</p>
+<p>Regenerate these numbers before quoting them. CPU, Node, package versions, and benchmark shape all matter.</p>
 <hr>
-<h2 id="Pitfalls-you-will-hit-during-the-migration"><a href="#Pitfalls-you-will-hit-during-the-migration" class="headerlink" title="Pitfalls you will hit during the migration"></a>Pitfalls you will hit during the migration</h2><h3 id="Pitfall-1-tracking-stops-at-the-top-level-field-boundary-the-one-that-changes-the-most-code"><a href="#Pitfall-1-tracking-stops-at-the-top-level-field-boundary-the-one-that-changes-the-most-code" class="headerlink" title="Pitfall 1: tracking stops at the top-level field boundary (the one that changes the most code)"></a>Pitfall 1: tracking stops at the top-level field boundary (the one that changes the most code)</h3><p>“Reads are subscriptions” sounds like property-level tracking. It is not. Tracking happens at the <strong>field</strong> boundary of a store or slice.</p>
-<p>Verified with a minimal reproduction:</p>
-<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="ts" data-shiki-language="ts" data-highlighted="true" aria-label="ts code"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> useStore</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> create</span><span style="color:#24292E;--shiki-dark:#E1E4E8">((</span><span style="color:#E36209;--shiki-dark:#FFAB70">set</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> (&#123;</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  user: &#123; name: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">'Ada'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, email: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">'a@x.com'</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#125;,</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  unrelated: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">0</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
-<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">  setEmail</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#E36209;--shiki-dark:#FFAB70">v</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) &#123; </span><span style="color:#6F42C1;--shiki-dark:#B392F0">set</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(() </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123; </span><span style="color:#005CC5;--shiki-dark:#79B8FF">this</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.user.email </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> v; &#125;); &#125;,</span></span>
-<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">  setUnrelated</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#E36209;--shiki-dark:#FFAB70">v</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) &#123; </span><span style="color:#6F42C1;--shiki-dark:#B392F0">set</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(() </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123; </span><span style="color:#005CC5;--shiki-dark:#79B8FF">this</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.unrelated </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> v; &#125;); &#125;</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;));</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> View</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> observer</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(() </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123;</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> s</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> useStore</span><span style="color:#24292E;--shiki-dark:#E1E4E8">();</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  return</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#x3C;</span><span style="color:#6F42C1;--shiki-dark:#B392F0">span</span><span style="color:#24292E;--shiki-dark:#E1E4E8">>&#123;s.user.name&#125;</span><span style="color:#D73A49;--shiki-dark:#F97583">&#x3C;/</span><span style="color:#24292E;--shiki-dark:#E1E4E8">span</span><span style="color:#D73A49;--shiki-dark:#F97583">></span><span style="color:#24292E;--shiki-dark:#E1E4E8">; </span><span style="color:#6A737D;--shiki-dark:#6A737D">// reads name only</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;);</span></span></code></pre>
-
-<p>Results:</p>
-<table>
-<thead>
-<tr>
-<th align="left">Action</th>
-<th align="left">Component re-renders?</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="left">Change <code>user.email</code> (sibling field, same object)</td>
-<td align="left"><strong>Yes</strong> ← the pitfall</td>
-</tr>
-<tr>
-<td align="left">Change <code>unrelated</code> (unrelated top-level field)</td>
-<td align="left">No</td>
-</tr>
-</tbody></table>
-<p>The second row shows tracking is working. The first shows its granularity is the <code>user</code> field, not <code>user.name</code>.</p>
-<p>Two fixes, both verified:</p>
-<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="ts" data-shiki-language="ts" data-highlighted="true" aria-label="ts code"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">// Fix 1: flatten hot fields to the top level</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#123; </span><span style="color:#6F42C1;--shiki-dark:#B392F0">userName</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">'Ada'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#6F42C1;--shiki-dark:#B392F0">userEmail</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">'a@x.com'</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#125;</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">// Fix 2: split by change frequency into slices</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#123;</span></span>
-<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">  name</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: () </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> (&#123; value: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">'Ada'</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#125;),</span></span>
-<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">  contact</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: (</span><span style="color:#E36209;--shiki-dark:#FFAB70">set</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> (&#123; email: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">'a@x.com'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#6F42C1;--shiki-dark:#B392F0">setEmail</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#E36209;--shiki-dark:#FFAB70">v</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) &#123; </span><span style="color:#6A737D;--shiki-dark:#6A737D">/* ... */</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#125; &#125;)</span></span>
+<h2 id="One-migration-trap-matters-more-than-the-others-large-set-payloads"><a href="#One-migration-trap-matters-more-than-the-others-large-set-payloads" class="headerlink" title="One migration trap matters more than the others: large set({ ... }) payloads"></a>One migration trap matters more than the others: large <code>set({ ... })</code> payloads</h2><p>Zustand muscle memory often looks like this:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="ts" data-shiki-language="ts" data-highlighted="true" aria-label="ts code"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">bump</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(index) &#123;</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> items</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> get</span><span style="color:#24292E;--shiki-dark:#E1E4E8">().items.</span><span style="color:#6F42C1;--shiki-dark:#B392F0">slice</span><span style="color:#24292E;--shiki-dark:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  items[index] </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123;</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">    ...</span><span style="color:#24292E;--shiki-dark:#E1E4E8">items[index],</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    quantity: items[index].quantity </span><span style="color:#D73A49;--shiki-dark:#F97583">+</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> 1</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  &#125;;</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">  set</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(&#123; items &#125;);</span></span>
 <span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;</span></span></code></pre>
 
-<p>After either change, updating the email no longer re-renders the component that reads only the name.</p>
-<p><strong>Conclusion: migrating to Coaction does not make state modeling less important. It moves the modeling problem from “designing selectors” to “designing field boundaries.”</strong> If your stores hold large object fields whose inner fields change at very different rates, this is the bulk of the migration work.</p>
-<p>You can audit for it before migrating — <strong>a field is a re-render source if all three hold</strong>:</p>
-<ol>
-<li>it is an object or array, not a scalar;</li>
-<li>its sub-fields change at very different rates (say, <code>user.lastActiveAt</code> every second while <code>user.name</code> almost never changes);</li>
-<li>some component reads only a small part of it.</li>
-</ol>
-<p>The classic high-risk shape is the catch-all field: <code>user</code>, <code>settings</code>, <code>session</code>, <code>meta</code>. These usually exist in the Zustand version too — they were just masked by the selector’s hand-tuned granularity. <code>useStore(s =&gt; s.user.name)</code> plus <code>Object.is</code> happens to block sibling changes; <code>observer()</code>‘s field boundary does not. <strong>In other words this is not a new problem Coaction introduces; it makes modeling debt that was hidden inside selectors explicit.</strong></p>
-<p>One counterintuitive but correct behavior: destructuring during render does <strong>not</strong> break tracking.</p>
-<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="tsx" data-shiki-language="tsx" data-highlighted="true" aria-label="tsx code"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123; </span><span style="color:#005CC5;--shiki-dark:#79B8FF">count</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#125; </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> useStore</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(); </span><span style="color:#6A737D;--shiki-dark:#6A737D">// still tracks count correctly</span></span></code></pre>
-
-<p>because destructuring is itself a read.</p>
-<h3 id="Pitfall-2-not-every-useMemo-can-move-into-the-store"><a href="#Pitfall-2-not-every-useMemo-can-move-into-the-store" class="headerlink" title="Pitfall 2: not every useMemo can move into the store"></a>Pitfall 2: not every <code>useMemo</code> can move into the store</h3><p>Mentioned earlier, but you only hit it concretely during a migration. The test is simple — <strong>if even one input to the computation does not belong to the store, it stays in the component</strong>: props, local state, route params, <code>useContext</code> values all count.</p>
-<p>The tempting mistake is: “if I put the props into the store too, I could use a getter.” Don’t. That couples component lifecycle to global state — the input outlives the component after unmount, and multiple mounted instances overwrite each other. Leaving these computations in <code>useMemo</code> is correct, not a compromise.</p>
-<p>Using the earlier estimate, a 100k-line application has ~260 <code>useMemo</code> uses, of which roughly 85 are purely store-derived and can move; the other ~175 belong in components anyway. <strong>“Delete every useMemo” was never the goal.</strong></p>
-<h3 id="Pitfall-3-the-set-boundary-throws-in-a-burst-mid-migration"><a href="#Pitfall-3-the-set-boundary-throws-in-a-burst-mid-migration" class="headerlink" title="Pitfall 3: the set() boundary throws in a burst mid-migration"></a>Pitfall 3: the <code>set()</code> boundary throws in a burst mid-migration</h3><p>Code migrated from Zustand contains places that write state directly — especially after pulling an object out of <code>getState()</code> and assigning to a field. In Coaction these throw instead of silently taking effect.</p>
-<p>That is a good thing: the error message is direct, and those writes were bugs already. But be prepared — <strong>these errors arrive in a burst mid-migration</strong>, not sprinkled thinly.</p>
-<p>You can find them before you start:</p>
-<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="bash" data-shiki-language="bash" data-highlighted="true" aria-label="bash code"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># suspicious direct writes to fields pulled out of getState()</span></span>
-<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">grep</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> -rEn</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "getState\(\)\.[A-Za-z_$][A-Za-z0-9_$]*\s*(=[^=]|\+\+|--|\.push\(|\.splice\()"</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> src</span></span></code></pre>
-
-<p>Worth noting: these are equally wrong in Zustand — Zustand just does not stop them. So this batch of errors usually contains some pre-existing state corruption that had never been noticed.</p>
-<h3 id="Pitfall-4-no-cached-getters-on-mutable-external-adapters"><a href="#Pitfall-4-no-cached-getters-on-mutable-external-adapters" class="headerlink" title="Pitfall 4: no cached getters on mutable external adapters"></a>Pitfall 4: no cached getters on mutable external adapters</h3><p>If you bind an existing store through a mutable adapter such as <code>@coaction/mobx</code> or <code>@coaction/pinia</code>, cached getters and <code>get(deps, selector)</code> are unavailable on those instances. <code>observer()</code> still receives updates, but subject to the same field-boundary granularity.</p>
-<p>This is documented explicitly in the project docs; check whether you are on that path before migrating.</p>
-<h3 id="Pitfall-5-Zustand-muscle-memory-walks-straight-into-set"><a href="#Pitfall-5-Zustand-muscle-memory-walks-straight-into-set" class="headerlink" title="Pitfall 5: Zustand muscle memory walks straight into set({ ... })"></a>Pitfall 5: Zustand muscle memory walks straight into <code>set({ ... })</code></h3><p>This one is migration-specific, and the one I think is most worth knowing in advance.</p>
-<p><code>set({ items })</code> is simply how you write Zustand. Coaction’s <code>set()</code> accepts the same object payload — <strong>semantically correct, and correctly typed</strong> — so code carried over from Zustand runs unchanged. It is just two orders of magnitude slower at this scale, with nothing to warn you.</p>
-<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="ts" data-shiki-language="ts" data-highlighted="true" aria-label="ts code"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">// carried over from Zustand: works, but takes the slow path</span></span>
-<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">bump</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(index) &#123;</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> items</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> get</span><span style="color:#24292E;--shiki-dark:#E1E4E8">().items.</span><span style="color:#6F42C1;--shiki-dark:#B392F0">slice</span><span style="color:#24292E;--shiki-dark:#E1E4E8">();</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  items[index] </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123; </span><span style="color:#D73A49;--shiki-dark:#F97583">...</span><span style="color:#24292E;--shiki-dark:#E1E4E8">items[index], quantity: items[index].quantity </span><span style="color:#D73A49;--shiki-dark:#F97583">+</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> 1</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#125;;</span></span>
-<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">  set</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(&#123; items &#125;);</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">// how it should be written in Coaction</span></span>
-<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">bump</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(index) &#123;</span></span>
+<p>That call is semantically valid in Coaction, but large object payloads take a more expensive path because incoming values are sanitized and detached from caller-owned references.</p>
+<p>The Coaction-native form is:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="ts" data-shiki-language="ts" data-highlighted="true" aria-label="ts code"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">bump</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(index) &#123;</span></span>
 <span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">  set</span><span style="color:#24292E;--shiki-dark:#E1E4E8">((</span><span style="color:#E36209;--shiki-dark:#FFAB70">draft</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> &#123;</span></span>
 <span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    draft.items[index].quantity </span><span style="color:#D73A49;--shiki-dark:#F97583">+=</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> 1</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
 <span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  &#125;);</span></span>
 <span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#125;</span></span></code></pre>
 
-<p>After the rewrite, the same operation goes from ~340 ops&#x2F;sec to 43,918 ops&#x2F;sec.</p>
-<p>Note this is distinct from the defect fixed in the previous section: that one is fixed, this one is the intrinsic cost of the payload sanitizer, and only a rewrite avoids it.</p>
-<p><strong>This is the single most valuable thing to sweep for during a migration</strong>: every <code>set({ ... })</code> write whose target field is a sizable array or object should become a draft update. Nothing throws, tests stay green, and only performance degrades — which makes it the hardest kind of problem to catch in review.</p>
-<p>Find all the candidates:</p>
-<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="bash" data-shiki-language="bash" data-highlighted="true" aria-label="bash code"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># object-payload set() calls; judge each by the size of the target field</span></span>
-<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">grep</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> -rEn</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "set\(\s*\&#123;"</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> src</span></span></code></pre>
+<p>For large arrays and objects, this distinction is important.</p>
+<p>A useful migration sweep is:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="bash" data-shiki-language="bash" data-highlighted="true" aria-label="bash code"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">grep</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> -rEn</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "set\(\s*\&#123;"</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> src</span></span></code></pre>
 
-<p>The criterion is not <em>how many</em> there are but <strong>how large the value written at each site is</strong>. For a scalar or a handful of keys, the two forms are indistinguishable; for arrays, lists, and lookup tables, the draft form is required. Sweep them once during the migration rather than hunting them down after production slows.</p>
-<h2 id="Zustand-or-Coaction"><a href="#Zustand-or-Coaction" class="headerlink" title="Zustand or Coaction?"></a>Zustand or Coaction?</h2><p>Both handle most state-management work. The difference is mainly who carries the complexity: the application code, or the state runtime.</p>
+<p>Then inspect the size of the value written at each call site.</p>
+<p>For a scalar, the difference may be irrelevant. For a large list or lookup table, prefer the draft path.</p>
+<hr>
+<h2 id="Another-migration-trap-not-every-computation-belongs-in-the-store"><a href="#Another-migration-trap-not-every-computation-belongs-in-the-store" class="headerlink" title="Another migration trap: not every computation belongs in the store"></a>Another migration trap: not every computation belongs in the store</h2><p>The existence of cached getters can tempt you to globalize inputs that should remain local.</p>
+<p>Do not move props, route params, transient input, or component-local state into a global store only to make a computation eligible for a getter.</p>
+<p>A simple rule works well:</p>
+<blockquote>
+<p>If every input belongs to the domain state and the result is reusable, it is a good computed candidate.</p>
+<p>If an input belongs to one component instance, keep the computation close to that component.</p>
+</blockquote>
+<p>A reactive runtime should reduce accidental infrastructure, not erase architectural boundaries.</p>
+<hr>
+<h2 id="Zustand-or-Coaction"><a href="#Zustand-or-Coaction" class="headerlink" title="Zustand or Coaction?"></a>Zustand or Coaction?</h2><p>Both can handle most ordinary state-management work.</p>
+<p>The difference is mainly <strong>who carries the complexity</strong>.</p>
 <table>
 <thead>
 <tr>
@@ -834,68 +1048,117 @@
 </tr>
 </thead>
 <tbody><tr>
-<td align="left">Small stores, few selectors, little derived state</td>
+<td align="left">Small stores, few selectors, little shared derived state</td>
 <td align="left">Selectors, caches, and shared derived state are already everywhere</td>
 </tr>
 <tr>
-<td align="left">Minimal dependencies and bundle size come first</td>
-<td align="left">Willing to pay ~10x entry size for a built-in runtime</td>
+<td align="left">Bundle minimalism comes first</td>
+<td align="left">Willing to pay for a richer dependency runtime</td>
 </tr>
 <tr>
-<td align="left">Write-heavy hot paths (drag, animation, live streams)</td>
-<td align="left">Read-heavy product surfaces, with draft updates used consistently</td>
+<td align="left">Team strongly prefers explicit subscription mechanics</td>
+<td align="left">Comfortable with read tracking and computed invalidation</td>
 </tr>
 <tr>
-<td align="left">Team prefers explicit subscriptions over implicit tracking</td>
-<td align="left">Comfortable with “reads are subscriptions”, and with investing modeling effort in field boundaries</td>
+<td align="left">Write-heavy hot paths dominate</td>
+<td align="left">Read-heavy product surfaces dominate</td>
 </tr>
 <tr>
-<td align="left">Maturity and ecosystem depth matter most</td>
-<td align="left">Worker, SharedWorker, or collaboration is on the roadmap</td>
+<td align="left">Existing selector architecture is already clean and stable</td>
+<td align="left">Selector&#x2F;memoization infrastructure is becoming a maintenance layer</td>
+</tr>
+<tr>
+<td align="left">Ecosystem maturity is the highest priority</td>
+<td align="left">Immutable snapshots, patches, workers, or shared-state architecture matter</td>
 </tr>
 </tbody></table>
-<p>If selectors show up only occasionally, they are a clear, explicit design.</p>
-<p>It is when selectors, caches, and derived relationships are spread across the whole project that they turn into infrastructure you have to maintain. That is what Coaction is offering to take over.</p>
+<p>If selectors show up only occasionally, they are a clear and explicit design.</p>
+<p>If a handful of computations are local and cheap, plain functions are enough.</p>
+<p>Zustand should not be replaced merely because another runtime can do more.</p>
+<p>The crossover happens when the application starts repeatedly solving the same two dependency problems:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="text" data-shiki-language="text" data-highlighted="false" aria-label="text code"><code><span class="line"><span>Who needs to react?</span></span>
+<span class="line"><span>What needs to recompute?</span></span></code></pre>
+
+<p>At that point, selectors and memoized derivations are no longer just implementation details. They are an application-owned reactive layer.</p>
+<p>That is the layer Coaction is trying to absorb.</p>
 <hr>
-<h2 id="Workers-are-the-architectural-ceiling-not-a-free-upgrade"><a href="#Workers-are-the-architectural-ceiling-not-a-free-upgrade" class="headerlink" title="Workers are the architectural ceiling, not a free upgrade"></a>Workers are the architectural ceiling, not a free upgrade</h2><p>Coaction also offers a path toward Web Workers, SharedWorkers, cross-tab state, and Yjs collaboration.</p>
-<p>None of that is a prerequisite for single-threaded use. You can adopt only automatic tracking, computeds, and draft updates.</p>
-<p>But shared mode is not a zero-cost switch:</p>
+<h2 id="Workers-are-the-architectural-ceiling-not-the-entry-point"><a href="#Workers-are-the-architectural-ceiling-not-the-entry-point" class="headerlink" title="Workers are the architectural ceiling, not the entry point"></a>Workers are the architectural ceiling, not the entry point</h2><p>Coaction also has a path toward Web Workers, SharedWorkers, cross-tab state, and collaborative synchronization.</p>
+<p>That is not required to justify using it in a single-threaded application.</p>
+<p>The single-thread argument should stand on its own:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="text" data-shiki-language="text" data-highlighted="false" aria-label="text code"><code><span class="line"><span>state</span></span>
+<span class="line"><span>  │</span></span>
+<span class="line"><span>  ├── dependency-aware observation</span></span>
+<span class="line"><span>  │</span></span>
+<span class="line"><span>  └── dependency-aware computation</span></span></code></pre>
+
+<p>Shared mode then extends the same state model across a different ownership boundary.</p>
+<p>That matters because a state abstraction with a richer runtime can grow into:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="text" data-shiki-language="text" data-highlighted="false" aria-label="text code"><code><span class="line"><span>main thread</span></span>
+<span class="line"><span>    │</span></span>
+<span class="line"><span>    ├── observer graph</span></span>
+<span class="line"><span>    │</span></span>
+<span class="line"><span>    └──── shared state protocol ──── worker / SharedWorker</span></span>
+<span class="line"><span>                                      │</span></span>
+<span class="line"><span>                                      └── authoritative computation</span></span></code></pre>
+
+<p>But that is an architectural ceiling, not a free toggle.</p>
+<p>Cross-thread state changes method calling, serialization constraints, ordering, error handling, and authority. It should be adopted because the workload needs it, not because the library happens to support it.</p>
+<hr>
+<h2 id="Closing"><a href="#Closing" class="headerlink" title="Closing"></a>Closing</h2><p>I do not think the strongest reason to migrate from Zustand to Coaction is draft syntax, <code>this</code>, or even fewer selector lines.</p>
+<p>Those are visible features.</p>
+<p>The deeper reason is that sufficiently large Zustand applications often accumulate two application-managed systems around the store:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="text" data-shiki-language="text" data-highlighted="false" aria-label="text code"><code><span class="line"><span>observation policy</span></span>
+<span class="line"><span>    └── selectors, equality, useShallow</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>computation policy</span></span>
+<span class="line"><span>    └── useMemo, Reselect, memoization, cache ownership</span></span></code></pre>
+
+<p>Coaction tries to make both part of the runtime:</p>
+<pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="text" data-shiki-language="text" data-highlighted="false" aria-label="text code"><code><span class="line"><span>                    reactive runtime</span></span>
+<span class="line"><span>                         │</span></span>
+<span class="line"><span>            ┌────────────┴────────────┐</span></span>
+<span class="line"><span>            │                         │</span></span>
+<span class="line"><span>     observation graph         computation graph</span></span>
+<span class="line"><span>            │                         │</span></span>
+<span class="line"><span>       who reacts?              what recomputes?</span></span></code></pre>
+
+<p>That is why I think “no selectors” is too shallow a description.</p>
+<p>And “cached getters” is too shallow a description too.</p>
+<p>The actual distinction is:</p>
+<blockquote>
+<p><strong>The runtime understands dependencies.</strong></p>
+</blockquote>
+<p>For observation, that means a consumer’s reads define what it depends on.</p>
+<p>For derived state, that means one computation can become one shared, cached node in the runtime and feed any number of consumers or other computed nodes.</p>
+<p>Zustand can assemble both capabilities. Reselect, <code>proxy-memoize</code>, tracking libraries, computed middleware, and disciplined store architecture are all valid tools.</p>
+<p>But the application owns that assembly.</p>
+<p>Coaction’s bet is that once those relationships become pervasive, they belong below the application layer.</p>
+<p>So my recommendation remains intentionally narrow:</p>
 <ul>
-<li>the client holds a mirror of the authoritative state;</li>
-<li>methods execute across a thread boundary and return promises;</li>
-<li>state ownership, call ordering, and the error-handling model all change;</li>
-<li>everything crossing the boundary must be JSON-shaped — no <code>Date</code>, no <code>Map</code>, no class instances.</li>
+<li>if your Zustand project is clear, small, and stable, <strong>stay on Zustand</strong>;</li>
+<li>if you mainly want mature mutable reactivity, <strong>use MobX</strong>;</li>
+<li>if selectors and shared derivations have become a second body of infrastructure and you also value immutable snapshots and patches, <strong>Coaction becomes an interesting alternative</strong>.</li>
 </ul>
-<p>So the accurate claim is not “flip one option and you get multithreading.” It is:</p>
-<blockquote>
-<p>The same state model has a path to evolve into multithreaded and collaborative scenarios, without replacing your state abstraction from scratch.</p>
-</blockquote>
-<p>That is an architectural ceiling, not a free implementation detail.</p>
-<hr>
-<h2 id="Closing"><a href="#Closing" class="headerlink" title="Closing"></a>Closing</h2><p>The reason to migrate from Zustand to Coaction is not that Zustand is inadequate, nor that Coaction is faster on every axis — <strong>it is clearly slower on write-heavy paths, and while writing this article I found a performance defect in my own object-replacement path that had survived two major versions</strong>.</p>
-<p>The only reason that holds is this: selectors, caches, and derived relationships have grown into a second body of state infrastructure that you now maintain. Go back to the table at the top — if you counted only a few dozen selectors, that reason does not apply to you.</p>
-<p>Zustand keeps its core simple and hands subscription and derivation policy to the application. Coaction uses a fuller runtime to take over automatic tracking, cached computeds, immutable drafts, and a path into shared mode.</p>
-<p>Both are reasonable choices.</p>
-<p>If your Zustand project is still clear, stable, and simple, stay on Zustand. If what you want is getters plus <code>this</code> plus automatic tracking, and mutable observables are fine for you, MobX is more mature.</p>
-<p>Coaction occupies a narrow position: <strong>you want that developer experience <em>and</em> you need what immutable snapshots and a patch stream make possible</strong> — undo, persistence, cross-thread state, collaboration.</p>
-<blockquote>
-<p><strong>What it is really offering to take over is not a few lines of selector, but the complexity behind them.</strong></p>
-</blockquote>
+<p>The migration is not really about deleting a few lines of selector code.</p>
+<p>It is about deciding <strong>who should own the dependency graph</strong>.</p>
 <pre class="shiki shiki-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8" tabindex="0" data-language="bash" data-shiki-language="bash" data-highlighted="true" aria-label="bash code"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">npm</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> install</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> coaction</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> @coaction/react</span></span></code></pre>
 
 <hr>
-<h3 id="Reproducing-everything-here"><a href="#Reproducing-everything-here" class="headerlink" title="Reproducing everything here"></a>Reproducing everything here</h3><ul>
-<li><a href="https://github.com/coactionjs/coaction">Coaction repository</a></li>
-<li><a href="https://github.com/coactionjs/coaction/blob/main/docs/comparison/single-thread.md">Why Coaction Without Multithreading</a></li>
-<li><a href="https://github.com/coactionjs/coaction/blob/main/docs/comparison/zustand.md">Coaction vs Zustand</a></li>
-<li><a href="https://github.com/coactionjs/coaction/blob/main/docs/migration/from-zustand.md">Migrating from Zustand</a></li>
-<li><a href="https://coactionjs.github.io/coaction/en/docs/guides/when-not-to-use">When not to use Coaction</a></li>
-<li>Derived-state benchmark: <code>pnpm benchmark:zustand-positioning</code> (<a href="https://github.com/coactionjs/coaction/blob/main/scripts/benchmark-zustand-positioning.ts">script</a>)</li>
-<li>Bulk update benchmark: <code>pnpm benchmark</code> (<a href="https://github.com/coactionjs/coaction/blob/main/scripts/benchmark.ts">script</a>)</li>
-<li>Known gap on the object-replacement path, with version history: <a href="https://github.com/coactionjs/coaction/blob/main/docs/benchmarking/zustand.md">Zustand-focused benchmarks</a></li>
+<h2 id="References-and-reproducibility"><a href="#References-and-reproducibility" class="headerlink" title="References and reproducibility"></a>References and reproducibility</h2><ul>
+<li>Coaction repository: <a href="https://github.com/coactionjs/coaction">https://github.com/coactionjs/coaction</a></li>
+<li>Coaction documentation: <a href="https://coactionjs.github.io/coaction/en/">https://coactionjs.github.io/coaction/en/</a></li>
+<li>Coaction vs Zustand: <a href="https://github.com/coactionjs/coaction/blob/main/docs/comparison/zustand.md">https://github.com/coactionjs/coaction/blob/main/docs/comparison/zustand.md</a></li>
+<li>Why Coaction Without Multithreading: <a href="https://github.com/coactionjs/coaction/blob/main/docs/comparison/single-thread.md">https://github.com/coactionjs/coaction/blob/main/docs/comparison/single-thread.md</a></li>
+<li>Migrating from Zustand: <a href="https://github.com/coactionjs/coaction/blob/main/docs/migration/from-zustand.md">https://github.com/coactionjs/coaction/blob/main/docs/migration/from-zustand.md</a></li>
+<li>Zustand documentation: <a href="https://zustand.docs.pmnd.rs/">https://zustand.docs.pmnd.rs/</a></li>
+<li>Reselect: <a href="https://reselect.js.org/">https://reselect.js.org/</a></li>
+<li>proxy-memoize: <a href="https://github.com/dai-shi/proxy-memoize">https://github.com/dai-shi/proxy-memoize</a></li>
+<li>MobX computeds: <a href="https://mobx.js.org/computeds.html">https://mobx.js.org/computeds.html</a></li>
+<li>Derived-state benchmark: <code>pnpm benchmark:zustand-positioning</code></li>
+<li>Bulk update benchmark: <code>pnpm benchmark</code></li>
 </ul>
 <blockquote>
-<p><strong>Disclosure: I am the author and maintainer of Coaction.</strong> This is an opinionated analysis, not an independent third-party comparison. Challenges to the implementation, the boundaries, or the benchmarks are welcome — ideally with reproducible code and a test scenario.</p>
+<p>Disclosure: I am the author and maintainer of Coaction. This is an opinionated architectural comparison, not an independent third-party review. The claims are intentionally framed around trade-offs rather than feature count; challenges are welcome, especially when they come with reproducible code and workload-specific measurements.</p>
 </blockquote>
 
   </div>
